@@ -1,3 +1,16 @@
+var b2Vec2 = Box2D.Common.Math.b2Vec2
+   ,b2AABB = Box2D.Collision.b2AABB
+   ,b2BodyDef = Box2D.Dynamics.b2BodyDef
+   ,b2Body = Box2D.Dynamics.b2Body
+   ,b2FixtureDef = Box2D.Dynamics.b2FixtureDef
+   ,b2Fixture = Box2D.Dynamics.b2Fixture
+   ,b2World = Box2D.Dynamics.b2World
+   ,b2MassData = Box2D.Collision.Shapes.b2MassData
+   ,b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
+   ,b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
+   ,b2DebugDraw = Box2D.Dynamics.b2DebugDraw
+   ,b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
+
 Simulator = function(world, canvas, scaling) {
   this.canvas = canvas;
   this.world = world;
@@ -22,7 +35,7 @@ Simulator.prototype.release = function() {
 
 Simulator.prototype.init = function() {
   // save initial world state
-  //this.world.PushState();
+  this.world.PushState();
 
   this.curr_time = 0;
   // setup debug draw
@@ -36,10 +49,11 @@ Simulator.prototype.init = function() {
   this.world.SetDebugDraw(this.dbgDraw);
   // setup mouse interaction
   this.mouseDown = false;
+  this.mouseDownTime = 0;
   this.mousePoint = new b2Vec2(0,0);
   var self = this;
   this.canvas.addEventListener("mousemove", function() { self.handleMouseMove.apply(self, arguments)}, true);
-	this.canvas.addEventListener("mousedown", function() { self.mouseDown = true; self.handleMouseMove.apply(self, arguments)}, true);
+	this.canvas.addEventListener("mousedown", function() { self.mouseDown = true; self.mouseDownTime = Date.now(); }, true);
 	this.canvas.addEventListener("mouseup", function() { self.handleMouseUp.apply(self, arguments)}, true);
   window.addEventListener("scroll", function() { self.canvas_position = self.getElementPosition(self.canvas) });
 	// setup timers
@@ -76,6 +90,11 @@ Simulator.prototype.reset = function() {
 
 Simulator.prototype.handleMouseUp = function(evt) {
   this.mouseDown = false;
+  if (this.mouseDownTime > 0) {
+    var dt = Date.now() - this.mouseDownTime;
+    if (dt < 250) this.reset();
+    this.mouseDownTime = 0;
+  }
   if (this.mouseJoint) {
     this.world.DestroyJoint(this.mouseJoint);
 	  this.mouseJoint = null;

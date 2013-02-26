@@ -1,0 +1,3 @@
+[submodule "libs/geom.js"]
+	path = libs/geom.js
+	url = git://github.com/eweitnauer/geom.js.git
