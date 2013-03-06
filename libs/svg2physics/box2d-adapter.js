@@ -8,8 +8,8 @@ var
 Box2DAdapter = function() {
   var self = this;
   this.rel_curve_error_margin = 0.08;  // unit: fraction of object diameter
-  this.linear_damping = 0.0035;   // Set for each body. Box2D uses the formula
-  this.angular_damping = 0.0035;  // angularVelocity *= b2Math.Clamp(1.0 - dt * angularDamping, 0.0, 1.0)
+  this.linear_damping = 0.35;   // Set for each body. Box2D uses the formula
+  this.angular_damping = 0.35;  // angularVelocity *= b2Math.Clamp(1.0 - dt * angularDamping, 0.0, 1.0)
                                 // A value of 0.35 will therefore lead to halving of the speed every
                                 // two seconds in case of an update rate of 60 Hz.
   this.cd_settings = {
@@ -33,10 +33,10 @@ Box2DAdapter = function() {
     Parameters:
       world                  b2World
       scene                  an SVGScene object with an Array of Polygons and Circles
-      add_frame_obj          should a frame be added to the world as static object (bool)
+      merge_frame_obj        if true add a frame to the first static (black) polygon shape
       synch_object_positions if true, the objects will be moved to the origin and x,y,rot values
                              will be set to match their b2Body. */
-Box2DAdapter.prototype.loadScene = function(world, scene, add_frame_obj, synch_object_positions) {
+Box2DAdapter.prototype.loadScene = function(world, scene, merge_frame_obj, synch_object_positions) {
   var bodies = [];
 
   // get friction, restitution and scale from the properties read from the SVG
@@ -44,15 +44,8 @@ Box2DAdapter.prototype.loadScene = function(world, scene, add_frame_obj, synch_o
   var restitution = scene.restitution;
   var scale = 1/scene.pixels_per_unit;
 
-  // first add the frame to the world
-  if (add_frame_obj) {
-    var pframe = new Polygon([[0,0], [scene.width*scale,0],
-                [scene.width*scale,scene.height*scale], [0,scene.height*scale]]);
-    var body = this.createBody(world, pframe, false, 0., 0, 0, 1.0, friction, restitution);
-    bodies.push(body);
-  }
-
   var self = this;
+  var first = true;
   // now add all other shapes
   scene.shapes.forEach(function(shape) {
     // check whether the object is dynamic (by its stroke color)
@@ -60,12 +53,17 @@ Box2DAdapter.prototype.loadScene = function(world, scene, add_frame_obj, synch_o
     // Okay, now this are two very ugly ways to check for black and get the
     // stroke width in pixels. It will easily break.
     var is_dynamic = !(color == "#000000" || color == "#000" || color == "black" || color == "rgb(0, 0, 0)");
+    if (merge_frame_obj && !is_dynamic && first && (shape instanceof Polygon)) {
+      var lp = shape.pts[shape.pts.length-1], fp = shape.pts[0];
+      shape.add_points([[lp.x,0], [fp.x,0], [fp.x,scene.height], [lp.x,scene.height], [lp.x, lp.y]]);
+      first = false;
+    }
     var stroke_width = 1;
     var reg_float = /^[0-9]*\.?[0-9]+/;
     if (reg_float.test(shape.style['stroke-width'])) {
       stroke_with = Number(reg_float.exec(shape.style['stroke-width'])[0]);
     }
-    var shape = shape.copy();
+    //var shape = shape.copy();
     var pos = shape.centroid();
     // move the shape's centroid to 0,0 and scale it
     if (shape instanceof Polygon) {
