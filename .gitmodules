@@ -1,3 +1,6 @@
 [submodule "libs/geom.js"]
 	path = libs/geom.js
 	url = git://github.com/eweitnauer/geom.js.git
+[submodule "libs/pbp-svgs"]
+	path = libs/pbp-svgs
+	url = git://github.com/eweitnauer/PBPs.git
