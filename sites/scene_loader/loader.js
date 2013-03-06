@@ -4,7 +4,7 @@ var scale = 1,
     span;
 
 function loadScenes() {
-  var path = "../../imgs/pbp" + pbps[pbp_idx].pbp;
+  var path = "../../libs/pbp-svgs/svgs/pbp" + pbps[pbp_idx].pbp;
   span.innerText = 'PBP'+pbps[pbp_idx].pbp;
 
   d3.selectAll("svg").remove();
@@ -13,7 +13,7 @@ function loadScenes() {
 
   for (var y=1; y<=5; y++) for (var x=1; x<=4; x++) {
     //if (y!=5 || x!=1) continue;
-    var scene = SVGSceneParser.parseFile(path + "/pbp-scene-" + y + "-" + x + '.svg');
+    var scene = SVGSceneParser.parseFile(path + "/" + y + "-" + x + '.svg');
     // well now we could display the scenes, no?
     var display1 = document.getElementById('s'+y+"-"+x);
     var child; while (child = display1.childNodes[0]) { display1.removeChild(child); }

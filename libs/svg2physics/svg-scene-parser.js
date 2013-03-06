@@ -49,7 +49,7 @@ var SVGSceneParser = (function() {
 
   /// Loads the shapes in the scene from the contents of an svg file (passed as string)
   var parseFile = function(file_url) {
-    console.log('parsing', file_url);
+    //console.log('parsing', file_url);
     var content = ajaxGetUrl(file_url);
     var svg_dom = parseXml(content);
     if (!svg_dom) throw 'Error parsing ' + content;
@@ -94,7 +94,6 @@ var SVGSceneParser = (function() {
                 Polygon.fromSVGPath(path_node, 1, false);
       if (shape instanceof Polygon) {
         shape.merge_vertices({min_dist: 1, min_vertex_count: 2});
-        console.log(shape.pts.length);
       }
       shape.svg_transform = path_node.getCTM();
       shape.style = readStyle(path_node);
@@ -108,7 +107,7 @@ var SVGSceneParser = (function() {
        ,dy = -Math.min(frame.pts[0].y, frame.pts[2].y)
     apply_transformations(shapes, dx, dy, s, root);
 
-    return new SVGScene(shapes);
+    return new SVGScene(shapes, frame);
   }
   pub.parseFile = parseFile;
 
@@ -165,8 +164,10 @@ var SVGSceneParser = (function() {
 })();
 
 
-SVGScene = function(shapes) {
+SVGScene = function(shapes, frame) {
   this.shapes = shapes || []; // may contain polygons or circles
+  for (var i=0; i<this.shapes.length; i++) this.shapes[i].id = i;
+  this.frame = frame; // a polygon
   this.width = 100;
   this.height = 100;
   this.friction = 0.3;

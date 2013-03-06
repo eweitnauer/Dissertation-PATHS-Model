@@ -2,13 +2,13 @@ Simulator = function(world, canvas) {
   this.canvas = canvas;
   this.world = world;
   this.curr_time = 0;
-	this.draw_interval = 1000/30; // frequency of drawing the scene and updating the mouse interaction in ms
-	this.step_interval = 1000/30; // frequency of stepping the scene when playing in ms
+	this.draw_interval = 1000/10; // frequency of drawing the scene and updating the mouse interaction in ms
+	this.step_interval = 1000/10; // frequency of stepping the scene when playing in ms
 	this.draw_position = true; // displays the current position in world coordinates at the upper left
   this.step_size = 1/60; // step size of one simulation step in seconds
   this.onWorldChange = null; // callback, called after each simulation timestep
   this.onBodySelectionChange = null; // callback with new selected object as parameter
-  this.onSceneSelectionChange = null; // callback with new selected scene as parameter  
+  this.onSceneSelectionChange = null; // callback with new selected scene as parameter
   this.playing = false;
   this.drawing = true;
   this.selectedBody = null;  // the currently selected body in any scene
@@ -99,7 +99,7 @@ Simulator.prototype.handleMouseMove = function(evt) {
 function getBodyAabb(body) {
   var aabb = b2AABB.Combine(body.m_fixtureList.m_aabb, body.m_fixtureList.m_aabb);
   for (var f = body.m_fixtureList.m_next; f; f = f.m_next) aabb.Combine(aabb, f.m_aabb);
-  return aabb;  
+  return aabb;
 }
 
 /** Checks which object and scene is at the passed position and updates the 'selectedBody' and
@@ -128,7 +128,7 @@ Simulator.prototype.selectBodyAt = function(p) {
       frame = b; break;
     }
   }
-  
+
   if (this.selectedBody != body) this.selectedBodyChanged = true;
   if (this.selectedFrame != frame) this.selectedSceneChanged = true;
   // deselect old body and select the new one
@@ -171,7 +171,7 @@ Simulator.prototype.draw = function() {
   var c = this.canvas.getContext("2d");
   this.dbgDraw.SetSprite(c);
   this.world.DrawDebugData();
-  
+
   if (this.draw_position && this.mousePoint) {
    	c.fillStyle = "black";
 	  c.fillText(this.mousePoint.x + ", " + this.mousePoint.y, 5, 10);
