@@ -8,22 +8,35 @@ var b2Body = Box2D.Dynamics.b2Body
    ,b2SimplexCache = Box2D.Collision.b2SimplexCache
    ,b2Distance = Box2D.Collision.b2Distance;
 
+b2World.prototype.forEachBody = function(f) {
+  for (var b = this.m_bodyList; b; b = b.m_next) f(b);
+}
+
+b2World.prototype.forEachDynamicBody = function(f) {
+  for (var b = this.m_bodyList; b; b = b.m_next) if (b.GetType() == b2Body.b2_dynamicBody) f(b);
+}
+
+b2Vec2.prototype.Transformed = function(xf) {
+  return new b2Vec2(this.x*xf.R.col1.x + this.y*xf.R.col2.x + xf.position.x,
+                    this.x*xf.R.col1.y + this.y*xf.R.col2.y + xf.position.y);
+}
+
+b2Body.prototype.IsCircle = function() {
+  return this.m_fixtureList.m_shape instanceof b2CircleShape && this.m_fixtureList.m_next == null;
+}
 
 /// Returns all objects grouped by touch. E.g "A  BC" will be returned as [[A], [B,C]].
 /// There is always the world.m_groundBody in each world (used as absolute reference for some joints),
 /// we just ignore it. We also ignore the ground (any static objects).
 b2World.prototype.getTouchGroups = function() {
   var res = [], touches = [], bodies = [];
-  // collect non-static bodies
-  for (var b1 = this.m_bodyList; b1; b1 = b1.m_next) {
-    if (b1.GetType() == b2Body.b2_staticBody) continue;
-    bodies.push(b1);
-  }
-  // link all non-static bodies which touch
+  this.forEachDynamicBody(function(b) { bodies.push(b) });
+  // link all dynamic bodies which touch
   for (var c = this.GetContactList(); c; c=c.m_next) {
     if (!c.IsTouching()) continue;
     var a = c.m_fixtureA.m_body, b = c.m_fixtureB.m_body;
-    if (a.GetType() == b2Body.b2_staticBody || b.GetType() == b2Body.b2_staticBody) continue;
+    if (a.GetType() !== b2Body.b2_dynamicBody ||
+        b.GetType() !== b2Body.b2_dynamicBody) continue;
     touches.push([a, b]);
   }
   return group_connected(bodies, touches);
@@ -119,10 +132,6 @@ b2BodyState.prototype.Init = function(body) {
 }
 
 b2BodyState.prototype.Apply = function(body) {
-  if ((this.m_flags & b2Body.e_activeFlag) == b2Body.e_activeFlag) {
-    body.SetActive(true);
-  }
-  body.m_flags = this.m_flags;
   body.m_xf.Set(this.m_xf);
   body.m_sweep.Set(this.m_sweep);
   body.m_linearVelocity = this.m_linearVelocity.Copy();
@@ -139,6 +148,27 @@ b2BodyState.prototype.Apply = function(body) {
 	body.m_invI = this.m_invI;
 	body.m_inertiaScale = this.m_inertiaScale;
 	body.m_islandIndex = this.m_islandIndex;
+  if ((this.m_flags & b2Body.e_activeFlag) == b2Body.e_activeFlag) {
+    body.SetActive(true);
+  }
+  if ((this.m_flags & b2Body.e_awakeFlag) == b2Body.e_awakeFlag) {
+    body.SetAwake(true);
+  }
+  body.m_flags = this.m_flags;
+}
+
+function b2WorldState(world) {
+  this.Init(world);
+}
+
+b2WorldState.prototype.Init = function(world) {
+  // curr_time is no internal property, we have to keep track of it
+  // ourselves each time we step the world
+  this.curr_time = world.curr_time;
+}
+
+b2WorldState.prototype.Apply = function(world) {
+  world.curr_time = this.curr_time;
 }
 
 b2Body.prototype.PushState = function() {
@@ -152,6 +182,8 @@ b2Body.prototype.PopState = function() {
 
 /// Pushes the states of all dynamic bodies.
 b2World.prototype.PushState = function() {
+  if (!this.worldstates) this.worldstates = [];
+  this.worldstates.push(new b2WorldState(this));
   for (var b = this.m_bodyList; b; b=b.m_next) {
     if (b.m_type == b2Body.b2_dynamicBody) b.PushState();
   }
@@ -159,7 +191,9 @@ b2World.prototype.PushState = function() {
 
 /// Pops the states of all dynamic bodies.
 b2World.prototype.PopState = function() {
+  this.worldstates.pop().Apply(this);
   for (var b = this.m_bodyList; b; b=b.m_next) {
     if (b.m_type == b2Body.b2_dynamicBody) b.PopState();
   }
 }
+

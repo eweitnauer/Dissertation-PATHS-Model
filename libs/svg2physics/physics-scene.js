@@ -1,0 +1,89 @@
+/// Written by Erik Weitnauer, 2013.
+/** A wrapper around the b2World class */
+
+Box2D.Common.b2Settings.b2_linearSleepTolerance = 0.1 //0.01;
+Box2D.Common.b2Settings.b2_angularSleepTolerance = 20.0 / 180.0 * Math.PI //2.0 / 180.0 * b2Settings.b2_pi;
+
+var PhysicsScene = function(world, dt) {
+	this.world = world;
+	this.world.curr_time = this.world.curr_time || 0;
+	this.world.PushState(); // save initial state for reset
+	this.dt = dt || 1/50;
+	this.onWorldChange = new ListenerPattern(); // Emits world.curr_time each time the world changed.
+}
+
+PhysicsScene.prototype.pushState = function() {
+	this.world.PushState();
+}
+
+PhysicsScene.prototype.popState = function() {
+	this.world.PopState();
+	this.onWorldChange.emit(this.world.curr_time);
+}
+
+PhysicsScene.prototype.reset = function() {
+	this.popState();
+	this.pushState();
+}
+
+PhysicsScene.prototype.getTime = function() {
+	return this.world.curr_time;
+}
+
+/// dt is optional, returns dt.
+PhysicsScene.prototype.step = function(dt) {
+	dt = dt || this.dt;
+	this.world.ClearForces(); // in case we set any forces like with mouse joints
+	this.world.Step(dt, 10, 10);
+  this.world.curr_time += dt;
+  this.onWorldChange.emit(this.world.curr_time);
+  return dt;
+}
+
+/// Makes as many steps of this.dt as needed to reach time.
+PhysicsScene.prototype.simulate = function(time) {
+  var t = this.dt;
+  while (t<time) t += this.step();
+  var rest = this.dt + t - time;
+  if (rest > 0.001) this.step(rest);
+}
+
+/// Simulates until all bodies sleep or max_time (default: Inifinity) is reached. Returns time.
+PhysicsScene.prototype.simulateUntilSleep = function(max_time) {
+	var max_time = max_time || Infinity;
+	var t = 0;
+	while (t<=max_time && this.countAwake() > 0) t += this.step();
+	return t;
+}
+
+/// Returns the total kinetic energy of all bodies.
+PhysicsScene.prototype.getKineticEnergy = function() {
+	var energy = 0;
+	this.world.forEachDynamicBody(function(b) {
+		energy += 0.5 * (b.m_I*b.m_angularVelocity*b.m_angularVelocity
+		                +b.m_mass*b.m_linearVelocity.Length()*b.m_linearVelocity.Length());
+	});
+	return energy;
+}
+
+/// Returns the number of dynamic objects that are awake.
+PhysicsScene.prototype.countAwake = function() {
+	var count = 0;
+	this.world.forEachDynamicBody(function(b) { if (b.IsAwake()) count++ });
+	return count;
+}
+
+var ListenerPattern = function() {
+	this.listeners = [];
+}
+ListenerPattern.prototype.addListener = function(l) { this.listeners.push(l) }
+ListenerPattern.prototype.removeListener = function(l) {
+	var i=this.listeners.indexOf(l);
+	if (i>=0) Array.remove(this.listeners, l);
+}
+ListenerPattern.prototype.removeAll = function() { this.listeners = [] }
+ListenerPattern.prototype.emit = function() {
+	for (var i = 0; i < this.listeners.length; i++) {
+		this.listeners[i].apply(this.listeners[i], arguments);
+	}
+}

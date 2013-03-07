@@ -11,33 +11,48 @@ var b2Vec2 = Box2D.Common.Math.b2Vec2
    ,b2DebugDraw = Box2D.Dynamics.b2DebugDraw
    ,b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
 
-Simulator = function(world, canvas, scaling) {
+Simulator = function(physics_scene, canvas, scaling) {
   this.canvas = canvas;
-  this.world = world;
-  this.curr_time = 0;
-	this.draw_interval = 1000/30; // frequency of drawing the scene and updating the mouse interaction in ms
-	this.step_interval = 1000/30; // frequency of stepping the scene when playing in ms
-	this.interaction_interval = 1000/30; // frequency of updating the mouse interaction in ms
-  this.draw_position = true; // displays the current position in world coordinates at the upper left
+  this.ctx = canvas.getContext('2d');
+  this.pscene = physics_scene;
+  this.step_interval = 1000/30;        // frequency of stepping the scene when playing in ms
+  this.interaction_interval = 1000/30; // frequency of updating the mouse interaction in ms
+  this.draw_position = true;           // displays the current position in world coordinates at the upper left
   this.draw_scale = scaling || 1;
-  this.step_size = 1/60; // step size of one simulation step in seconds
   this.playing = false;
   this.drawing = true;
   this.init();
+  this.draw();
 }
 
 /// Reset all intervals.
 Simulator.prototype.release = function() {
+  if (this.step_timer) clearInterval(this.step_timer);
+  if (this.interaction_timer) clearInterval(this.interaction_timer);
+  this.pscene.onWorldChange.removeListener(this.draw);
+}
+
+Simulator.prototype.pause = function() {
+  if (!this.playing) return;
   clearInterval(this.step_timer);
-  clearInterval(this.draw_timer);
-  clearInterval(this.interaction_timer);
+  this.step_time = null;
+  this.playing = false;
+}
+
+Simulator.prototype.play = function() {
+  if (this.playing) return;
+  var self = this;
+  this.step_timer = setInterval(function() { self.pscene.step() }, this.step_interval);
+  this.playing = true;
+}
+
+Simulator.prototype.reset = function() {
+  this.pscene.reset();
 }
 
 Simulator.prototype.init = function() {
-  // save initial world state
-  this.world.PushState();
+  var self = this;
 
-  this.curr_time = 0;
   // setup debug draw
   this.dbgDraw = new b2DebugDraw();
   this.dbgDraw.SetSprite(this.canvas.getContext("2d"));
@@ -46,30 +61,31 @@ Simulator.prototype.init = function() {
   this.dbgDraw.SetFillAlpha(0.5);
   this.dbgDraw.SetLineThickness(1.0);
   this.dbgDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);// | b2DebugDraw.e_centerOfMassBit);
-  this.world.SetDebugDraw(this.dbgDraw);
+  this.pscene.world.SetDebugDraw(this.dbgDraw);
+  this.pscene.onWorldChange.addListener(function() { self.draw.apply(self) });
+
   // setup mouse interaction
   this.mouseDown = false;
   this.mouseDownTime = 0;
   this.mousePoint = new b2Vec2(0,0);
-  var self = this;
-  this.canvas.addEventListener("mousemove", function() { self.handleMouseMove.apply(self, arguments)}, true);
-	this.canvas.addEventListener("mousedown", function() { self.mouseDown = true; self.mouseDownTime = Date.now(); }, true);
-	this.canvas.addEventListener("mouseup", function() { self.handleMouseUp.apply(self, arguments)}, true);
-  window.addEventListener("scroll", function() { self.canvas_position = self.getElementPosition(self.canvas) });
-	// setup timers
-	this.step_timer = setInterval(function() {
-	  if (!self.playing) return;
-	  self.step.apply(self);
-	}, this.step_interval);
-	this.interaction_timer = setInterval(function() {
+  this.canvas.addEventListener("mousemove", function() {
+    self.handleMouseMove.apply(self, arguments);
+  }, true);
+  this.canvas.addEventListener("mousedown", function() {
+    self.mouseDown = true; self.mouseDownTime = Date.now();
+  }, true);
+  this.canvas.addEventListener("mouseup", function() {
+    self.handleMouseUp.apply(self, arguments)
+  }, true);
+
+  // setup timers
+  this.interaction_timer = setInterval(function() {
     self.updateInteraction.apply(self);
   }, this.interaction_interval);
-  this.draw_timer = setInterval(function() {
-	  if (!self.drawing) return;
-	  self.draw.apply(self);
-	}, this.draw_interval);
 
+  // get position of canvas on screen and update on scrolling to get the mouse position relative to the canvas.
   this.canvas_position = this.getElementPosition(this.canvas);
+  window.addEventListener("scroll", function() { self.canvas_position = self.getElementPosition(self.canvas) });
 };
 
 Simulator.prototype.getElementPosition = function(el) {
@@ -82,21 +98,16 @@ Simulator.prototype.getElementPosition = function(el) {
   return {x: x, y: y};
 }
 
-Simulator.prototype.reset = function() {
-  this.world.PopState();
-  this.world.PushState();
-  this.curr_time = 0;
-}
 
 Simulator.prototype.handleMouseUp = function(evt) {
   this.mouseDown = false;
   if (this.mouseDownTime > 0) {
     var dt = Date.now() - this.mouseDownTime;
-    if (dt < 250) this.reset();
+    if (dt < 100) this.reset();
     this.mouseDownTime = 0;
   }
   if (this.mouseJoint) {
-    this.world.DestroyJoint(this.mouseJoint);
+    this.pscene.world.DestroyJoint(this.mouseJoint);
 	  this.mouseJoint = null;
 	}
 }
@@ -123,7 +134,7 @@ Simulator.prototype.getBodyAtMouse = function() {
     }
     return true;
   }
-  this.world.QueryAABB(filter, aabb);
+  this.pscene.world.QueryAABB(filter, aabb);
 
   return body;
 }
@@ -135,12 +146,12 @@ Simulator.prototype.updateInteraction = function() {
     var body = this.getBodyAtMouse();
     if (body) {
       var md = new b2MouseJointDef();
-      md.bodyA = this.world.GetGroundBody();
+      md.bodyA = this.pscene.world.GetGroundBody();
       md.bodyB = body;
       md.target = this.mousePoint;
       md.collideConnected = true;
       md.maxForce = 300.0 * body.GetMass();
-      this.mouseJoint = this.world.CreateJoint(md);
+      this.mouseJoint = this.pscene.world.CreateJoint(md);
       body.SetAwake(true);
     }
   }
@@ -148,26 +159,19 @@ Simulator.prototype.updateInteraction = function() {
     if (this.mouseDown) {
       this.mouseJoint.SetTarget(this.mousePoint);
     } else {
-      this.world.DestroyJoint(this.mouseJoint);
+      this.pscene.world.DestroyJoint(this.mouseJoint);
       this.mouseJoint = null;
     }
   }
 }
 
-Simulator.prototype.step = function() {
-  if(!this.world) return;
-  this.world.ClearForces();
-  this.world.Step(this.step_size, 10, 10);
-  this.curr_time += this.step_size;
-  if (this.onWorldChange) this.onWorldChange();
-}
-
 Simulator.prototype.draw = function() {
-  if (!this.world) return;
-  this.world.DrawDebugData();
+  if (!this.drawing) return;
+  this.pscene.world.DrawDebugData();
 
   if (this.draw_position && this.mousePoint) {
-   	//c.fillStyle = "black";
-	  //c.fillText(this.mousePoint.x + ", " + this.mousePoint.y, 5, 10);
+   	this.ctx.fillStyle = "black";
+    this.ctx.fillText('x='+this.mousePoint.x.toFixed(2) + " y=" + this.mousePoint.y.toFixed(2)
+                      + " t=" + this.pscene.getTime().toFixed(2) , 5, 10);
 	}
 }
