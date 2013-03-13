@@ -30,7 +30,7 @@ var Box2D = {};
             obj.__defineSetter__(p, cfg.set);
       }
    }
-   
+
    function emptyFn() {};
    a2j.inherit = function(cls, base) {
       var tmpCtr = cls;
@@ -38,13 +38,13 @@ var Box2D = {};
       cls.prototype = new emptyFn;
       cls.prototype.constructor = tmpCtr;
    };
-   
+
    a2j.generateCallback = function generateCallback(context, cb) {
       return function () {
          cb.apply(context, arguments);
       };
    };
-   
+
    a2j.NVector = function NVector(length) {
       if (length === undefined) length = 0;
       var tmp = new Array(length || 0);
@@ -52,23 +52,20 @@ var Box2D = {};
       tmp[i] = 0;
       return tmp;
    };
-   
+
    a2j.is = function is(o1, o2) {
       if (o1 === null) return false;
       if ((o2 instanceof Function) && (o1 instanceof o2)) return true;
       if ((o1.constructor.__implements != undefined) && (o1.constructor.__implements[o2])) return true;
       return false;
    };
-   
+
    a2j.parseUInt = function(v) {
       return Math.abs(parseInt(v));
    }
-   
+
 })(Box2D);
 
-//#TODO remove assignments from global namespace
-var Vector = Array;
-var Vector_a2j_Number = Box2D.NVector;
 //package structure
 if (typeof(Box2D) === "undefined") Box2D = {};
 if (typeof(Box2D.Collision) === "undefined") Box2D.Collision = {};
@@ -79,6 +76,10 @@ if (typeof(Box2D.Dynamics) === "undefined") Box2D.Dynamics = {};
 if (typeof(Box2D.Dynamics.Contacts) === "undefined") Box2D.Dynamics.Contacts = {};
 if (typeof(Box2D.Dynamics.Controllers) === "undefined") Box2D.Dynamics.Controllers = {};
 if (typeof(Box2D.Dynamics.Joints) === "undefined") Box2D.Dynamics.Joints = {};
+
+Box2D.Vector = Array;
+Box2D.Vector_a2j_Number = Box2D.NVector;
+
 //pre-definitions
 (function () {
    Box2D.Collision.IBroadPhase = 'Box2D.Collision.IBroadPhase';
@@ -825,10 +826,10 @@ Box2D.postDefs = [];
    }
    b2BoundValues.b2BoundValues = function () {};
    b2BoundValues.prototype.b2BoundValues = function () {
-      this.lowerValues = new Vector_a2j_Number();
+      this.lowerValues = new Box2D.Vector_a2j_Number();
       this.lowerValues[0] = 0.0;
       this.lowerValues[1] = 0.0;
-      this.upperValues = new Vector_a2j_Number();
+      this.upperValues = new Box2D.Vector_a2j_Number();
       this.upperValues[0] = 0.0;
       this.upperValues[1] = 0.0;
    }
@@ -1012,7 +1013,7 @@ Box2D.postDefs = [];
       tClip.id.features.incidentVertex = 1;
    }
    b2Collision.MakeClipPointVector = function () {
-      var r = new Vector(2);
+      var r = new Box2D.Vector(2);
       r[0] = new ClipVertex();
       r[1] = new ClipVertex();
       return r;
@@ -1259,8 +1260,8 @@ Box2D.postDefs = [];
       Box2D.Collision.b2Collision.s_incidentEdge = b2Collision.MakeClipPointVector();
       Box2D.Collision.b2Collision.s_clipPoints1 = b2Collision.MakeClipPointVector();
       Box2D.Collision.b2Collision.s_clipPoints2 = b2Collision.MakeClipPointVector();
-      Box2D.Collision.b2Collision.s_edgeAO = new Vector_a2j_Number(1);
-      Box2D.Collision.b2Collision.s_edgeBO = new Vector_a2j_Number(1);
+      Box2D.Collision.b2Collision.s_edgeAO = new Box2D.Vector_a2j_Number(1);
+      Box2D.Collision.b2Collision.s_edgeBO = new Box2D.Vector_a2j_Number(1);
       Box2D.Collision.b2Collision.s_localTangent = new b2Vec2();
       Box2D.Collision.b2Collision.s_localNormal = new b2Vec2();
       Box2D.Collision.b2Collision.s_planePoint = new b2Vec2();
@@ -1410,8 +1411,8 @@ Box2D.postDefs = [];
    }
    Box2D.postDefs.push(function () {
       Box2D.Collision.b2Distance.s_simplex = new b2Simplex();
-      Box2D.Collision.b2Distance.s_saveA = new Vector_a2j_Number(3);
-      Box2D.Collision.b2Distance.s_saveB = new Vector_a2j_Number(3);
+      Box2D.Collision.b2Distance.s_saveA = new Box2D.Vector_a2j_Number(3);
+      Box2D.Collision.b2Distance.s_saveB = new Box2D.Vector_a2j_Number(3);
    });
    b2DistanceInput.b2DistanceInput = function () {};
    b2DistanceOutput.b2DistanceOutput = function () {
@@ -1424,7 +1425,7 @@ Box2D.postDefs = [];
       case b2Shape.e_circleShape:
          {
             var circle = (shape instanceof b2CircleShape ? shape : null);
-            this.m_vertices = new Vector(1, true);
+            this.m_vertices = new Box2D.Vector(1, true);
             this.m_vertices[0] = circle.m_p;
             this.m_count = 1;
             this.m_radius = circle.m_radius;
@@ -1534,7 +1535,7 @@ Box2D.postDefs = [];
    }
    b2DynamicTree.prototype.Query = function (callback, aabb) {
       if (this.m_root == null) return;
-      var stack = new Vector();
+      var stack = new Box2D.Vector();
       var count = 0;
       stack[count++] = this.m_root;
       while (count > 0) {
@@ -1570,7 +1571,7 @@ Box2D.postDefs = [];
          segmentAABB.upperBound.x = Math.max(p1.x, tX);
          segmentAABB.upperBound.y = Math.max(p1.y, tY);
       }
-      var stack = new Vector();
+      var stack = new Box2D.Vector();
       var count = 0;
       stack[count++] = this.m_root;
       while (count > 0) {
@@ -1713,8 +1714,8 @@ Box2D.postDefs = [];
    }
    b2DynamicTreeBroadPhase.b2DynamicTreeBroadPhase = function () {
       this.m_tree = new b2DynamicTree();
-      this.m_moveBuffer = new Vector();
-      this.m_pairBuffer = new Vector();
+      this.m_moveBuffer = new Box2D.Vector();
+      this.m_pairBuffer = new Box2D.Vector();
       this.m_pairCount = 0;
    };
    b2DynamicTreeBroadPhase.prototype.CreateProxy = function (aabb, userData) {
@@ -1819,7 +1820,7 @@ Box2D.postDefs = [];
       this.m_pointCount = 0;
    };
    b2Manifold.prototype.b2Manifold = function () {
-      this.m_points = new Vector(b2Settings.b2_maxManifoldPoints);
+      this.m_points = new Box2D.Vector(b2Settings.b2_maxManifoldPoints);
       for (var i = 0; i < b2Settings.b2_maxManifoldPoints; i++) {
          this.m_points[i] = new b2ManifoldPoint();
       }
@@ -2177,7 +2178,7 @@ Box2D.postDefs = [];
       this.m_v1 = new b2SimplexVertex();
       this.m_v2 = new b2SimplexVertex();
       this.m_v3 = new b2SimplexVertex();
-      this.m_vertices = new Vector(3);
+      this.m_vertices = new Box2D.Vector(3);
    };
    b2Simplex.prototype.b2Simplex = function () {
       this.m_vertices[0] = this.m_v1;
@@ -2395,8 +2396,8 @@ Box2D.postDefs = [];
       this.m_count = 3;
    }
    b2SimplexCache.b2SimplexCache = function () {
-      this.indexA = new Vector_a2j_Number(3);
-      this.indexB = new Vector_a2j_Number(3);
+      this.indexA = new Box2D.Vector_a2j_Number(3);
+      this.indexB = new Box2D.Vector_a2j_Number(3);
    };
    b2SimplexVertex.b2SimplexVertex = function () {};
    b2SimplexVertex.prototype.Set = function (other) {
@@ -2535,7 +2536,7 @@ Box2D.postDefs = [];
       this.m_normal = new b2Vec2();
    };
    b2WorldManifold.prototype.b2WorldManifold = function () {
-      this.m_points = new Vector(b2Settings.b2_maxManifoldPoints);
+      this.m_points = new Box2D.Vector(b2Settings.b2_maxManifoldPoints);
       for (var i = 0; i < b2Settings.b2_maxManifoldPoints; i++) {
          this.m_points[i] = new b2Vec2();
       }
@@ -3099,7 +3100,7 @@ Box2D.postDefs = [];
    }
    b2PolygonShape.prototype.SetAsArray = function (vertices, vertexCount) {
       if (vertexCount === undefined) vertexCount = 0;
-      var v = new Vector();
+      var v = new Box2D.Vector();
       var i = 0,
          tVec;
       for (i = 0;
@@ -3356,7 +3357,7 @@ Box2D.postDefs = [];
       if (offset === undefined) offset = 0;
       var normalL = b2Math.MulTMV(xf.R, normal);
       var offsetL = offset - b2Math.Dot(normal, xf.position);
-      var depths = new Vector_a2j_Number();
+      var depths = new Box2D.Vector_a2j_Number();
       var diveCount = 0;
       var intoIndex = parseInt((-1));
       var outoIndex = parseInt((-1));
@@ -3468,8 +3469,8 @@ Box2D.postDefs = [];
       this.__super.b2Shape.call(this);
       this.m_type = b2Shape.e_polygonShape;
       this.m_centroid = new b2Vec2();
-      this.m_vertices = new Vector();
-      this.m_normals = new Vector();
+      this.m_vertices = new Box2D.Vector();
+      this.m_normals = new Box2D.Vector();
    }
    b2PolygonShape.prototype.Reserve = function (count) {
       if (count === undefined) count = 0;
@@ -3504,7 +3505,7 @@ Box2D.postDefs = [];
    b2PolygonShape.ComputeOBB = function (obb, vs, count) {
       if (count === undefined) count = 0;
       var i = 0;
-      var p = new Vector(count + 1);
+      var p = new Box2D.Vector(count + 1);
       for (i = 0;
       i < count; ++i) {
          p[i] = vs[i];
@@ -5073,8 +5074,8 @@ Box2D.postDefs = [];
       Box2D.Dynamics.b2ContactFilter.b2_defaultFilter = new b2ContactFilter();
    });
    b2ContactImpulse.b2ContactImpulse = function () {
-      this.normalImpulses = new Vector_a2j_Number(b2Settings.b2_maxManifoldPoints);
-      this.tangentImpulses = new Vector_a2j_Number(b2Settings.b2_maxManifoldPoints);
+      this.normalImpulses = new Box2D.Vector_a2j_Number(b2Settings.b2_maxManifoldPoints);
+      this.tangentImpulses = new Box2D.Vector_a2j_Number(b2Settings.b2_maxManifoldPoints);
    };
    b2ContactListener.b2ContactListener = function () {};
    b2ContactListener.prototype.BeginContact = function (contact) {}
@@ -5450,9 +5451,9 @@ Box2D.postDefs = [];
    }
    b2Island.b2Island = function () {};
    b2Island.prototype.b2Island = function () {
-      this.m_bodies = new Vector();
-      this.m_contacts = new Vector();
-      this.m_joints = new Vector();
+      this.m_bodies = new Box2D.Vector();
+      this.m_contacts = new Box2D.Vector();
+      this.m_joints = new Box2D.Vector();
    }
    b2Island.prototype.Initialize = function (bodyCapacity, contactCapacity, jointCapacity, allocator, listener, contactSolver) {
       if (bodyCapacity === undefined) bodyCapacity = 0;
@@ -5691,7 +5692,7 @@ Box2D.postDefs = [];
       this.warmStarting = step.warmStarting;
    }
    b2World.b2World = function () {
-      this.s_stack = new Vector();
+      this.s_stack = new Box2D.Vector();
       this.m_contactManager = new b2ContactManager();
       this.m_contactSolver = new b2ContactSolver();
       this.m_island = new b2Island();
@@ -6156,7 +6157,7 @@ Box2D.postDefs = [];
    }
    b2World.prototype.RayCastAll = function (point1, point2) {
       var __this = this;
-      var result = new Vector();
+      var result = new Box2D.Vector();
 
       function RayCastAllWrapper(fixture, point, normal, fraction) {
          if (fraction === undefined) fraction = 0;
@@ -6521,7 +6522,7 @@ Box2D.postDefs = [];
             var poly = ((shape instanceof b2PolygonShape ? shape : null));
             var vertexCount = parseInt(poly.GetVertexCount());
             var localVertices = poly.GetVertices();
-            var vertices = new Vector(vertexCount);
+            var vertices = new Box2D.Vector(vertexCount);
             for (i = 0;
             i < vertexCount; ++i) {
                vertices[i] = b2Math.MulX(xf, localVertices[i]);
@@ -6543,7 +6544,7 @@ Box2D.postDefs = [];
       Box2D.Dynamics.b2World.s_backupA = new b2Sweep();
       Box2D.Dynamics.b2World.s_backupB = new b2Sweep();
       Box2D.Dynamics.b2World.s_timestep = new b2TimeStep();
-      Box2D.Dynamics.b2World.s_queue = new Vector();
+      Box2D.Dynamics.b2World.s_queue = new Box2D.Vector();
       Box2D.Dynamics.b2World.s_jointColor = new b2Color(0.5, 0.8, 0.8);
       Box2D.Dynamics.b2World.e_newFixture = 0x0001;
       Box2D.Dynamics.b2World.e_locked = 0x0002;
@@ -6827,7 +6828,7 @@ Box2D.postDefs = [];
       this.K = new b2Mat22();
    };
    b2ContactConstraint.prototype.b2ContactConstraint = function () {
-      this.points = new Vector(b2Settings.b2_maxManifoldPoints);
+      this.points = new Box2D.Vector(b2Settings.b2_maxManifoldPoints);
       for (var i = 0; i < b2Settings.b2_maxManifoldPoints; i++) {
          this.points[i] = new b2ContactConstraintPoint();
       }
@@ -6856,9 +6857,9 @@ Box2D.postDefs = [];
       }
    }
    b2ContactFactory.prototype.InitializeRegisters = function () {
-      this.m_registers = new Vector(b2Shape.e_shapeTypeCount);
+      this.m_registers = new Box2D.Vector(b2Shape.e_shapeTypeCount);
       for (var i = 0; i < b2Shape.e_shapeTypeCount; i++) {
-         this.m_registers[i] = new Vector(b2Shape.e_shapeTypeCount);
+         this.m_registers[i] = new Box2D.Vector(b2Shape.e_shapeTypeCount);
          for (var j = 0; j < b2Shape.e_shapeTypeCount; j++) {
             this.m_registers[i][j] = new b2ContactRegister();
          }
@@ -6922,7 +6923,7 @@ Box2D.postDefs = [];
    };
    b2ContactSolver.b2ContactSolver = function () {
       this.m_step = new b2TimeStep();
-      this.m_constraints = new Vector();
+      this.m_constraints = new Box2D.Vector();
    };
    b2ContactSolver.prototype.b2ContactSolver = function () {}
    b2ContactSolver.prototype.Initialize = function (step, contacts, contactCount, allocator) {
@@ -7413,8 +7414,8 @@ Box2D.postDefs = [];
    b2PositionSolverManifold.b2PositionSolverManifold = function () {};
    b2PositionSolverManifold.prototype.b2PositionSolverManifold = function () {
       this.m_normal = new b2Vec2();
-      this.m_separations = new Vector_a2j_Number(b2Settings.b2_maxManifoldPoints);
-      this.m_points = new Vector(b2Settings.b2_maxManifoldPoints);
+      this.m_separations = new Box2D.Vector_a2j_Number(b2Settings.b2_maxManifoldPoints);
+      this.m_points = new Box2D.Vector(b2Settings.b2_maxManifoldPoints);
       for (var i = 0; i < b2Settings.b2_maxManifoldPoints; i++) {
          this.m_points[i] = new b2Vec2();
       }
