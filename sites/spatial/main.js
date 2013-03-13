@@ -18,7 +18,7 @@ function res_change(resolution) {
 function calc(res) {
 	d3.selectAll('canvas').remove();
 	var scale = res/2/100; // scene (100) has to fit in twice horizontally and vertically
-	var sra = SpatialRelationsAnalyzer(res, scale, 'above');
+	var sra = SpatialRelationAnalyzer(res, scale, 'above');
 	A = scene.shapes[1], R = scene.shapes[0];
 	console.log(sra.getMembership(A, R));
 	var dx = (R.x-A.x)*scale, dy = (R.y-A.y)*scale;
@@ -30,7 +30,7 @@ function speed_test() {
 	var t = Date.now();
 	d3.selectAll('canvas').remove();
 	var res = 100, scale = res/2/100;
-	var sra = SpatialRelationsAnalyzer(res, scale, 'above');
+	var sra = SpatialRelationAnalyzer(res, scale, 'above');
 	var A = scene.shapes[0];
 	var R, BM = sra.calcBodyMatrix(A);
   for (var k=0; k<100; k++) {
