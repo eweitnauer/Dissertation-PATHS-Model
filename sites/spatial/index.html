@@ -19,15 +19,14 @@
     <script src="../../src/features/hpos-attr.js"></script>
     <script src="../../src/features/touch-rel.js"></script>
     <script src="../../src/features/ontop-rel.js"></script>
-    <script src="../../src/features/spatial-relationship.js"></script>
-    <script src="../../src/features/spatial-relationship-math.js"></script>
+    <script src="../../src/features/spatial-relations.js"></script>
     <script src="main.js"></script>
     <style>
       canvas { border: 1px solid lightgray;}
     </style>
   </head>
   <body onload="init();">
-    <input type="range" min="3" max="500" value="50" step="1" onchange="calc(this.value)" style="width: 800px;" />
+    <input type="range" min="3" max="500" value="50" step="1" onchange="res_change(this.value)" style="width: 800px;" />
     <span id="res_value">?</span></br>
     <svg id="svg" width=300 height=300 style="margin: 5px"></svg>
   </body>

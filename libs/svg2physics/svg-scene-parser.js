@@ -183,6 +183,7 @@ SVGScene = function(shapes, frame) {
 }
 
 /// Centers all polygon shapes onto the origin and saves their original centers in x, y.
+/// Also sets rot to 0.
 SVGScene.prototype.moveToOrigin = function() {
   for (var i=0; i<this.shapes.length; i++) {
     var shape = this.shapes[i];
@@ -191,6 +192,7 @@ SVGScene.prototype.moveToOrigin = function() {
     shape.pts.forEach(function(p) { p.Sub(pos) });
     shape.x = pos.x;
     shape.y = pos.y;
+    shape.rot = 0;
   }
 }
 
