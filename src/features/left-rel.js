@@ -1,27 +1,29 @@
-/// Object being left to other object on a scale from 1 (very) to 0 (not at all).
-LeftRelationship = function() {
-  this.type = "metric";
-  this.name = "left-to";
+/// Object beeing left to other object on a scale from 1 (very) to 0 (not at all).
+LeftRelationship = function(obj, other) {
+  this.name = "left-of";
   this.arity = 2;
-  this.other = null;
-  this.labels = ['left-of'];
+  this.symmetry = false;
+  this.constant = false;
+  this.obj = obj;
+  this.other = other;
   this.val = '?';
+  this.rval = '?';
 }
 
-/// Returns the delta angle to "left", given dx and dy of two points.
-LeftRelationship.delta_angle = function(dx, dy) {
-  if (dx == 0 && dy == 0) return 0;
-  else return Math.acos(-dx/Math.sqrt(dx*dx+dy*dy)); // arccos([dx, dy] * [-1, 0] / ||dx,dy||)
-}
-
-LeftRelationship.membership_fun = function(d_angle) {
-  return Math.max(0, 1-2*d_angle/Math.PI);
-}
+LeftRelationship.Analyzer = SpatialRelationAnalyzer(100, 100/2/100, 'left');
 
 LeftRelationship.perceive = function(obj, other) {
-  var attr = new LeftRelationship();
-  attr.other = other;
-  attr.val = LeftRelationship.membership_fun(
-             LeftRelationship.delta_angle(obj.x-other.x, obj.y-other.y));
-  return attr;
+  var rel = new LeftRelationship(obj, other);
+  rel.val = LeftRelationship.Analyzer.getMembership(obj, other);
+  rel.opp_val = RightRelationship.Analyzer.getMembership(obj, other);
+  return rel;
+}
+
+LeftRelationship.prototype.get_activity = function() {
+  if (this.val == '?') return 0;
+  else return Math.max(0, this.val[1] - this.opp_val[1]);
+}
+
+LeftRelationship.prototype.get_label = function() {
+  return 'left-of';
 }

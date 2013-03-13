@@ -43,3 +43,23 @@ ObjectNode.prototype.perceive = function(state, obj, others) {
   }
   return this;
 }
+
+ObjectNode.prototype.describe = function() {
+  console.log('Object', this.obj.id, '=============');
+  for (var state in this.states) {
+    var out = [];
+    for (var a in ObjectNode.attrs) {
+      var attr = this.states[state][a];
+      if (!('get_activity' in attr)) continue;
+      if (attr.get_activity() >= 0.6) out.push(attr.get_label());
+    }
+    for (var r in ObjectNode.rels) {
+      var rels = this.states[state][r];
+      for (var i=0; i<rels.length; i++) {
+        if (!('get_activity' in rels[i])) continue;
+        if (rels[i].get_activity() >= 0.5) out.push(rels[i].get_label() + ' ' + rels[i].other.id);
+      }
+    }
+    console.log(state + ": " + out.join(', '));
+  }
+}

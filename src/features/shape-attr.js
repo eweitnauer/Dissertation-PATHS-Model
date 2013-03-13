@@ -1,7 +1,8 @@
-ShapeAttribute = function(other) {
+ShapeAttribute = function(obj) {
   this.name = 'shape';
-  this.type = 'nominal';
-  this.labels = ['circle', 'triangle', 'rectangle', 'square', 'unknown'];
+  // this.labels = ['circle', 'triangle', 'rectangle', 'square', 'unknown'];
+  this.constant = true;
+  this.obj = obj;
   this.val = "?";
 }
 
@@ -9,9 +10,17 @@ ShapeAttribute = function(other) {
 /// object's shape. Possible shapes are circle, triangle, rectangle, square and
 /// unknown.
 ShapeAttribute.perceive = function(obj) {
-  var sa = new ShapeAttribute();
+  var sa = new ShapeAttribute(obj);
   sa.val = ShapeAttribute.determineShape(obj);
   return sa;
+}
+
+ShapeAttribute.prototype.get_activity = function() {
+  return this.val == '?' ? 0 : 1;
+}
+
+ShapeAttribute.prototype.get_label = function() {
+  return this.val;
 }
 
 ShapeAttribute.determineShape = function(shape) {

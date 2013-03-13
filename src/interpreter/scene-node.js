@@ -30,3 +30,15 @@ SceneNode.perceive = function(scene, oracle) {
   }
   return sn;
 }
+
+SceneNode.prototype.describe = function() {
+  console.log('Objects:');
+  for (var i=0; i<this.parts.length; i++) {
+    this.parts[i].describe();
+  };
+  console.log('Collisions:');
+  for (var i=0; i<this.collisions.length; i++) {
+    var c = this.collisions[i];
+    console.log(c.a.id, 'hits', c.b.id);
+  };
+}
