@@ -29,8 +29,8 @@ function loadScenes() {
 
      var display2 = document.getElementById('c'+y+'-'+x);
      if (sims[y+'-'+x]) sims[y+'-'+x].release();
-     sims[y+'-'+x] = new Simulator(world, display2, scene.pixels_per_unit*scale);
-     sims[y+'-'+x].playing = true;
+     sims[y+'-'+x] = new Simulator(new PhysicsScene(world), display2, scene.pixels_per_unit*scale, false);
+     sims[y+'-'+x].play();
   }
 }
 

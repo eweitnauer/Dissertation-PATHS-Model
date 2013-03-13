@@ -11,13 +11,13 @@ var b2Vec2 = Box2D.Common.Math.b2Vec2
    ,b2DebugDraw = Box2D.Dynamics.b2DebugDraw
    ,b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
 
-Simulator = function(physics_scene, canvas, scaling) {
+Simulator = function(physics_scene, canvas, scaling, draw_info) {
   this.canvas = canvas;
   this.ctx = canvas.getContext('2d');
   this.pscene = physics_scene;
   this.step_interval = 1000/30;        // frequency of stepping the scene when playing in ms
   this.interaction_interval = 1000/30; // frequency of updating the mouse interaction in ms
-  this.draw_position = true;           // displays the current position in world coordinates at the upper left
+  this.draw_info = draw_info;          // displays mouse pos. in world coordinates and current time
   this.draw_scale = scaling || 1;
   this.playing = false;
   this.drawing = true;
@@ -169,7 +169,7 @@ Simulator.prototype.draw = function() {
   if (!this.drawing) return;
   this.pscene.world.DrawDebugData();
 
-  if (this.draw_position && this.mousePoint) {
+  if (this.draw_info && this.mousePoint) {
    	this.ctx.fillStyle = "black";
     this.ctx.fillText('x='+this.mousePoint.x.toFixed(2) + " y=" + this.mousePoint.y.toFixed(2)
                       + " t=" + this.pscene.getTime().toFixed(2) , 5, 10);

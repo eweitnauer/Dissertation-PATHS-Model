@@ -3,8 +3,8 @@ var s = 2; // scaling: 1 unit will be s*1 meters, the displayed area is sxs
 function onload() {
   can = document.getElementById("canvas");
   world = createWorld();
-  sim = new Simulator(world, can, 400/s);
-  sim.playing = true;
+  sim = new Simulator(new PhysicsScene(world), can, 400/s, true);
+  sim.play();
 }
 
 function createWorld() {
