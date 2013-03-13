@@ -6,7 +6,8 @@ var b2Body = Box2D.Dynamics.b2Body
    ,b2DistanceOutput = Box2D.Collision.b2DistanceOutput
    ,b2DistanceProxy = Box2D.Collision.b2DistanceProxy
    ,b2SimplexCache = Box2D.Collision.b2SimplexCache
-   ,b2Distance = Box2D.Collision.b2Distance;
+   ,b2Distance = Box2D.Collision.b2Distance
+   ,b2Vec2 = Box2D.Common.Math.b2Vec2;
 
 b2World.prototype.forEachBody = function(f) {
   for (var b = this.m_bodyList; b; b = b.m_next) f(b);

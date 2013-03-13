@@ -24,21 +24,19 @@ Box2DAdapter = function() {
   };
 }
 
-/** Iterates through the passed scene's shapes and creates b2Bodys from them. The b2Bodys are added
-    to the passed b2World and also written to the 'phys_obj' attribute of their shape. To the
-    b2Bodys, an attribute 'master_obj' is set to the shape for which it the b2Body was
-    created. The scale that was used to create the objects is written to their props
-    attribute as phys_scale attributes. A method synch_to_phys to synch the
-    x, y and rot attribute with their b2Body is added.
+/** Iterates through the passed scene's shapes and creates b2Bodys from them. Polygon shapes
+    must be centered at the origin and have x, y properties to denote their position. Each
+    shape must have the movable property set to true, if it is dynamic object. The
+    b2Bodys are added to the passed b2World and also written to the 'phys_obj' attribute of
+    their respective shape. To the b2Bodys, an attribute 'master_obj' is set to the shape for
+    which it the b2Body was created. The scale that was used to create the objects is written
+    to them as phys_scale attribute. A method synch_to_phys to synch the x, y and rot attribute
+    with their b2Body is added.
     Parameters:
       world                  b2World
       scene                  an SVGScene object with an Array of Polygons and Circles
-      merge_frame_obj        if true add a frame to the first static (black) polygon shape
-      synch_object_positions if true, the objects will be moved to the origin and x,y,rot values
-                             will be set to match their b2Body. */
-Box2DAdapter.prototype.loadScene = function(world, scene, merge_frame_obj, synch_object_positions) {
-  var bodies = [];
-
+      merge_frame_obj        if true add a frame to the first static (black) polygon shape */
+Box2DAdapter.prototype.loadScene = function(world, scene) {
   // get friction, restitution and scale from the properties read from the SVG
   var friction = scene.friction;
   var restitution = scene.restitution;
@@ -48,51 +46,32 @@ Box2DAdapter.prototype.loadScene = function(world, scene, merge_frame_obj, synch
   var first = true;
   // now add all other shapes
   scene.shapes.forEach(function(shape) {
-    // check whether the object is dynamic (by its stroke color)
-    var color = shape.style.stroke;
-    // Okay, now this are two very ugly ways to check for black and get the
-    // stroke width in pixels. It will easily break.
-    var is_dynamic = !(color == "#000000" || color == "#000" || color == "black" || color == "rgb(0, 0, 0)");
-    if (merge_frame_obj && !is_dynamic && first && (shape instanceof Polygon)) {
-      var lp = shape.pts[shape.pts.length-1], fp = shape.pts[0];
-      shape.add_points([[lp.x,0], [fp.x,0], [fp.x,scene.height], [lp.x,scene.height], [lp.x, lp.y]]);
-      first = false;
-    }
     var stroke_width = 1;
     var reg_float = /^[0-9]*\.?[0-9]+/;
     if (reg_float.test(shape.style['stroke-width'])) {
       stroke_with = Number(reg_float.exec(shape.style['stroke-width'])[0]);
     }
-    //var shape = shape.copy();
-    var pos = shape.centroid();
-    // move the shape's centroid to 0,0 and scale it
-    if (shape instanceof Polygon) {
-      shape.pts.forEach(function(p) {
-        p.x = (p.x-pos.x)*scale;
-        p.y = (p.y-pos.y)*scale;
-      });
-    } else if (shape instanceof Circle) {
-      // since the b2CircleShape as no additional collision radius as the polygon,
+    var _shape = shape.copy();
+    if (_shape instanceof Polygon) {
+      _shape.pts.forEach(function(p) { p.Scale(scale) });
+    } else if (_shape instanceof Circle) {
+      // since the b2Circle_shape as no additional collision radius as the polygon,
       // we will grow the circle to make it the same size as its SVG source,
       // which means we need to include half of its stroke-width
-      shape.r += stroke_width/2;
-      shape.x = 0; shape.y = 0; shape.r *= scale;
+      _shape.r = (_shape.r+stroke_width/2) * scale;
     } else throw("Unknown object type.");
     shape.phys_scale = scale;
     /// Method that sets x, y and rot attributes of the scene object according to
     /// the state of its b2Body.
     shape.synch_to_phys = function() {
-      this.x = this.phys_obj.GetPosition().x / this.props.phys_scale;
-      this.y = this.phys_obj.GetPosition().y / this.props.phys_scale;
+      this.x = this.phys_obj.GetPosition().x / this.phys_scale;
+      this.y = this.phys_obj.GetPosition().y / this.phys_scale;
       this.rot = this.phys_obj.GetAngle();
     }
-    shape.phys_obj = self.createBody(world, shape, is_dynamic, pos.x*scale,
-                           pos.y*scale, 0.0, 1.0, friction, restitution);
+    shape.phys_obj = self.createBody(world, _shape, shape.movable, shape.x*scale, shape.y*scale,
+                                     0.0, 1.0, friction, restitution);
     shape.phys_obj.master_obj = shape;
-    if (synch_object_positions) {
-      shape.move_to_origin();
-      shape.synch_to_phys();
-    }
+    shape.rot = 0;
   });
 }
 

@@ -11,6 +11,22 @@ This class provides all functionality of the "physics black box" to the PBP Inte
 var PhysicsOracle = function(physics_scene) {
 	this.pscene = physics_scene;
 	this.contact_listener = new PhysicsOracle.ContactListener(this);
+  this.gotoState('start');
+}
+
+/// State can be one of
+/// 'start' ... goes to 0.15 seconds after the initial state (things start moving, "resting" objects settle down).
+/// 'end' ... goes to the state where all objects stopped moving (or max. 10 seconds after start)
+PhysicsOracle.prototype.gotoState = function(state) {
+  if (state == 'start') this.pscene.seek(0.15);
+  else if (state == 'end') this.pscene.simulateUntilSleep();
+  else throw 'unknown state "' + state + '"';
+}
+
+/// Calls synch_to_phys for every body's master shape object. This updates the x, y and rot attributes of
+/// the shapes.
+PhysicsOracle.prototype.synchShapes = function() {
+  this.pscene.forEachBody(function(b) { b.master_obj.synch_to_phys() });
 }
 
 /// Returns all objects grouped by touch. E.g "A  BC" will be returned as [[A], [B,C]]. Only
@@ -34,7 +50,7 @@ PhysicsOracle.prototype.observeCollisions = function() {
 	this.collisions = [];
 	this.pscene.simulateUntilSleep(8);
 	this.pscene.world.SetContactListener(old_cl);
-	this.collisions = PhysicsOracle.mergeCollisions(this.collisions);
+	this.collisions = PhysicsOracle.mergeCollisions(this.collisions, 0);
 	this.pscene.popState();
 	return this.collisions;
 }
@@ -49,11 +65,12 @@ PhysicsOracle.mergeCollisions = function(collisions, min_t, max_dt) {
   if (typeof(min_t)  == 'undefined') min_t  = 0.1;
   for (var i=0; i<collisions.length; i++) {
     var c = collisions[i];
+    if (c.t < min_t) continue;
     var r = res[res.length-1];
     if (r && ((r.a == c.a && r.b == c.b) || (r.a == c.b && r.b == c.a))
           && (Math.abs(r.t - c.t) <= max_dt)) {
       r.dv = Math.max(r.dv, c.dv);
-    } else if (c.t >= min_t) {
+    } else {
       res.push(c);
     }
   }
@@ -109,10 +126,10 @@ PhysicsOracle.ContactListener = function(parent) {
   	if (dv > 0.5) {
     	var bodya = contact.m_fixtureA.m_body, bodyb = contact.m_fixtureB.m_body;
     	if (Math.abs(contact.vel_a) > Math.abs(contact.vel_b)) {
-      	console.log(bodya.master_obj.id, 'hits', bodyb.master_obj.id, 'with', dv, 'at', world.curr_time);
+      	//console.log(bodya.master_obj.id, 'hits', bodyb.master_obj.id, 'with', dv, 'at', world.curr_time);
       	parent.collisions.push({a: bodya, b: bodyb, dv:dv, t:world.curr_time});
     	} else {
-      	console.log(bodyb.master_obj.id, 'hits', bodya.master_obj.id, 'with', dv, 'at', world.curr_time);
+      	//console.log(bodyb.master_obj.id, 'hits', bodya.master_obj.id, 'with', dv, 'at', world.curr_time);
       	parent.collisions.push({a:bodyb, b:bodya, dv:dv, t:world.curr_time});
     	}
     }

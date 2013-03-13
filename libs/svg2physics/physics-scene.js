@@ -30,6 +30,11 @@ PhysicsScene.prototype.getTime = function() {
 	return this.world.curr_time;
 }
 
+PhysicsScene.prototype.seek = function(t) {
+	if (this.world.curr_time > t) this.reset();
+	this.simulate(t - this.world.curr_time);
+}
+
 /// dt is optional, returns dt.
 PhysicsScene.prototype.step = function(dt) {
 	dt = dt || this.dt;
@@ -54,6 +59,14 @@ PhysicsScene.prototype.simulateUntilSleep = function(max_time) {
 	var t = 0;
 	while (t<=max_time && this.countAwake() > 0) t += this.step();
 	return t;
+}
+
+PhysicsScene.prototype.forEachBody = function(f) {
+  for (var b = this.world.m_bodyList; b; b = b.m_next) if (b !== this.world.m_groundBody) f(b);
+}
+
+PhysicsScene.prototype.forEachDynamicBody = function(f) {
+  for (var b = this.world.m_bodyList; b; b = b.m_next) if (b.GetType() == b2Body.b2_dynamicBody) f(b);
 }
 
 /// Returns the total kinetic energy of all bodies.

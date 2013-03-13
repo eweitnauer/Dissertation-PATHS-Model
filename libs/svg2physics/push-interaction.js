@@ -29,7 +29,9 @@ function applyCentralImpulse(body, dir, strength) {
 /// 0.3 seconds of simulation, its position changed less than 0.23, its rotation
 /// changed less than 30 degrees and its speed is less than 0.5. If the body is
 /// a circle, the rotation is not considered.
+/// For an static object 'stable' is returned.
 function checkStability(body) {
+  if (body.m_type == b2Body.b2_staticBody) return 'stable';
   var check = function(dir) {
     body.m_world.PushState();
     var rot0 = body.GetAngle();

@@ -101,13 +101,19 @@ var SVGSceneParser = (function() {
       shapes.push(shape);
     }
 
+    // set `movable` property for all object that have no black stroke color
+    shapes.forEach(function(s) {
+      var color = s.style.stroke;
+      s.movable = !(color == "#000000" || color == "#000" || color == "black" || color == "rgb(0, 0, 0)");
+    });
+
     apply_transformations([frame], 0, 0, 1, root);
     var s  = 100/Math.abs(frame.pts[0].x-frame.pts[1].x)
        ,dx = -Math.min(frame.pts[0].x, frame.pts[1].x)
        ,dy = -Math.min(frame.pts[0].y, frame.pts[2].y)
     apply_transformations(shapes, dx, dy, s, root);
 
-    return new SVGScene(shapes, frame);
+    return new SVGScene(shapes);
   }
   pub.parseFile = parseFile;
 
@@ -167,15 +173,41 @@ var SVGSceneParser = (function() {
 SVGScene = function(shapes, frame) {
   this.shapes = shapes || []; // may contain polygons or circles
   for (var i=0; i<this.shapes.length; i++) this.shapes[i].id = i;
-  this.frame = frame; // a polygon
   this.width = 100;
   this.height = 100;
   this.friction = 0.3;
   this.restitution = 0.1;
   this.pixels_per_unit = 50;
+  this.moveToOrigin();
+  this.addFrameToGround();
 }
 
-SVGScene.prototype.renderInSvg = function(doc, parent, x, y, scale) {
+/// Centers all polygon shapes onto the origin and saves their original centers in x, y.
+SVGScene.prototype.moveToOrigin = function() {
+  for (var i=0; i<this.shapes.length; i++) {
+    var shape = this.shapes[i];
+    if (!(shape instanceof Polygon)) continue;
+    var pos = shape.centroid();
+    shape.pts.forEach(function(p) { p.Sub(pos) });
+    shape.x = pos.x;
+    shape.y = pos.y;
+  }
+}
+
+SVGScene.prototype.addFrameToGround = function() {
+  for (var i=0; i<this.shapes.length; i++) {
+    var shape = this.shapes[i];
+    if (shape.movable) continue;
+    var left = shape.pts[shape.pts.length-1], right = shape.pts[0];
+    if (left.x > right.x) { var h=left; left=right; right=h; }
+    var dx = shape.x || 0, dy = shape.y || 0;
+    shape.add_points([[0-dx,left.y], [0-dx,0-dy], [this.width-dx,0-dy], [this.width-dx,this.height-dy]
+                     ,[0-dx,this.height-dy], [0-dx,left.y]]);
+    break;
+  }
+}
+
+SVGScene.prototype.renderInSvg = function(doc, parent, x, y, scale, show_numbers) {
   var g = doc.createElementNS('http://www.w3.org/2000/svg','g');
   g.setAttribute('transform', 'translate('+(x)+','+(y)+') scale('+scale+')');
   parent.appendChild(g);
@@ -186,8 +218,14 @@ SVGScene.prototype.renderInSvg = function(doc, parent, x, y, scale) {
   rect.setAttribute('height', this.width);
   rect.setAttribute('style','fill:none; stroke:black; stroke-width:1px');
   g.appendChild(rect);
-  this.shapes.forEach(function (shape) {
+  for (var i = 0; i < this.shapes.length; i++) {
+    var shape = this.shapes[i];
     var svg_obj = shape.renderInSvg(document, g);
     for (var s in shape.style) svg_obj.style.setProperty(s, shape.style[s]);
-  });
+    if (show_numbers && this.shapes[i].movable) {
+      d3.select(parent).append('text').style('fill', 'black')
+        .attr('x', shape.x*scale).attr('y', shape.y*scale)
+        .attr('text-anchor', 'middle').text(i);
+    }
+  };
 }
