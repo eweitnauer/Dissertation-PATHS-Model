@@ -172,7 +172,7 @@ var SVGSceneParser = (function() {
 
 SVGScene = function(shapes, frame) {
   this.shapes = shapes || []; // may contain polygons or circles
-  for (var i=0; i<this.shapes.length; i++) this.shapes[i].id = i;
+  this.setIds();
   this.width = 100;
   this.height = 100;
   this.friction = 0.3;
@@ -180,6 +180,14 @@ SVGScene = function(shapes, frame) {
   this.pixels_per_unit = 50;
   this.moveToOrigin();
   this.addFrameToGround();
+}
+
+SVGScene.prototype.setIds = function() {
+  var id = 0;
+  for (var i=0; i<this.shapes.length; i++) {
+    if (this.shapes[i].movable) this.shapes[i].id = id++;
+    else this.shapes[i].id = '_';
+  }
 }
 
 /// Centers all polygon shapes onto the origin and saves their original centers in x, y.
