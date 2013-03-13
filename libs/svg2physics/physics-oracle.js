@@ -10,6 +10,7 @@ This class provides all functionality of the "physics black box" to the PBP Inte
 /// Pass a b2World.
 var PhysicsOracle = function(physics_scene) {
 	this.pscene = physics_scene;
+  this.pscene.onWorldChange.addListener(this.synchShapes.bind(this));
 	this.contact_listener = new PhysicsOracle.ContactListener(this);
   this.gotoState('start');
 }
