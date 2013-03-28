@@ -1,18 +1,16 @@
 StabilityAttribute = function(obj) {
   this.name = 'stable';
-  this.obj = obj;
-  this.val = '?';
+  this.perceive(obj);
 }
 
 /// Returns an StabilityAttribute instance, which is the perception of the passed
 /// object's stability. Possible values are 'very stable', 'stable', 'unstable'
 /// and 'very unstable'.
-StabilityAttribute.perceive = function(obj) {
-  var sa = new StabilityAttribute(obj);
+StabilityAttribute.prototype.perceive = function(obj) {
+  this.obj = obj;
   var val = checkStability(obj.phys_obj);
-  if (val == 'stable') sa.val = 'stable';
-  if (val == 'unstable' || val == 'moving') sa.val = 'unstable';
-  return sa;
+  if (val == 'stable') this.val = 'stable';
+  if (val == 'unstable' || val == 'moving') this.val = 'unstable';
 }
 
 StabilityAttribute.prototype.get_activity = function() {

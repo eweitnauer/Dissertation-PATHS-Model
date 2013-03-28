@@ -1,20 +1,20 @@
 /// Object being left or right to another object on a scale from 1 (very) to 0 (not at all).
 BesideRelationship = function(obj, other) {
-  this.type = "metric";
-  this.name = "beside-of";
+  this.name = "beside";
   this.arity = 2;
-  this.obj = obj;
-  this.other = other;
   this.symmetric = true;
-  this.val = '?';
+  this.constant = false;
+  this.perceive(obj, other);
 }
 
-BesideRelationship.perceive = function(obj, other) {
-  var attr = new BesideRelationship(obj, other);
-  var l = LeftRelationship.perceive(obj, other).get_activity();
-  var r = RightRelationship.perceive(obj, other).get_activity();
-  attr.val = Math.max(l-r, r-l);
-  return attr;
+BesideRelationship.prototype.perceive = function(obj, other) {
+  this.obj = obj;
+  this.other = other;
+  var l_pos = SpatialRelationAnalyzer(100, 100/2/100, 'left').getMembership(obj, other);
+  var r_pos = SpatialRelationAnalyzer(100, 100/2/100, 'right').getMembership(obj, other);
+  var left = Math.max(0, l_pos[1]-r_pos[1]);
+  var right = Math.max(0, r_pos[1]-l_pos[1]);
+  this.val = Math.max(left, right);
 }
 
 BesideRelationship.prototype.get_activity = function() {
@@ -22,5 +22,5 @@ BesideRelationship.prototype.get_activity = function() {
 }
 
 BesideRelationship.prototype.get_label = function() {
-  return 'beside-of';
+  return 'beside';
 }

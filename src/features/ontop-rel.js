@@ -2,17 +2,16 @@
 OnTopRelationship = function(obj, other) {
   this.name = "on-top-of";
   this.arity = 2;
-  this.obj = obj;
-  this.other = other;
   this.symmetric = false;
   this.constant = false;
-  this.val = '?';
+  this.perceive(obj, other);
 }
 
-OnTopRelationship.perceive = function(obj, other) {
-  var rel = new OnTopRelationship(obj, other);
-  rel.val = TouchRelationship.perceive(obj, other).val * AboveRelationship.perceive(obj, other).val[1];
-  return rel;
+OnTopRelationship.prototype.perceive = function(obj, other) {
+  this.obj = obj;
+  this.other = other;
+  this.val = (new TouchRelationship(obj, other)).val *
+             (new AboveRelationship(obj, other)).val;
 }
 
 OnTopRelationship.prototype.get_activity = function() {

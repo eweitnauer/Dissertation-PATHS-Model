@@ -1,18 +1,15 @@
 ShapeAttribute = function(obj) {
   this.name = 'shape';
-  // this.labels = ['circle', 'triangle', 'rectangle', 'square', 'unknown'];
   this.constant = true;
-  this.obj = obj;
-  this.val = "?";
+  this.perceive(obj);
 }
 
 /// Returns an ShapeAttribute instance, which is the perception of the passed
 /// object's shape. Possible shapes are circle, triangle, rectangle, square and
 /// unknown.
-ShapeAttribute.perceive = function(obj) {
-  var sa = new ShapeAttribute(obj);
-  sa.val = ShapeAttribute.determineShape(obj);
-  return sa;
+ShapeAttribute.prototype.perceive = function(obj) {
+  this.obj = obj;
+  this.val = ShapeAttribute.determineShape(obj);
 }
 
 ShapeAttribute.prototype.get_activity = function() {

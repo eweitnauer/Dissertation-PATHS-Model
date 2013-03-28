@@ -1,18 +1,16 @@
 TouchRelationship = function(obj, other) {
   this.name = "touches";
   this.arity = 2;
-  this.obj = obj;
-  this.other = other;
   this.symmetric = true;
   this.constant = false;
-  this.val = '?';
+  this.perceive(obj, other);
 }
 
-TouchRelationship.perceive = function(obj, other) {
-  var attr = new TouchRelationship(obj, other);
+TouchRelationship.prototype.perceive = function(obj, other) {
+  this.obj = obj;
+  this.other = other;
   var dist = obj.phys_obj.distance(other.phys_obj);
-  attr.val = (dist <= 0) ? 1 : 0;
-  return attr;
+  this.val = (dist <= 0) ? 1 : 0;
 }
 
 TouchRelationship.prototype.get_activity = function() {

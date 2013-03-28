@@ -4,24 +4,20 @@ LeftRelationship = function(obj, other) {
   this.arity = 2;
   this.symmetry = false;
   this.constant = false;
-  this.obj = obj;
-  this.other = other;
-  this.val = '?';
-  this.rval = '?';
+  this.perceive(obj, other);
 }
 
-LeftRelationship.Analyzer = SpatialRelationAnalyzer(100, 100/2/100, 'left');
-
-LeftRelationship.perceive = function(obj, other) {
-  var rel = new LeftRelationship(obj, other);
-  rel.val = LeftRelationship.Analyzer.getMembership(obj, other);
-  rel.opp_val = RightRelationship.Analyzer.getMembership(obj, other);
-  return rel;
+LeftRelationship.prototype.perceive = function(obj, other) {
+  this.obj = obj;
+  this.other = other;
+  var left = SpatialRelationAnalyzer(100, 100/2/100, 'left').getMembership(obj, other);
+  var right = SpatialRelationAnalyzer(100, 100/2/100, 'right').getMembership(obj, other);
+  this.val = Math.max(0, left[1]-right[1]);
 }
 
 LeftRelationship.prototype.get_activity = function() {
   if (this.val == '?') return 0;
-  else return Math.max(0, this.val[1] - this.opp_val[1]);
+  return this.val;
 }
 
 LeftRelationship.prototype.get_label = function() {

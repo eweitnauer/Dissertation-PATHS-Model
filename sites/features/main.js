@@ -2,8 +2,8 @@ var scale = 3, sim, scene, oracle;
 
 function loadScene() {
   //scene = SVGSceneParser.parseFile("2-1.svg");
-  scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp08/4-1.svg");
-  //scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/interpretation_tests/1-2.svg");
+  //scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp08/4-1.svg");
+  scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/interpretation_tests/1-2.svg");
   // well now we could display the scenes, no?
   var display1 = document.getElementById('svg');
   var child; while (child = display1.childNodes[0]) { display1.removeChild(child); }

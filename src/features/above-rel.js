@@ -4,22 +4,20 @@ AboveRelationship = function(obj, other) {
   this.arity = 2;
   this.symmetry = false;
   this.constant = false;
-  this.obj = obj;
-  this.other = other;
-  this.val = '?';
+  this.perceive(obj, other);
 }
 
-AboveRelationship.Analyzer = SpatialRelationAnalyzer(100, 100/2/100, 'above');
-
-AboveRelationship.perceive = function(obj, other) {
-  var rel = new AboveRelationship(obj, other);
-  rel.val = AboveRelationship.Analyzer.getMembership(obj, other);
-  return rel;
+AboveRelationship.prototype.perceive = function(obj, other) {
+  this.obj = obj;
+  this.other = other;
+  var above = SpatialRelationAnalyzer(100, 100/2/100, 'above').getMembership(obj, other);
+  var below = SpatialRelationAnalyzer(100, 100/2/100, 'below').getMembership(obj, other);
+  this.val = Math.max(0, above[1]-below[1]);
 }
 
 AboveRelationship.prototype.get_activity = function() {
   if (this.val == '?') return 0;
-  else return this.val[1];
+  else return this.val;
 }
 
 AboveRelationship.prototype.get_label = function() {
