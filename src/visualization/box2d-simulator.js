@@ -115,6 +115,7 @@ Simulator.prototype.handleMouseUp = function(evt) {
 Simulator.prototype.handleMouseMove = function(evt) {
   this.mousePoint.x = (evt.clientX - this.canvas_position.x) / this.draw_scale;
   this.mousePoint.y = (evt.clientY - this.canvas_position.y) / this.draw_scale;
+  if (this.mouseDown && !this.playing) this.pscene.step();
 }
 
 /** Checks which object is at the passed position, a b2Vec2. Returns the selected body. */
