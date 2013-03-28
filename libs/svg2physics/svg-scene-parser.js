@@ -112,8 +112,9 @@ var SVGSceneParser = (function() {
        ,dx = -Math.min(frame.pts[0].x, frame.pts[1].x)
        ,dy = -Math.min(frame.pts[0].y, frame.pts[2].y)
     apply_transformations(shapes, dx, dy, s, root);
+    apply_transformations([frame], dx, dy, s, root);
 
-    return new SVGScene(shapes);
+    return new SVGScene(shapes, frame);
   }
   pub.parseFile = parseFile;
 
@@ -123,13 +124,13 @@ var SVGSceneParser = (function() {
     shapes.forEach(function(shape) {
       var transform = function(p) {
         svg_pt.x = p.x; svg_pt.y = p.y;
-        svg_pt = svg_pt.matrixTransform(shape.svg_transform);
+        if (shape.svg_transform) svg_pt = svg_pt.matrixTransform(shape.svg_transform);
         p.x = s*svg_pt.x+dx; p.y = s*svg_pt.y+dy;
       }
       if (shape instanceof Circle) {
         var c = shape.centroid(); transform(c);
         shape.x = c.x; shape.y = c.y;
-        shape.r *= Math.abs(shape.svg_transform.a);
+        if (shape.svg_transform) shape.r *= Math.abs(shape.svg_transform.a);
       }
       else if (shape instanceof Polygon) shape.pts.forEach(transform);
       else throw "Unkown object type";
@@ -172,6 +173,8 @@ var SVGSceneParser = (function() {
 
 SVGScene = function(shapes, frame) {
   this.shapes = shapes || []; // may contain polygons or circles
+  this.frame = frame;
+  this.shapes.push(frame);
   this.setIds();
   this.width = 100;
   this.height = 100;
@@ -179,13 +182,12 @@ SVGScene = function(shapes, frame) {
   this.restitution = 0.1;
   this.pixels_per_unit = 50;
   this.moveToOrigin();
-  this.addFrameToGround();
 }
 
 SVGScene.prototype.setIds = function() {
-  var id = 0;
   for (var i=0; i<this.shapes.length; i++) {
-    if (this.shapes[i].movable) this.shapes[i].id = id++;
+    if (this.shapes[i].movable) this.shapes[i].id = i;
+    else if (this.shapes[i] == this.frame) this.shapes[i].id = '|'
     else this.shapes[i].id = '_';
   }
 }
@@ -204,30 +206,17 @@ SVGScene.prototype.moveToOrigin = function() {
   }
 }
 
-SVGScene.prototype.addFrameToGround = function() {
-  for (var i=0; i<this.shapes.length; i++) {
-    var shape = this.shapes[i];
-    if (shape.movable) continue;
-    var left = shape.pts[shape.pts.length-1], right = shape.pts[0];
-    if (left.x > right.x) { var h=left; left=right; right=h; }
-    var dx = shape.x || 0, dy = shape.y || 0;
-    shape.add_points([[0-dx,left.y], [0-dx,0-dy], [this.width-dx,0-dy], [this.width-dx,this.height-dy]
-                     ,[0-dx,this.height-dy], [0-dx,left.y]]);
-    break;
-  }
-}
-
 SVGScene.prototype.renderInSvg = function(doc, parent, x, y, scale, show_numbers) {
   var g = doc.createElementNS('http://www.w3.org/2000/svg','g');
   g.setAttribute('transform', 'translate('+(x)+','+(y)+') scale('+scale+')');
   parent.appendChild(g);
   var rect = doc.createElementNS('http://www.w3.org/2000/svg','rect');
-  rect.setAttribute('x',0);
-  rect.setAttribute('y',0);
-  rect.setAttribute('width', this.height);
-  rect.setAttribute('height', this.width);
-  rect.setAttribute('style','fill:none; stroke:black; stroke-width:1px');
-  g.appendChild(rect);
+  // rect.setAttribute('x',0);
+  // rect.setAttribute('y',0);
+  // rect.setAttribute('width', this.height);
+  // rect.setAttribute('height', this.width);
+  // rect.setAttribute('style','fill:none; stroke:black; stroke-width:1px');
+  // g.appendChild(rect);
   for (var i = 0; i < this.shapes.length; i++) {
     var shape = this.shapes[i];
     var svg_obj = shape.renderInSvg(document, g);
@@ -235,7 +224,8 @@ SVGScene.prototype.renderInSvg = function(doc, parent, x, y, scale, show_numbers
     if (show_numbers && this.shapes[i].movable) {
       d3.select(parent).append('text').style('fill', 'black')
         .attr('x', shape.x*scale).attr('y', shape.y*scale)
-        .attr('text-anchor', 'middle').text(i);
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'central').text(i);
     }
   };
 }

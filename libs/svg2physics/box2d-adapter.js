@@ -34,8 +34,7 @@ Box2DAdapter = function() {
     with their b2Body is added.
     Parameters:
       world                  b2World
-      scene                  an SVGScene object with an Array of Polygons and Circles
-      merge_frame_obj        if true add a frame to the first static (black) polygon shape */
+      scene                  an SVGScene object with an Array of Polygons and Circles */
 Box2DAdapter.prototype.loadScene = function(world, scene) {
   // get friction, restitution and scale from the properties read from the SVG
   var friction = scene.friction;
@@ -44,6 +43,11 @@ Box2DAdapter.prototype.loadScene = function(world, scene) {
 
   var self = this;
   var first = true;
+  // // add the frame
+  // var frame = new Polygon([[0,0],[100*scale, 0],[100*scale, 100*scale],[0, 100*scale]]);
+  // frame.closed = true;
+  // self.createBody(world, frame, false, 0, 0, 0, 1, friction, restitution);
+
   // now add all other shapes
   scene.shapes.forEach(function(shape) {
     var stroke_width = 1;
