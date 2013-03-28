@@ -21,14 +21,12 @@
     <script src="../../src/features/touch-rel.js"></script>
     <script src="../../src/features/ontop-rel.js"></script>
     <script src="main.js"></script>
-    <style>
-      canvas { border: 1px solid lightgray;}
-    </style>
+    <link href="main.css" rel="stylesheet">
   </head>
   <body onload="init();">
-    <input type="range" min="3" max="500" value="50" step="1" onchange="res_change(this.value)" style="width: 800px;" />
-    <span id="res_value">50</span></br>
-    <svg id="svg" width=300 height=300 style="margin: 5px"></svg>
+    <input type="range" min="3" max="500" value="200" step="1" onchange="res_change(this.value)" style="width: 800px;" />
+    <span id="res_value">200</span></br>
+    <svg id="svg" width=300 height=300 style="margin: 5px"></svg></br>
   </body>
 </html>
 
