@@ -62,11 +62,15 @@ PhysicsScene.prototype.simulateUntilSleep = function(max_time) {
 }
 
 PhysicsScene.prototype.forEachBody = function(f) {
-  for (var b = this.world.m_bodyList; b; b = b.m_next) if (b !== this.world.m_groundBody) f(b);
+  for (var b = this.world.m_bodyList; b; b = b.m_next) {
+  	if (b.master_obj) f(b);
+  }
 }
 
 PhysicsScene.prototype.forEachDynamicBody = function(f) {
-  for (var b = this.world.m_bodyList; b; b = b.m_next) if (b.GetType() == b2Body.b2_dynamicBody) f(b);
+  for (var b = this.world.m_bodyList; b; b = b.m_next) {
+  	if (b.GetType() == b2Body.b2_dynamicBody) f(b);
+ 	}
 }
 
 /// Returns the total kinetic energy of all bodies.

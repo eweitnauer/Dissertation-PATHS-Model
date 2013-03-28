@@ -23,10 +23,10 @@ function applyCentralImpulse(body, dir, strength) {
 }
 
 /// Returns whether the object is 'stable', 'unstable' or 'moving'.
-/// An object is 'moving', if its speed is above 0.1 now or after running the simulation
-/// for 0.1 seconds without applying any external force. An object is considered
-/// 'stable' if, after pushing it with an impulse as big as its mass, after
-/// 0.3 seconds of simulation, its position changed less than 0.23, its rotation
+/// An object is 'moving', if its speed is above 0.35 now or above 0.2 after running
+/// the simulation for 0.1 seconds without applying any external force. An object is
+/// considered 'stable' if, after pushing it with an impulse as big as its mass, after
+/// 0.3 seconds of simulation, its position changed less than 0.25, its rotation
 /// changed less than 30 degrees and its speed is less than 0.5. If the body is
 /// a circle, the rotation is not considered.
 /// For an static object 'stable' is returned.
@@ -41,7 +41,7 @@ function checkStability(body) {
     if (body.m_linearVelocity.Length()<0.5) {
       var dx = getBodyDistance(body, body.bodystates[body.bodystates.length-1].m_xf);
       //console.log('pushed',dir,'dist:',dx);
-      if (dx < 0.23) {
+      if (dx < 0.25) {
         var drot = norm_rotation(body.GetAngle() - rot0);
         //console.log('pushed',dir,'rotation:',drot);
         if ((Math.abs(drot) < 30*Math.PI/180) || body.IsCircle()) {
@@ -55,12 +55,13 @@ function checkStability(body) {
   }
   // check for 'moving'
   // moving now?
-  if (body.m_linearVelocity.Length()>0.1) return 'moving';
+  var v_00 = body.m_linearVelocity.Length();
+  if (v_00 > 0.35) return 'moving';
   // moving after 0.1 seconds?
   body.m_world.PushState();
   stepWorld(body.m_world, 0.1);
-  //console.log('velocity:', body.m_linearVelocity.Length());
-  if (body.m_linearVelocity.Length()>0.1) {
+  var v_01 = body.m_linearVelocity.Length();
+  if (v_01 > 0.2){// || (v_01 > 0.1 && v_01 > v_00)) {
     body.m_world.PopState();
     return 'moving';
   }
