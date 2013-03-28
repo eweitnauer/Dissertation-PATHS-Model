@@ -86,7 +86,7 @@ PhysicsScene.prototype.getKineticEnergy = function() {
 /// Returns the number of dynamic objects that are awake.
 PhysicsScene.prototype.countAwake = function() {
 	var count = 0;
-	this.world.forEachDynamicBody(function(b) { if (b.IsAwake()) count++ });
+	this.forEachDynamicBody(function(b) { if (b.IsAwake()) count++ });
 	return count;
 }
 

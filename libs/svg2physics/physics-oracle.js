@@ -33,13 +33,72 @@ PhysicsOracle.prototype.synchShapes = function() {
 /// Returns all objects grouped by touch. E.g "A  BC" will be returned as [[A], [B,C]]. Only
 /// regards dynamic bodies.
 PhysicsOracle.prototype.getTouchGroups = function() {
-	return this.pscene.world.getTouchGroups();
+  var touches = [], bodies = [];
+  this.pscene.forEachDynamicBody(function(b) { bodies.push(b) });
+  // link all dynamic bodies which touch
+  for (var c = this.GetContactList(); c; c=c.m_next) {
+    if (!c.IsTouching()) continue;
+    var a = c.m_fixtureA.m_body, b = c.m_fixtureB.m_body;
+    if (a.GetType() !== b2Body.b2_dynamicBody ||
+        b.GetType() !== b2Body.b2_dynamicBody) continue;
+    touches.push([a, b]);
+  }
+  return this.groupLinkedNodes(bodies, touches);
+}
+
+/// Returns a list with all touched bodies, possibly including the ground or the frame.
+PhysicsOracle.prototype.getTouchedBodies = function(body) {
+  var res = [];
+  var gb = body.m_world.m_groundBody;
+  for (var c = body.m_world.GetContactList(); c; c=c.m_next) {
+    if (!c.IsTouching()) continue;
+    var a = c.m_fixtureA.m_body, b = c.m_fixtureB.m_body;
+    if (a != body && b != body) continue;
+    if (a == gb || b == gb) continue;
+    res.push(a == body ? b : a);
+  }
+  return res;
 }
 
 /// Gives back an array of bodies directly touched by the passed body, potentially including the
 /// ground.
 PhysicsOracle.prototype.getTouchedBodies = function(body) {
 	return body.getTouchedBodies();
+}
+
+/// Returns all objects grouped by vicinity. E.g "A    B C" will be returned as [[A], [B,C]]
+/// if dist(A, B) > max_dist and dist(B,C) is <= max_dist. All static objects are ignored.
+PhysicsOracle.prototype.getSpatialGroups = function(max_dist) {
+  var links = [], bodies = [];
+  this.pscene.forEachDynamicBody(function(b) { bodies.push(b) });
+  for (var i=0; i<bodies.length-1; i++) for (var j=i+1; j<bodies.length; j++) {
+    if (bodies[i].distance(bodies[j]) <= max_dist) links.push([bodies[i], bodies[j]]);
+  };
+  return this.groupLinkedNodes(bodies, links);
+}
+
+/// Returns the nodes in groups where each group contains all nodes between which there is
+/// a path of links.
+PhysicsOracle.prototype.groupLinkedNodes = function(nodes, links) {
+  var res=[];
+  for (var i=0; i<nodes.length; i++) {
+    res.push([nodes[i]]);
+    nodes[i]._ew_group_ = i;
+  }
+  for (var i=0; i<links.length; i++) {
+    var n1 = links[i][0], n2 = links[i][1];
+    var g1 = n1._ew_group_, g2 = n2._ew_group_;
+    if (g1 == g2) continue;
+    // put all objects from group g2 into g1
+    for (var j=0; j<res[g2].length; j++) {
+      var n3 = res[g2][j];
+      n3._ew_group_ = g1;
+      res[g1].push(n3);
+    }
+    res[g2] = [];
+  }
+  for (var i=0; i<nodes.length; i++) delete nodes[i]._ew_group_;
+  return res.filter(function(x){return x.length});
 }
 
 /// Gives back an array of collision events {a, b, dv, t} where a is the 'hitter' and b the

@@ -9,14 +9,6 @@ var b2Body = Box2D.Dynamics.b2Body
    ,b2Distance = Box2D.Collision.b2Distance
    ,b2Vec2 = Box2D.Common.Math.b2Vec2;
 
-b2World.prototype.forEachBody = function(f) {
-  for (var b = this.m_bodyList; b; b = b.m_next) f(b);
-}
-
-b2World.prototype.forEachDynamicBody = function(f) {
-  for (var b = this.m_bodyList; b; b = b.m_next) if (b.GetType() == b2Body.b2_dynamicBody) f(b);
-}
-
 b2Vec2.prototype.Transformed = function(xf) {
   return new b2Vec2(this.x*xf.R.col1.x + this.y*xf.R.col2.x + xf.position.x,
                     this.x*xf.R.col1.y + this.y*xf.R.col2.y + xf.position.y);
@@ -24,61 +16,6 @@ b2Vec2.prototype.Transformed = function(xf) {
 
 b2Body.prototype.IsCircle = function() {
   return this.m_fixtureList.m_shape instanceof b2CircleShape && this.m_fixtureList.m_next == null;
-}
-
-/// Returns all objects grouped by touch. E.g "A  BC" will be returned as [[A], [B,C]].
-/// There is always the world.m_groundBody in each world (used as absolute reference for some joints),
-/// we just ignore it. We also ignore the ground (any static objects).
-b2World.prototype.getTouchGroups = function() {
-  var res = [], touches = [], bodies = [];
-  this.forEachDynamicBody(function(b) { bodies.push(b) });
-  // link all dynamic bodies which touch
-  for (var c = this.GetContactList(); c; c=c.m_next) {
-    if (!c.IsTouching()) continue;
-    var a = c.m_fixtureA.m_body, b = c.m_fixtureB.m_body;
-    if (a.GetType() !== b2Body.b2_dynamicBody ||
-        b.GetType() !== b2Body.b2_dynamicBody) continue;
-    touches.push([a, b]);
-  }
-  return group_connected(bodies, touches);
-}
-
-/// Returns a list with all touched bodies, possibly including the ground.
-b2Body.prototype.getTouchedBodies = function() {
-  var res = [];
-  var gb = this.m_world.m_groundBody;
-  for (var c = this.m_world.GetContactList(); c; c=c.m_next) {
-    if (!c.IsTouching()) continue;
-    var a = c.m_fixtureA.m_body, b = c.m_fixtureB.m_body;
-    if (a != this && b != this) continue;
-    if (a == gb || b == gb) continue;
-    res.push(a == this ? b : a);
-  }
-  return res;
-}
-
-/// Returns the nodes grouped by connection. If there is a link path from node n1
-/// to node n2, then they are put into the same group. The nodes must be objects.
-function group_connected(nodes, links) {
-  var res=[];
-  for (var i=0; i<nodes.length; i++) {
-    res.push([nodes[i]]);
-    nodes[i]._group_ = i;
-  }
-  for (var i=0; i<links.length; i++) {
-    var n1 = links[i][0], n2 = links[i][1];
-    var g1 = n1._group_, g2 = n2._group_;
-    if (g1 == g2) continue;
-    // put all objects from group g2 into g1
-    for (var j=0; j<res[g2].length; j++) {
-      var n3 = res[g2][j];
-      n3._group_ = g1;
-      res[g1].push(n3);
-    }
-    res[g2] = [];
-  }
-  for (var i=0; i<nodes.length; i++) delete nodes[i]._group_;
-  return res.filter(function(x){return x.length});
 }
 
 /// Returns the minimal distance between this and the passed body.
