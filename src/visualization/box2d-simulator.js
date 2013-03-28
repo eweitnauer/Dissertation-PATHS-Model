@@ -11,7 +11,21 @@ var b2Vec2 = Box2D.Common.Math.b2Vec2
    ,b2DebugDraw = Box2D.Dynamics.b2DebugDraw
    ,b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
 
-Simulator = function(physics_scene, canvas, scaling, draw_info) {
+/** Visualization of a PhysicsScene on a canvas with mouse interaction.
+In the constructor, you can pass a scaling, whether time and mouse position
+should be shown and whether the simulator should pause automatically when
+during playing, all bodies in the scene become inactive.
+
+Call play(), pause() and reset() to control the simulator. The drawing attribute
+can be set to false to disable the drawing. If drawing is enabled, the simulator
+will automatically redraw the scene if anything in it changed (e.g., it was stepped
+from someone other than the Simulator).
+
+Mouse interaction is also possible when paused, the scene will be stepped during the
+interaction. If the pause was due to autopause, the simulator will switch back into
+play mode when the user starts interacting.
+*/
+Simulator = function(physics_scene, canvas, scaling, draw_info, auto_pause) {
   this.canvas = canvas;
   this.ctx = canvas.getContext('2d');
   this.pscene = physics_scene;
@@ -21,6 +35,7 @@ Simulator = function(physics_scene, canvas, scaling, draw_info) {
   this.draw_scale = scaling || 1;
   this.playing = false;
   this.drawing = true;
+  this.auto_pause = (auto_pause === undefined) ? true : auto_pause;
   this.init();
   this.draw();
 }
@@ -33,6 +48,7 @@ Simulator.prototype.release = function() {
 }
 
 Simulator.prototype.pause = function() {
+  this.was_autopaused = false;
   if (!this.playing) return;
   clearInterval(this.step_timer);
   this.step_time = null;
@@ -42,7 +58,14 @@ Simulator.prototype.pause = function() {
 Simulator.prototype.play = function() {
   if (this.playing) return;
   var self = this;
-  this.step_timer = setInterval(function() { self.pscene.step() }, this.step_interval);
+  self.was_autopaused = false;
+  this.step_timer = setInterval(function() {
+    self.pscene.step();
+    if (self.auto_pause && self.pscene.countAwake() == 0) {
+      self.pause();
+      self.was_autopaused = true;
+    }
+  }, this.step_interval);
   this.playing = true;
 }
 
@@ -115,7 +138,10 @@ Simulator.prototype.handleMouseUp = function(evt) {
 Simulator.prototype.handleMouseMove = function(evt) {
   this.mousePoint.x = (evt.clientX - this.canvas_position.x) / this.draw_scale;
   this.mousePoint.y = (evt.clientY - this.canvas_position.y) / this.draw_scale;
-  if (this.mouseDown && !this.playing) this.pscene.step();
+  if (this.mouseDown && !this.playing) {
+    if (this.was_autopaused) this.play();
+    else this.pscene.step();
+  }
 }
 
 /** Checks which object is at the passed position, a b2Vec2. Returns the selected body. */
