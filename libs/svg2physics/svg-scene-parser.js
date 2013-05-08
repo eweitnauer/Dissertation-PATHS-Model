@@ -47,8 +47,10 @@ var SVGSceneParser = (function() {
     return (Point.len(tf.a, tf.b) + Point.len(tf.c, tf.d)) / 2
   }
 
-  /// Loads the shapes in the scene from the contents of an svg file (passed as string)
-  var parseFile = function(file_url) {
+  /// Loads the shapes in the scene from the contents of an svg file (passed as string).
+  /// The default pixels_per_unit is 100.
+  var parseFile = function(file_url, pixels_per_unit) {
+    pixels_per_unit = pixels_per_unit || 100;
     //console.log('parsing', file_url);
     var content = ajaxGetUrl(file_url);
     var svg_dom = parseXml(content);
@@ -114,7 +116,7 @@ var SVGSceneParser = (function() {
     apply_transformations(shapes, dx, dy, s, root);
     apply_transformations([frame], dx, dy, s, root);
 
-    return new SVGScene(shapes, frame);
+    return new SVGScene(shapes, frame, pixels_per_unit);
   }
   pub.parseFile = parseFile;
 
@@ -171,7 +173,7 @@ var SVGSceneParser = (function() {
 })();
 
 
-SVGScene = function(shapes, frame) {
+SVGScene = function(shapes, frame, pixels_per_unit) {
   this.shapes = shapes || []; // may contain polygons or circles
   this.frame = frame;
   this.shapes.push(frame);
@@ -180,8 +182,36 @@ SVGScene = function(shapes, frame) {
   this.height = 100;
   this.friction = 0.3;
   this.restitution = 0.1;
-  this.pixels_per_unit = 50;
+  this.pixels_per_unit = pixels_per_unit;
   this.moveToOrigin();
+}
+
+SVGScene.prototype.adjustStrokeWidth = function(width) {
+  var reg_float = /^[0-9]*\.?[0-9]+/;
+  for (var i=0; i<this.shapes.length; i++) {
+    var shape = this.shapes[i];
+    var stroke_width = 1;
+    if (reg_float.test(shape.style['stroke-width'])) {
+      stroke_width = Number(reg_float.exec(shape.style['stroke-width'])[0]);
+    }
+    var bb = shape.bounding_box();
+    var scale_x = (bb.width + stroke_width) / (bb.width + width);
+    var scale_y = (bb.height + stroke_width) / (bb.height + width);
+    if (shape instanceof Polygon) {
+      if (shape.movable) {
+        console.log('scale', scale_x, scale_y);
+        shape.pts.forEach(function(p) { p.x *= scale_x; p.y *= scale_y });
+        shape.style['stroke-width'] = width;
+      } else if (shape.id == "_") {
+        // if its the ground, move it up a bit
+        shape.pts.forEach(function(p) { p.y += (width-stroke_width)/2 });
+        shape.style['stroke-width'] = width;
+      }
+    } else if (shape instanceof Circle) {
+      shape.style['stroke-width'] = width;
+      shape.r = shape.r * scale_x;
+    }
+  }
 }
 
 SVGScene.prototype.setIds = function() {

@@ -53,11 +53,27 @@ Box2DAdapter.prototype.loadScene = function(world, scene) {
     var stroke_width = 1;
     var reg_float = /^[0-9]*\.?[0-9]+/;
     if (reg_float.test(shape.style['stroke-width'])) {
-      stroke_with = Number(reg_float.exec(shape.style['stroke-width'])[0]);
+      stroke_width = Number(reg_float.exec(shape.style['stroke-width'])[0]);
     }
+    var target_width = Box2D.Common.b2Settings.b2_linearSlop;
     var _shape = shape.copy();
+    // We now scale the shape according to the scenes' pixel per unit scale factor
+    // It is important that objects that are stacked onto each other are also stacked exacty only each
+    // other in the physics simulation. Box2D has a threshold b2_linearSlop used for collision and
+    // constraint resolution. The border width of the shapes should be equal to this value. We will grow /
+    // shrink the movable shapes and their borders so this is fulfilled.
+    var bb = shape.bounding_box();
+    var scale_x = (bb.width + stroke_width) / (bb.width + target_width);
+    var scale_y = (bb.height + stroke_width) / (bb.height + target_width);
     if (_shape instanceof Polygon) {
       _shape.pts.forEach(function(p) { p.Scale(scale) });
+      if (shape.movable) {
+        console.log('scale', scale_x, scale_y);
+        _shape.pts.forEach(function(p) { p.x *= scale_x; p.y *= scale_y });
+      } else if (shape.id == "_") {
+         // if its the ground, move it up a bit
+         _shape.pts.forEach(function(p) { p.y += (target_width-stroke_width)*scale/4 });
+      }
     } else if (_shape instanceof Circle) {
       // since the b2Circle_shape as no additional collision radius as the polygon,
       // we will grow the circle to make it the same size as its SVG source,
