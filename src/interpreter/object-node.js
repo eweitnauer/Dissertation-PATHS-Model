@@ -1,3 +1,5 @@
+/// Copyright by Erik Weitnauer, 2012.
+
 /// An ObjectNode represents a single object.
 ObjectNode = function(scene_node) {
 	this.obj = null;
@@ -13,6 +15,9 @@ ObjectNode.attrs = {
  ,'on_ground': OnGroundAttribute
  ,'shape': ShapeAttribute
  ,'stability': StabilityAttribute
+ ,'small': SmallAttribute
+ ,'large': LargeAttribute
+ ,'moves': MovesAttribute
 };
 
 ObjectNode.rels = {
@@ -30,6 +35,7 @@ ObjectNode.rels = {
 /// Returns an ObjectNode instance, which is the perception of the passed shape.
 ObjectNode.prototype.perceive = function(state, obj, others) {
   this.obj = obj;
+  obj.obj_node = this;
   this.states[state] = {};
   for (var a in ObjectNode.attrs) {
     this.states[state][a] = new ObjectNode.attrs[a](obj, this.scene_node);

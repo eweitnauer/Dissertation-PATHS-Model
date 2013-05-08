@@ -1,3 +1,5 @@
+/// Copyright by Erik Weitnauer, 2013.
+
 var b2Vec2 = Box2D.Common.Math.b2Vec2
    ,b2AABB = Box2D.Collision.b2AABB
    ,b2BodyDef = Box2D.Dynamics.b2BodyDef
