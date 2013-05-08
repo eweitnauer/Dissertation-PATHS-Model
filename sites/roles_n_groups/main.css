@@ -1,0 +1,24 @@
+svg text {
+	font-size: 4px;
+	fill: black;
+}
+
+svg .shape {
+	fill: #aaa;
+	stroke: #444;
+}
+
+svg .unseen.shape {
+	fill: #eee;
+	stroke: #aaa;
+}
+
+svg .shape.static {
+	fill: none;
+	stroke: black;
+}
+
+svg .shape.selected {
+	stroke: red;
+	stroke-width: 1;
+}
