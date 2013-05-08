@@ -12,7 +12,6 @@ var PhysicsOracle = function(physics_scene) {
 	this.pscene = physics_scene;
   this.pscene.onWorldChange.addListener(this.synchShapes.bind(this));
 	this.contact_listener = new PhysicsOracle.ContactListener(this);
-  this.gotoState('start');
 }
 
 /// State can be one of
@@ -58,12 +57,6 @@ PhysicsOracle.prototype.getTouchedBodies = function(body) {
     res.push(a == body ? b : a);
   }
   return res;
-}
-
-/// Gives back an array of bodies directly touched by the passed body, potentially including the
-/// ground.
-PhysicsOracle.prototype.getTouchedBodies = function(body) {
-	return body.getTouchedBodies();
 }
 
 /// Returns all objects grouped by vicinity. E.g "A    B C" will be returned as [[A], [B,C]]

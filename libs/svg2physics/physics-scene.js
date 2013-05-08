@@ -47,9 +47,9 @@ PhysicsScene.prototype.step = function(dt) {
 
 /// Makes as many steps of this.dt as needed to reach time.
 PhysicsScene.prototype.simulate = function(time) {
-  var t = this.dt;
-  while (t<time) t += this.step();
-  var rest = this.dt + t - time;
+  var t = 0;
+  while (t+this.dt<time) t += this.step();
+  var rest = time-t;
   if (rest > 0.001) this.step(rest);
 }
 
