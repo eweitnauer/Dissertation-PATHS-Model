@@ -11,7 +11,7 @@ TopAttribute.prototype.adaptDomain = function(ground) {
 }
 
 TopAttribute.prototype.membership = function(x) {
-	return 1-1/(1+Math.exp(20*(0.35-x/this.maxy)));
+	return 1-1/(1+Math.exp(20*(0.45-x/this.maxy)));
 }
 
 TopAttribute.prototype.perceive = function(obj) {

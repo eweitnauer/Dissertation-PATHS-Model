@@ -24,7 +24,8 @@ function loadScene() {
   //sim.play();
   oracle = new PhysicsOracle(ps);
 
-  sn = SceneNode.perceive(scene, oracle);
+  sn = new SceneNode(scene, oracle);
+  sn.perceive();
   sn.describe();
 }
 
