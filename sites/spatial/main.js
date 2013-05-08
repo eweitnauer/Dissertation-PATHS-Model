@@ -1,10 +1,10 @@
-var scene, scale = 3, res=100, rot=0;
+var scene, scale = 3, res=200, rot=0;
 
 function loadScene(res) {
   //scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp20/5-1.svg");
-  //scene = SVGSceneParser.parseFile("inside3.svg");
+  scene = SVGSceneParser.parseFile("inside1.svg");
   //scene = SVGSceneParser.parseFile("all.svg");
-  scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp08/4-1.svg");
+  //scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp08/4-1.svg");
   // well now we could display the scenes, no?
   var display1 = document.getElementById('svg');
   var child; while (child = display1.childNodes[0]) { display1.removeChild(child); }
@@ -17,8 +17,30 @@ function res_change(resolution) {
 	calc(res);
 }
 
+function plot_artifacts() {
+	var res = 200;
+	var scale = res/100;
+	scene = SVGSceneParser.parseFile("inside4.svg");
+	var sra = SpatialRelationAnalyzer(res, scale, 'below', null
+		          , function (val) { return Math.max(0, 1-2*val/Math.PI) });
+	var R = scene.shapes[3], BM = sra.calcBodyMatrix(R);
+	// accurate
+	var acc = sra.calcSpatialMembershipMapAccurate(BM, sra.f_beta, sra.f_member);
+	sra.debug_draw_A_R(null, acc, sra.debug_get_canvas('acc','accurate'));
+	// 2 pass (I. Bloch)
+	var _2pass = sra.calcSpatialMembershipMapFast(BM, sra.f_beta, sra.f_member);
+	sra.debug_draw_A_R(null, _2pass, sra.debug_get_canvas('_2pass','2 passes'));
+	// 4 pass (eweitnauer)
+	var _4pass = sra.calcSpatialMembershipMapFaster(BM, sra.f_beta, sra.f_member);
+	sra.debug_draw_A_R(null, _4pass, sra.debug_get_canvas('_4pass','4 passes'));
+
+	d3.selectAll('canvas').on('click', function() {
+	  window.open(this.toDataURL("image/png"))
+	});
+}
+
 function calc(res) {
-	var scale = res/2/100; // scene (100) has to fit in twice horizontally and vertically
+	var scale = res/1.75/100; // scene (100) has to fit in twice horizontally and vertically
 	var rels = {near:1, far:1, above:1, below:1, left:1, right:1};
 	A = scene.shapes[0];
 	for (var i=0; i<scene.shapes.length; i++) {
@@ -35,7 +57,6 @@ function calc(res) {
 			var can = sra.debug_get_canvas(rel+i, rel);
 			sra.debug_draw_A_R(A._body_matrix.data, R._spatial_maps[rel].data, can, dx, dy);
 		}
-
 		// var f_close = function(dist) { return dist > 20 ? 0 : 1-(dist/20) };
 		// var f_far = function(dist) { return dist < 10 ? 0 : (dist > 40 ? 1 : (dist-10)/30) };
 		// var src = SpatialRelationAnalyzer(res, scale, 'near2', function(dx,dy) { return (Math.sqrt(dx*dx + dy*dy)) }, f_close);
@@ -137,7 +158,7 @@ function calc(res) {
 		// PROBLEM with this definition: an elongated object exactly above a square
 		// can be both left and right to the object and therefore easily be attributed
 		// to be 'beside', which is not true. Beside should just be defined on the
-		// acceptability level as max(left, right).
+		// acceptability level as min(left, right).
 		var beside = lor.combine(lar, minus);
 		var can = sra.debug_get_canvas('d10-'+i, 'beside: (l ∪ r) - (l ∩ r)');
 		sra.debug_draw_A_R(A._body_matrix.data, beside, can, dx, dy);
@@ -145,9 +166,13 @@ function calc(res) {
 
 		// inside does not work well for an U rotated by 45 deg --> it should rather be
 		// defined relative to the convex hull of the object
-		var inside = left.combine(right, tnorm_d);
+		var inside = left.combine(right, tnorm);
 		var can = sra.debug_get_canvas('d11-'+i, 'inside: l ∩d r');
 		sra.debug_draw_A_R(null, inside, can);
+
+		var inside2 = left.combine(right, tnorm_d);
+		var can = sra.debug_get_canvas('d12-'+i, 'inside_drastic: l ∩d r');
+		sra.debug_draw_A_R(null, inside2, can);
 	}
 
 	d3.selectAll('canvas').on('click', function() {
