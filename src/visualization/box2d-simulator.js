@@ -14,7 +14,7 @@ var b2Vec2 = Box2D.Common.Math.b2Vec2
    ,b2MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef;
 
 /** Visualization of a PhysicsScene on a canvas with mouse interaction.
-In the constructor, you can pass a scaling, whether time and mouse position
+In the constructor, you can pass a scaling, whether the time
 should be shown and whether the simulator should pause automatically when
 during playing, all bodies in the scene become inactive.
 
@@ -26,14 +26,17 @@ from someone other than the Simulator).
 Mouse interaction is also possible when paused, the scene will be stepped during the
 interaction. If the pause was due to autopause, the simulator will switch back into
 play mode when the user starts interacting.
+
+Manually set show_pos to true in order to display the current mouse position.
 */
-Simulator = function(physics_scene, canvas, scaling, draw_info, auto_pause) {
+Simulator = function(physics_scene, canvas, scaling, show_time, auto_pause) {
   this.canvas = canvas;
   this.ctx = canvas.getContext('2d');
   this.pscene = physics_scene;
   this.step_interval = 1000/30;        // frequency of stepping the scene when playing in ms
   this.interaction_interval = 1000/30; // frequency of updating the mouse interaction in ms
-  this.draw_info = draw_info;          // displays mouse pos. in world coordinates and current time
+  this.show_time = show_time;          // displays current time
+  this.show_pos = false;               // displays mouse pos. in world coordinates
   this.draw_scale = scaling || 1;
   this.playing = false;
   this.drawing = true;
@@ -71,6 +74,11 @@ Simulator.prototype.play = function() {
   this.playing = true;
 }
 
+Simulator.prototype.toggle = function() {
+  if (this.playing) this.pause();
+  else this.play();
+}
+
 Simulator.prototype.reset = function() {
   this.pscene.reset();
 }
@@ -91,16 +99,21 @@ Simulator.prototype.init = function() {
 
   // setup mouse interaction
   this.mouseDown = false;
-  this.mouseDownTime = 0;
   this.mousePoint = new b2Vec2(0,0);
   this.canvas.addEventListener("mousemove", function() {
     self.handleMouseMove.apply(self, arguments);
   }, true);
   this.canvas.addEventListener("mousedown", function() {
-    self.mouseDown = true; self.mouseDownTime = Date.now();
+    self.mouseDown = true;
   }, true);
   this.canvas.addEventListener("mouseup", function() {
-    self.handleMouseUp.apply(self, arguments)
+    // if we didn't move a body, it was a normal click and we toggle the playing state
+    if (!self.mouseJoint) self.toggle.apply(self);
+    self.handleMouseUp.apply(self, arguments);
+  }, true);
+  this.canvas.addEventListener("dblclick", function() {
+    self.pause();
+    self.reset();
   }, true);
 
   // setup timers
@@ -126,11 +139,6 @@ Simulator.prototype.getElementPosition = function(el) {
 
 Simulator.prototype.handleMouseUp = function(evt) {
   this.mouseDown = false;
-  if (this.mouseDownTime > 0) {
-    var dt = Date.now() - this.mouseDownTime;
-    if (dt < 100) this.reset();
-    this.mouseDownTime = 0;
-  }
   if (this.mouseJoint) {
     this.pscene.world.DestroyJoint(this.mouseJoint);
 	  this.mouseJoint = null;
@@ -144,6 +152,8 @@ Simulator.prototype.handleMouseMove = function(evt) {
     if (this.was_autopaused) this.play();
     else this.pscene.step();
   }
+  // draw new mouse position if we would not redraw otherwise
+  if (this.draw_pos && !this.mouseDown && !this.playing) this.draw();
 }
 
 /** Checks which object is at the passed position, a b2Vec2. Returns the selected body. */
@@ -198,9 +208,11 @@ Simulator.prototype.draw = function() {
   if (!this.drawing) return;
   this.pscene.world.DrawDebugData();
 
-  if (this.draw_info && this.mousePoint) {
-   	this.ctx.fillStyle = "black";
-    this.ctx.fillText('x='+this.mousePoint.x.toFixed(2) + " y=" + this.mousePoint.y.toFixed(2)
-                      + " t=" + this.pscene.getTime().toFixed(2) , 5, 10);
-	}
+  if (this.show_time || this.show_pos) {
+    var text = '';
+    if (this.show_pos && this.mousePoint) text += ' x='+this.mousePoint.x.toFixed(2) + " y=" + this.mousePoint.y.toFixed(2);
+    if (this.show_time) text += ' t=' + this.pscene.getTime().toFixed(2);
+    this.ctx.fillStyle = "black";
+    this.ctx.fillText(text, 5, 10);
+  }
 }

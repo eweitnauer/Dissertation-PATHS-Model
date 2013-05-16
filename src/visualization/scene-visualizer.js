@@ -1,5 +1,6 @@
 /// Copyright by Erik Weitnauer, 2013.
 
+/// Visualize a scene as svg and augment it with information of a SceneNode.
 var SceneVisualizer = function(scene, scene_node, svg, scaling) {
 	this.scene = scene;
 	this.sn = scene_node;
@@ -8,13 +9,34 @@ var SceneVisualizer = function(scene, scene_node, svg, scaling) {
 	this.scaling = scaling || 1;
 	this.selected = [];
 	this.value_getter = null;
+	this.group_getter = null;
 	//this.color_scale = d3.scale.linear().domain([0, 50, 100]).range(['steelblue', 'white', 'pink']);
-	this.color_scale = d3.scale.linear().domain([0, 100]).range(['white', 'red']);
+	this.metric_color_scale = d3.scale.pow().exponent(1.5).domain([0, 100]).range(['white', 'red']);
+	this.ordinal_color_scale = d3.scale.category10();
+	this.highlight_mode = 'values'; // 'values' or 'groups'
 }
 
-SceneVisualizer.prototype.colorize = function(value_getter) {
-	this.value_getter = value_getter;
+SceneVisualizer.prototype.colorize_values = function(value_getter) {
+	this.highlight_mode = 'values';
+	if (value_getter) this.value_getter = value_getter;
 	this.draw_scene();
+}
+
+SceneVisualizer.prototype.colorize_groups = function(group_getter) {
+	this.highlight_mode = 'groups';
+	this.group_getter = group_getter;
+	this.draw_scene();
+}
+
+SceneVisualizer.prototype.toggleSelection = function(node) {
+	var new_sel;
+	if (this.selected.indexOf(node) != -1) {
+		new_sel = this.selected.filter(function (n) { return n!==node });
+	} else {
+		new_sel = this.selected.slice();
+		new_sel.push(node);
+	}
+	this.selectShapes(new_sel);
 }
 
 SceneVisualizer.prototype.selectShapes = function(shapes) {
@@ -44,32 +66,49 @@ SceneVisualizer.prototype.draw_scene = function() {
 		  .classed('dynamic', function (d) { return d.movable })
 		  .attr('stroke-width', function (d) { return d.style['stroke-width'] })
 		  .on('click', function(d) {
-		  	thiz.selectShapes([d]);
+		  	d3.event.stopPropagation();
+		  	if (d3.event.shiftKey) thiz.toggleSelection(d);
+		  	else thiz.selectShapes([d]);
 		  	if (thiz.value_getter) console.log(thiz.value_getter(d));
 		  });
-		el.filter(function (d) { return d.movable })
-			.append('text')
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'central')
-      .text(function (d) { return d.id });
+	}
+	var add_text = function(container) {
+		container
+		.filter(function (d) { return d.movable })
+		.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dominant-baseline', 'central')
+    .text(function (d) { return d.id });
 	}
 
 	// select
-	var gs = this.svgg
-		  .selectAll('.shape-container')
+	d3.select(this.svg).attr('pointer-events', 'visible').on('click', function () { thiz.selectShapes([]) });
+	var gs = this.svgg.attr('pointer-events', 'visiblePainted')
+		  .selectAll('.shape-container-pos')
 		 	.data(this.scene.shapes, function(shape) { return shape.id });
 	// enter
-	gs.enter()
+	var g_pos = gs.enter()
 	  .append('g')
-		.classed('shape-container', true)
+		.classed('shape-container-pos', true);
+	g_pos
+		.append('g')
+		.classed('shape-container-rot', true)
 		.each(add_shape);
+	g_pos.call(add_text);
+
 	// update
-	gs.attr('transform', function (d) { return "translate(" + d.x + "," +  d.y + ") rotate(" + d.rot*180/Math.PI + ")"; });
+	gs.attr('transform', function (d) { return "translate(" + d.x + "," +  d.y + ")" });
+	gs.select('.shape-container-rot').attr('transform', function (d) { return "rotate(" + d.rot*180/Math.PI + ")" });
 	gs.select('.shape')
 	  .classed('unseen', function (d) { return d.obj_node == undefined });
-	if (this.value_getter) {
+	if (this.highlight_mode == 'values' && this.value_getter) {
 		gs.select('.shape')
-			.style('fill', function (d) { return thiz.color_scale(thiz.value_getter(d)) })
+		  .filter(function(d) {return d.movable})
+			.style('fill', function (d) { return thiz.metric_color_scale(thiz.value_getter(d)) })
+	} else if (this.highlight_mode == 'groups' && this.group_getter) {
+		gs.select('.shape')
+			.filter(function(d) {return d.movable})
+		  .style('fill', function (d) { return thiz.ordinal_color_scale(thiz.group_getter(d)) })
 	}
 	// remove
 	gs.exit().remove();
