@@ -41,13 +41,23 @@
     <script src="../../src/features/close-rel.js"></script>
     <script src="../../src/interpreter/object-node.js"></script>
     <script src="../../src/interpreter/scene-node.js"></script>
+    <script src="loader.js"></script>
     <script src="main.js"></script>
     <link href="main.css" rel="stylesheet">
   </head>
   <body onload="init();">
-    <svg id="svg1" width=300 height=300 style="margin: 5px"></svg>
-    <canvas id="canvas" width=300 height=300 style="margin: 5px"></canvas>
-    <svg id="svg2" width=300 height=300 style="margin: 5px"></svg>
+    <div id="options">
+      <div id="details">
+      </div>
+      <div id="main">
+        <button id="show-hide">highlight options</button>
+        <button type="button" id="btnPrev" onclick="prev()">Previous</button>
+        <span id="curr_num">?</span>
+        <button type="button" id="btnNext" onclick="next()">Next</button><br/>
+      </div>
+    </div>
+    <div id="canvases" style="float: left;"></div>
+    <div id="svgs" style="float: left;"></div>
   </body>
 </html>
 

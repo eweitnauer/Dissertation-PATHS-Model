@@ -2,8 +2,8 @@ var scene, scale = 3, res=200, rot=0;
 
 function loadScene(res) {
   //scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp20/5-1.svg");
-  scene = SVGSceneParser.parseFile("inside1.svg");
-  //scene = SVGSceneParser.parseFile("all.svg");
+  //scene = SVGSceneParser.parseFile("inside1.svg");
+  scene = SVGSceneParser.parseFile("all.svg");
   //scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp08/4-1.svg");
   // well now we could display the scenes, no?
   var display1 = document.getElementById('svg');

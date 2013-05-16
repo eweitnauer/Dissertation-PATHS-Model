@@ -1,6 +1,20 @@
+body {
+	padding: 0;
+	margin: 0;
+	background: #eee;
+}
+
+svg, canvas {
+	background: white;
+}
+
 svg text {
 	font-size: 4px;
 	fill: black;
+	pointer-events: none;
+	-webkit-user-select: none; /* Chrome/Safari */
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* IE10+ */
 }
 
 svg .shape {
@@ -21,4 +35,24 @@ svg .shape.static {
 svg .shape.selected {
 	stroke: red;
 	stroke-width: 1;
+}
+
+div#options #details {
+	display: none;
+}
+
+div#options {
+	background: #333;
+	color: #ddd;
+	font-size: 10pt;
+	padding: 5px 10px;
+}
+
+div#options #details {
+	margin-bottom: 1em;
+}
+
+button#show-hide {
+	margin-right: 10em;
+	display: inline-block;
 }

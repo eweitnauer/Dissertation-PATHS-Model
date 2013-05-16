@@ -1,60 +1,38 @@
-var vis_scaling = 3, pixels_per_unit = 50, sim, scene, oracle;
+var vis_scaling = 1.5, pixels_per_unit = 50;//, sim, scene, oracle;
 
-function loadScene() {
-  //scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp26/3-1.svg");
-  //scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp33/1-1.svg");
-  scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp33/5-2.svg", pixels_per_unit);
-  scene.adjustStrokeWidth(0.5*pixels_per_unit/100);
-  // well now we could display the scenes, no?
-  var display1 = document.getElementById('svg1');
-  var child; while (child = display1.childNodes[0]) { display1.removeChild(child); }
-  scene.renderInSvg(document, display1, 0, 0, vis_scaling, true);
-
-  // okay, next we will be so bold as to put the scene into a b2World
-  world = new Box2D.Dynamics.b2World(new Box2D.Common.Math.b2Vec2(0, 10), true);
-  var adapter = new Box2DAdapter();
-  scene.friction = 0.3;
-  scene.resitution = 0.1;
-  adapter.loadScene(world, scene, true, false);
-
-  var display2 = document.getElementById('canvas');
-  if (sim) sim.release();
-  var ps = new PhysicsScene(world);
-  sim = new Simulator(ps, display2, scene.pixels_per_unit*vis_scaling, true);
-  //sim.play();
-  oracle = new PhysicsOracle(ps);
-
-  sn = new SceneNode(scene, oracle);
-  svis = new SceneVisualizer(scene, sn, d3.select('#svg2').node(), vis_scaling);
-  ps.onWorldChange.addListener(function() { svis.draw_scene() })
-  svis.draw_scene();
-
-  //sn.perceive();
+function analyzeScene(sn, svis) {
+  //return;
   sn.oracle.gotoState('start');
   sn.perceiveCurrent('start');
-  sn.describe();
-  console.log('movement attention:', get_movement_attention(sn));
-  console.log('top attention:', get_top_attention(sn));
+  sn.oracle.pscene.reset();
+  //sn.describe();
+  var move_att, top_att;
+  console.log('movement attention:', move_att = get_movement_attention(sn));
+  console.log('top attention:', top_att = get_top_attention(sn));
   var s1, s2, s3, s4, s5, winner;
-  console.log('spatial saliency:', s1=get_spatial_saliency(sn));
-  console.log('size saliency:', s2=get_size_saliency(sn));
-  console.log('shape saliency:', s3=get_shape_saliency(sn));
-  console.log('movement saliency:', s4=get_move_saliency(sn));
-  console.log('mean saliency:', s5=mean_hashes([s1,s2,s3,s4]));
-  var winners = hash_get_maxima(s5);
-  console.log('max saliency:', winners.keys, '==>', winners.value);
-  sim.pscene.reset();
-  var winner_shapes = [];
-  for (var i=0; i<winners.keys.length; i++) {
-    scene.shapes[winners.keys[i]].renderInSvg(document, d3.select('svg g')[0][0]);
-    winner_shapes.push(scene.shapes[winners.keys[i]]);
-  }
-  svis.colorize(function(shape) { return s5[shape.id] });
+  //console.log('spatial saliency:', s1=get_spatial_saliency(sn));
+  //console.log('size saliency:', s2=get_size_saliency(sn));
+  //console.log('shape saliency:', s3=get_shape_saliency(sn));
+  //console.log('movement saliency:', s4=get_move_saliency(sn));
+  //console.log('mean saliency:', s5=mean_hashes([s1,s2,s3,s4]));
+  // var winners = hash_get_maxima(s5);
+  // console.log('max saliency:', winners.keys, '==>', winners.value);
+  //sim.pscene.reset();
+  // var winner_shapes = [];
+  // for (var i=0; i<winners.keys.length; i++) {
+  //   scene.shapes[winners.keys[i]].renderInSvg(document, d3.select('svg g')[0][0]);
+  //   winner_shapes.push(scene.shapes[winners.keys[i]]);
+  // }
+  var spatial_grouping = get_spatial_saliency_grouping(sn);
+  svis.colorize_values(function(shape) { return top_att[shape.id] });                      //////// use this
+  //svis.colorize_groups(function(shape) { return spatial_grouping[shape.id] });        //////// OR this
 }
 
-function init() {
-  loadScene();
-}
+//function init() {
+  //loadScene("../../libs/pbp-svgs/svgs/pbp26/3-1.svg");
+  //loadScene("../../libs/pbp-svgs/svgs/pbp33/1-1.svg");
+  //loadScene("../../libs/pbp-svgs/svgs/pbp33/5-2.svg");
+//}
 
 function hash_get_maxima(h) {
   var keys=[], val=-Infinity;
@@ -80,36 +58,53 @@ function mean_hashes(arr) {
 }
 
 function get_movement_attention(sn) {
-  var count=0, res = {};
+  var sum=0, res = {};
   for (var i=0; i<sn.parts.length; i++) {
-    if (sn.parts[i].states.start.moves.get_activity()>=0.5) count+=3
-    else if (sn.parts[i].states.start.stability.get_label() == 'unstable') count++;
+    var val = 0;
+    if (sn.parts[i].states.start.moves.get_activity()>=0.5) val = 100;
+    else if (sn.parts[i].states.start.stability.get_label() == 'unstable') val = 50;
+    sum += val;
+    res[sn.parts[i].obj.id] = val;
   };
-  for (var i=0; i<sn.parts.length; i++) {
-    if (sn.parts[i].states.start.moves.get_activity()>=0.5) {
-      res[sn.parts[i].obj.id] = 3*100/count;
-    } else if (sn.parts[i].states.start.stability.get_label() == 'unstable') {
-      res[sn.parts[i].obj.id] = 100/count;
-    } else res[sn.parts[i].obj.id] = 0;
-  };
+  if (sum > 0) for (var id in res) res[id] /= sum *0.01;
   return res;
 }
 
+/// All attention on the top-most object and almost top-most objects
 function get_top_attention(sn) {
-  var count=0, res = {};
+  var best, best_obj = null, res = {};
+  // get highest object
   for (var i=0; i<sn.parts.length; i++) {
-    if (sn.parts[i].states.start.top_pos.get_activity()>=0.5) count++;
-  };
+    if (!best_obj || best > sn.parts[i].states.start.top_pos.val) {
+      best_obj = sn.parts[i];
+      best = sn.parts[i].states.start.top_pos.val;
+    }
+  }
+  var sum=0;
+  // focus at all objects vertically close to the highest object
   for (var i=0; i<sn.parts.length; i++) {
-    if (sn.parts[i].states.start.top_pos.get_activity()>=0.5) {
-      res[sn.parts[i].obj.id] = 100/count;
-    } else res[sn.parts[i].obj.id] = 0;
+    var val = CloseRelationship.membership(2*Math.abs(sn.parts[i].states.start.top_pos.val-best));
+    sum += val;
+    res[sn.parts[i].obj.id] = val;
   };
+  if (sum > 0) for (var id in res) res[id] /= sum *0.01;
+  return res;
+}
+
+/// Returns a hash that maps shape ids to group ids.
+function get_spatial_saliency_grouping(sn) {
+  // get grouping and and pretend its flat (FIXME)
+  var gs = sn.oracle.getSpatialGroups(0.06);
+  // create result hash
+  var res = {};
+  for (var i=0; i<gs.length; i++) for (var j=0; j<gs[i].length; j++) {
+    res[gs[i][j].master_obj.id] = i;
+  }
   return res;
 }
 
 function get_spatial_saliency(sn) {
-  var gs = sn.oracle.getSpatialGroups(0.08);
+  var gs = sn.oracle.getSpatialGroups(0.06);
   var hg = new HashGroup(gs.length);
   for (var i=0; i<gs.length; i++) hg[i] = gs[i].map(function(body) { return body.master_obj });
   return get_uniqueness(hg);
