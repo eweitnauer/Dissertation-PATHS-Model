@@ -1,13 +1,29 @@
 var vis_scaling = 1.5, pixels_per_unit = 50;//, sim, scene, oracle;
 
+
+var options = [
+  {name: 'none', checked: true, opts: []}
+ ,{name: 'attention', multiple: true, opts: [{name: 'moves', checked: true}
+                            ,{name: 'top-most'}]}
+ ,{name: 'uniqueness', multiple: true, opts: [{name: 'spatial', checked: true}
+                           ,{name: 'size'}
+                           ,{name: 'shape'}
+                           ,{name: 'moves'}]}
+ ,{name: 'groups', multiple: false, opts: [{name: 'close', checked: true}
+                         ,{name: 'touch'}
+                         ,{name: 'size'}
+                         ,{name: 'shape'}
+                         ,{name: 'moves'}]}
+]
+
 function analyzeScene(sn, svis) {
-  //return;
   sn.oracle.gotoState('start');
   sn.perceiveCurrent('start');
   sn.oracle.pscene.reset();
+  return;
   //sn.describe();
   var move_att, top_att;
-  console.log('movement attention:', move_att = get_movement_attention(sn));
+   console.log('movement attention:', move_att = get_movement_attention(sn));
   console.log('top attention:', top_att = get_top_attention(sn));
   var s1, s2, s3, s4, s5, winner;
   //console.log('spatial saliency:', s1=get_spatial_saliency(sn));
@@ -24,15 +40,67 @@ function analyzeScene(sn, svis) {
   //   winner_shapes.push(scene.shapes[winners.keys[i]]);
   // }
   var spatial_grouping = get_spatial_saliency_grouping(sn);
-  svis.colorize_values(function(shape) { return top_att[shape.id] });                      //////// use this
-  //svis.colorize_groups(function(shape) { return spatial_grouping[shape.id] });        //////// OR this
+  //svis.colorize_values(function(shape) { return top_att[shape.id] });                      //////// use this
+  svis.colorize_groups(function(shape) { return spatial_grouping[shape.id] });        //////// OR this
 }
 
-//function init() {
-  //loadScene("../../libs/pbp-svgs/svgs/pbp26/3-1.svg");
-  //loadScene("../../libs/pbp-svgs/svgs/pbp33/1-1.svg");
-  //loadScene("../../libs/pbp-svgs/svgs/pbp33/5-2.svg");
-//}
+function option_callback(d) {
+  for (var i in problems) {
+    var p = problems[i];
+    var opts = {};
+    d.opts.forEach(function (o) { if (o.checked) opts[o.name] = true });
+    if (d.name == 'none') {
+      p.svis.highlight_mode = 'none';
+      p.svis.draw_scene();
+    } else if (d.name == 'groups') {
+      var groups;
+      if (opts.close) groups = group_by_distance(p.sn.parts, p.sn);
+      else if (opts.touch) groups = group_by_distance(p.sn.parts, p.sn, 0.001);
+      else if (opts.size) groups = group_by_attributes(p.sn.parts, ['small', 'large']);
+      else if (opts.shape) groups = group_by_shape(p.sn.parts);
+      else if (opts.moves) groups = group_by_attributes(p.sn.parts, ['moves']);
+      groups = inverse_aa(groups);
+      p.svis.colorize_groups(function(groups) { return function(shape) { return groups[shape.id] }}(groups));
+    } else if (d.name == 'attention') {
+      var vals = [];
+      if (opts['top-most']) vals.push(get_top_attention(p.sn));
+      if (opts.moves) vals.push(get_movement_attention(p.sn));
+      vals = mean_map(vals);
+      p.svis.colorize_values(function(vals) { return function(shape) { return vals[shape.id] }}(vals));
+    } else if (d.name == 'uniqueness') {
+      var vals = [];
+      if (opts.shape) vals.push(get_uniqueness(group_by_shape(p.sn.parts)));
+      if (opts.size) vals.push(get_uniqueness(group_by_attributes(p.sn.parts, ['small', 'large'])));
+      if (opts.moves) vals.push(get_uniqueness(group_by_attributes(p.sn.parts, ['moves'])));
+      if (opts.spatial) vals.push(get_uniqueness(group_by_distance(p.sn.parts, p.sn)));
+      vals = mean_map(vals);
+      p.svis.colorize_values(function(vals) { return function(shape) { return vals[shape.id] }}(vals));
+    }
+  }
+}
+
+var group_by_shape = function(objs) {
+  var res = group_by_attributes(objs, ['shape']);
+  if (res.rectangle || res.triangle || res.square) {
+    res.angular = {};
+    ['rectangle', 'square', 'triangle'].forEach(function (s) {
+      if (s in res) {
+        res.angular[s] = res[s];
+        delete res[s];
+      }
+    });
+  }
+  console.log(res);
+  return res;
+}
+
+var group_by_distance = function(objs, sn, max_dist) {
+  if (typeof(max_dist) === 'undefined') max_dist = 0.06;
+  var sg = sn.oracle.getSpatialGroups(max_dist);
+  var res = {};
+  for (var i=0; i<sg.length; i++) res[i] = sg[i].map(function(body) { return body.master_obj });
+  return res;
+}
 
 function hash_get_maxima(h) {
   var keys=[], val=-Infinity;
@@ -47,12 +115,16 @@ function hash_get_maxima(h) {
   return {keys: keys, value: val};
 }
 
-function mean_hashes(arr) {
-  var res = {};
-  for (var a in arr[0]) {
-    if (!arr[0].hasOwnProperty(a)) return;
-    res[a] = 0;
-    for (var i=0; i<arr.length; i++) res[a] += arr[i][a] / arr.length;
+/// Returns an associative array with the same keys as the first passed map and the values
+/// set to the mean of the mean value all arguments values for that key.
+/// Example:
+///  m_m([{a:1, b:3}, {a:3, b:-3}]) ==> {a:2, b:0}
+function mean_map(maps) {
+  if (!maps.length) return {};
+  var res = {}, keys = d3.keys(maps[0]);
+  for (var i=0; i<keys.length; i++) {
+    res[keys[i]] = 0;
+    for (var j=0; j<maps.length; j++) res[keys[i]] += maps[j][keys[i]] / maps.length;
   }
   return res;
 }
@@ -70,7 +142,8 @@ function get_movement_attention(sn) {
   return res;
 }
 
-/// All attention on the top-most object and almost top-most objects
+/// All attention on the top-most object and vertically close objects (using the
+/// membership function of the CloseRelationship on 2.5 times the vertical distance).
 function get_top_attention(sn) {
   var best, best_obj = null, res = {};
   // get highest object
@@ -83,7 +156,7 @@ function get_top_attention(sn) {
   var sum=0;
   // focus at all objects vertically close to the highest object
   for (var i=0; i<sn.parts.length; i++) {
-    var val = CloseRelationship.membership(2*Math.abs(sn.parts[i].states.start.top_pos.val-best));
+    var val = CloseRelationship.membership(2.5*Math.abs(sn.parts[i].states.start.top_pos.val-best));
     sum += val;
     res[sn.parts[i].obj.id] = val;
   };
@@ -91,23 +164,24 @@ function get_top_attention(sn) {
   return res;
 }
 
-/// Returns a hash that maps shape ids to group ids.
-function get_spatial_saliency_grouping(sn) {
-  // get grouping and and pretend its flat (FIXME)
-  var gs = sn.oracle.getSpatialGroups(0.06);
-  // create result hash
-  var res = {};
-  for (var i=0; i<gs.length; i++) for (var j=0; j<gs[i].length; j++) {
-    res[gs[i][j].master_obj.id] = i;
-  }
-  return res;
-}
 
-function get_spatial_saliency(sn) {
-  var gs = sn.oracle.getSpatialGroups(0.06);
-  var hg = new HashGroup(gs.length);
-  for (var i=0; i<gs.length; i++) hg[i] = gs[i].map(function(body) { return body.master_obj });
-  return get_uniqueness(hg);
+/// Inverses the values and keys of the passes associative array, but uses ids as new keys and
+/// successive numbers as values. For nested arrays just considers the leaves.
+/// Example:
+///   {angular: {square: [o1], recangle: [o2, o3]}, circle: [o4]} ==> {1: 0, 2: 1, 3: 1, 4: 2}
+function inverse_aa(aa) {
+  var res = {}, idx=0;
+  var f = function(aa) {
+    if (Array.isArray(aa)) {
+      for (var i=0; i<aa.length; i++) res[aa[i].id] = idx;
+      idx++;
+    } else {
+      var arr = d3.values(aa);
+      for (var i=0; i<arr.length; i++) f(arr[i]);
+    }
+  }
+  f(aa);
+  return res;
 }
 
 function get_move_saliency(sn) {
@@ -133,78 +207,49 @@ function get_shape_saliency(sn) {
   return get_uniqueness(hg);
 }
 
-var HashGroup = function(N) {
-  this.N = N || 0;
-}
-
-HashGroup.prototype.forEachValue = function(f) {
-  for (var attr in this) {
-    if (attr == 'N' || !this.hasOwnProperty(attr)) continue;
-    f(this[attr]);
-  }
-}
-
-/// Example return: {0: [O1], 1: [O2, O3], N: 2} where N is the number of values.
-function group_by_attr(objs, attr) {
-  var hg = new HashGroup();
+/// Returns an associative array with the names of the attributes with highest activation as
+/// keys and an array of objects as values. Pass an array of objects and an array of attribute
+/// names and optionally a minimum activity required for an attribute to be active (default 0.5).
+/// If no attribute is active, the object is sorted into an '_none_' key. This function
+/// works for single-valued attributes (like small) and multi-valued attributes (like shape).
+/// Example calls:
+///   g_b_a([o1,o2,o3], ['shape']) ==> {'rectangle': [o1], 'square': [o2], '_none_': [o3]}
+///   g_b_a([o1,o2,o3], ['small', 'large']) ==> {'small': [o1], 'large': [o2,o3]}
+function group_by_attributes(objs, attrs, min_activity) {
+  var res = {};
+  if (typeof min_activity == 'undefined') min_activity = 0.5;
   for (var i=0; i<objs.length; i++) {
-    var val = objs[i].states.start[attr].get_activity() >= 0.5 ? 1 : 0;
-    if (!hg[val]) { hg[val] = []; hg.N++ }
-    hg[val].push(objs[i].obj);
-  }
-  return hg;
-}
-
-/// Example return: {rect: [O1], square: [O2, O3], N: 2} where N is the number of values.
-function group_by_multivalued_attr(objs, attr) {
-  var gs = new HashGroup();
-  for (var i=0; i<objs.length; i++) {
-    var val = objs[i].states.start[attr].get_label();
-    if (!gs[val]) { gs[val] = []; gs.N++ }
-    gs[val].push(objs[i].obj);
-  }
-  return gs;
-}
-
-/// Example return: {small: [O1], large: [O2, O3], N: 2} where N is the number of attrs
-/// that were found. Each object is put into the attr-group were it had the highest activity.
-function group_by_attrs(objs, attrs) {
-  var gs = new HashGroup();
-  for (var i=0; i<objs.length; i++) {
-    var max_val = -Infinity, max_attr = null;
+    var max_act = min_activity, max_attr = '_none_';
     for (var j=0; j<attrs.length; j++) {
-      if (objs[i].states.start[attrs[j]].get_activity() > max_val) {
-        max_val = objs[i].states.start[attrs[j]].get_activity();
-        max_attr = attrs[j];
+      var act = objs[i].states.start[attrs[j]].get_activity();
+      if (act >= max_act) {
+        max_act = act;
+        max_attr = objs[i].states.start[attrs[j]].get_label();
       }
-    };
-    if (max_attr) {
-      if (!gs[max_attr]) { gs[max_attr] = []; gs.N++ }
-      gs[max_attr].push(objs[i].obj);
     }
+    if (!(max_attr in res)) { res[max_attr] = [] }
+    res[max_attr].push(objs[i].obj);
   }
-  return gs;
+  return res;
 }
 
-/// Pass a (nested) HashGroup keys N and name:[obj or hash] to get an hash that holds the pecularity
-/// value (in [0, 100]) for each node's id.
-/// Example: {small: [O1], large: [O2, O3], N: 2} ==> {1: 50, 2: 25, 3: 25}.
-function get_uniqueness(hg) {
+/// Pass a (nested) associative array with to get an hash that holds the uniqueness value
+/// (in [0, 100]) for each node's id.
+/// Example:
+///   {small: [o1], large: [o2, o3]} ==> {1: 50, 2: 25, 3: 25}
+///   {angular: {square: [o1], recangle: [o2, o3]}, circle: [o4]} ==> {1: 25, 2: 12.5, 3: 12.5, 4: 50}
+function get_uniqueness(arr) {
   var res = {};
   var f = function(X, factor) {
-    if (X instanceof HashGroup) {
-      X.forEachValue(function(el) {
-        if (el instanceof HashGroup || Array.isArray(el)) f(el, factor/X.N);
-        else res[el.id] = Math.round(factor/X.N);
-      });
-    } else if (Array.isArray(X)) {
-      for (var i=0; i<X.length; i++) {
-        var el = X[i];
-        if (el instanceof HashGroup || Array.isArray(el)) f(el, factor/X.length);
-        else res[el.id] = Math.round(factor/X.length);
+    if (Array.isArray(X)) {
+      for (var i=0; i<X.length; i++) res[X[i].id] = Math.round(factor/X.length);
+    } else {
+      var arr = d3.values(X);
+      for (var i=0; i<arr.length; i++) {
+        f(arr[i], factor/arr.length);
       }
     }
   }
-  f(hg, 100);
+  f(arr, 100);
   return res;
 }

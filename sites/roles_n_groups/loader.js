@@ -27,7 +27,6 @@ function loadScenes() {
     var ps = new PhysicsScene(world);
     var sim = new Simulator(ps, el_canvas, scene.pixels_per_unit*vis_scaling, true);
     var sn = new SceneNode(scene, new PhysicsOracle(ps));
-    problems[''+y+'-'+x] = {sn: sn};
 
     // create SceneVisualizer
     var el_svg = document.getElementById('s'+y+"-"+x);
@@ -35,6 +34,8 @@ function loadScenes() {
     ps.onWorldChange.addListener(function(svis) { return function() {svis.draw_scene()} }(svis))
     svis.draw_scene();
     analyzeScene(sn, svis);
+
+    problems[''+y+'-'+x] = {sn: sn, svis: svis};
   }
 }
 
@@ -78,13 +79,56 @@ function prev() {
   loadScenes();
 }
 
-function init() {
-  span = document.getElementById('curr_num');
+function setup_options() {
   d3.select('#show-hide')
     .on('click', function () {
-      var n = d3.select('#details');
+      var n = d3.select('#options');
       n.style('display', n.style('display') == 'none' ? 'block' : 'none')
     });
+
+  var fields = d3.select('#options')
+                 .selectAll('div.opt-field')
+                 .data(options)
+                 .enter()
+                 .append('div')
+                 .classed('opt-field', true);
+  fields.append('input')
+        .attr('type', 'radio')
+        .attr('name', 'options')
+        .attr('value', function (d) { return d.name })
+        .attr('checked', function (d) { return d.checked })
+        .on('change', function (d) {
+          d3.select(this.parentNode.parentNode).selectAll('input').each(
+            function (d) { d.checked = this.checked }
+          );
+          if (this.checked) option_callback(d)
+        });
+  fields.append('span')
+        .text(function (d) { return d.name });
+
+  var opts = fields.selectAll('div.opt')
+        .data(function (d) { return d.opts.map(function (o) { o.parent = d; return o }) })
+        .enter()
+        .append('div')
+        .classed('opt', true);
+  opts.append('input')
+      .attr('type', function (d) { return d.parent.multiple ? 'checkbox' : 'radio' })
+      .attr('name', function (d) { return d.parent.name } )
+      .attr('value', function (d) { return d.name })
+      .attr('checked', function (d) { return d.checked })
+      .on('change', function (d) {
+        d3.select(this.parentNode.parentNode).selectAll('input').each(
+          function (d) { d.checked = this.checked }
+        );
+        if (d.parent.checked) option_callback(d.parent);
+      })
+  opts.append('span')
+        .text(function (d) { return d.name });
+}
+
+function init() {
+  span = document.getElementById('curr_num');
+  setup_options();
   loadScenes();
 }
 

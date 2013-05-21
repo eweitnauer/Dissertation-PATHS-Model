@@ -13,7 +13,7 @@ var SceneVisualizer = function(scene, scene_node, svg, scaling) {
 	//this.color_scale = d3.scale.linear().domain([0, 50, 100]).range(['steelblue', 'white', 'pink']);
 	this.metric_color_scale = d3.scale.pow().exponent(1.5).domain([0, 100]).range(['white', 'red']);
 	this.ordinal_color_scale = d3.scale.category10();
-	this.highlight_mode = 'values'; // 'values' or 'groups'
+	this.highlight_mode = 'values'; // 'values' or 'groups' or 'none'
 }
 
 SceneVisualizer.prototype.colorize_values = function(value_getter) {
@@ -109,6 +109,10 @@ SceneVisualizer.prototype.draw_scene = function() {
 		gs.select('.shape')
 			.filter(function(d) {return d.movable})
 		  .style('fill', function (d) { return thiz.ordinal_color_scale(thiz.group_getter(d)) })
+	} else {
+		gs.select('.shape')
+			.filter(function(d) {return d.movable})
+		  .style('fill', '#aaa');
 	}
 	// remove
 	gs.exit().remove();

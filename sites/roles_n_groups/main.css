@@ -37,19 +37,30 @@ svg .shape.selected {
 	stroke-width: 1;
 }
 
-div#options #details {
-	display: none;
+div#header #options {
 }
 
-div#options {
+div#header {
 	background: #333;
 	color: #ddd;
 	font-size: 10pt;
 	padding: 5px 10px;
 }
 
-div#options #details {
+div#header #options {
 	margin-bottom: 1em;
+}
+
+div.opt-field {
+	display: inline-block;
+	vertical-align: top;
+	margin: 0px 4px;
+	border: 1px solid #555;
+	padding: 4px 8px;
+}
+
+div.opt-field .opt {
+	margin-left: 1em;
 }
 
 button#show-hide {
