@@ -46,10 +46,10 @@ SceneNode.prototype.perceiveAll = function() {
 SceneNode.prototype.perceiveCurrent = function(state_name) {
   state_name = state_name || 'current';
   var movables = this.scene.shapes.filter(function(s) { return s.movable });
-  for (var i = 0; i < movables.length; i++) {
-    if (!this.parts[i]) this.parts.push(new ObjectNode(this));
-    this.parts[i].perceive(state_name, movables[i], movables);
-  };
+  for (var i=0; i<movables.length; i++) {
+    if (!this.parts[i]) this.parts.push(new ObjectNode(this, movables[i]));
+  }
+  for (var i=0; i<movables.length; i++) this.parts[i].perceive(state_name);
 }
 
 SceneNode.prototype.describe = function() {

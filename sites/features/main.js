@@ -25,7 +25,7 @@ function loadScene() {
   oracle = new PhysicsOracle(ps);
 
   sn = new SceneNode(scene, oracle);
-  sn.perceive();
+  sn.perceiveAll();
   sn.describe();
 }
 

@@ -12,6 +12,7 @@ function loadScenes() {
   problems = {};
 
   for (var y=1; y<=5; y++) for (var x=1; x<=4; x++) {
+    console.log('loading and analyzing scene ' + y + '-' + x + ' of PBP ' + pbps[pbp_idx].pbp + '...');
     //if (y!=4 || x!=1) continue;
     var scene = SVGSceneParser.parseFile(path + "/" + y + "-" + x + '.svg', pixels_per_unit);
     scene.adjustStrokeWidth(0.5*pixels_per_unit/100);
