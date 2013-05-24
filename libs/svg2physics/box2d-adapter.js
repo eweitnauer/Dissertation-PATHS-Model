@@ -68,7 +68,7 @@ Box2DAdapter.prototype.loadScene = function(world, scene) {
     if (_shape instanceof Polygon) {
       _shape.pts.forEach(function(p) { p.Scale(scale) });
       if (shape.movable) {
-        console.log('scale', scale_x, scale_y);
+        //console.log('scale', scale_x, scale_y);
         _shape.pts.forEach(function(p) { p.x *= scale_x; p.y *= scale_y });
       } else if (shape.id == "_") {
          // if its the ground, move it up a bit

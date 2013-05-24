@@ -199,7 +199,7 @@ SVGScene.prototype.adjustStrokeWidth = function(width) {
     var scale_y = (bb.height + stroke_width) / (bb.height + width);
     if (shape instanceof Polygon) {
       if (shape.movable) {
-        console.log('scale', scale_x, scale_y);
+        //console.log('scale', scale_x, scale_y);
         shape.pts.forEach(function(p) { p.x *= scale_x; p.y *= scale_y });
         shape.style['stroke-width'] = width;
       } else if (shape.id == "_") {
