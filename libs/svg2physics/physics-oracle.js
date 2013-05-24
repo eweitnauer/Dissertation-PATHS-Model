@@ -18,7 +18,7 @@ var PhysicsOracle = function(physics_scene) {
 /// 'start' ... goes to 0.1 seconds after the initial state (things start moving, "resting" objects settle down).
 /// 'end' ... goes to the state where all objects stopped moving (or max. 10 seconds after start)
 PhysicsOracle.prototype.gotoState = function(state) {
-  if (state == 'start') this.pscene.seek(0.1);
+  if (state == 'start') this.pscene.seek(0.05);
   else if (state == 'end') this.pscene.simulateUntilSleep();
   else throw 'unknown state "' + state + '"';
 }
