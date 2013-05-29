@@ -49,17 +49,20 @@ SceneNode.prototype.perceiveCurrent = function(state_name) {
   for (var i=0; i<movables.length; i++) {
     if (!this.parts[i]) this.parts.push(new ObjectNode(this, movables[i]));
   }
-  for (var i=0; i<movables.length; i++) this.parts[i].perceive(state_name);
+  for (var i=0; i<this.parts.length; i++) this.parts[i].perceive(state_name);
 }
 
-SceneNode.prototype.describe = function() {
-  console.log('Objects:');
+/// Returns a human readable description of the scene.
+SceneNode.prototype.describe = function(prefix) {
+  prefix = prefix || '';
+  var res = [prefix+'Objects:'];
   for (var i=0; i<this.parts.length; i++) {
-    this.parts[i].describe();
+    res.push(this.parts[i].describe(prefix+'  '));
   };
-  console.log('Collisions:');
+  res.push(prefix+'Collisions:');
   for (var i=0; i<this.collisions.length; i++) {
     var c = this.collisions[i];
-    console.log(c.a.id, 'hits', c.b.id);
+    res.push(prefix + '  ' + c.a.id + ' hits ' + c.b.id);
   };
+  return res.join("\n");
 }
