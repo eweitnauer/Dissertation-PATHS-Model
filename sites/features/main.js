@@ -26,7 +26,7 @@ function loadScene() {
 
   sn = new SceneNode(scene, oracle);
   sn.perceiveAll();
-  sn.describe();
+  console.log(sn.describe());
 }
 
 function init() {

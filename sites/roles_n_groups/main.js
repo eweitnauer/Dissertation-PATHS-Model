@@ -145,18 +145,10 @@ function get_movement_attention(sn) {
 /// All attention on the top-most object and vertically close objects (using the
 /// membership function of the CloseRelationship on 2.5 times the vertical distance).
 function get_top_attention(sn) {
-  var best, best_obj = null, res = {};
-  // get highest object
+
+  var sum=0, res={}
   for (var i=0; i<sn.parts.length; i++) {
-    if (!best_obj || best > sn.parts[i].states.start.top_pos.val) {
-      best_obj = sn.parts[i];
-      best = sn.parts[i].states.start.top_pos.val;
-    }
-  }
-  var sum=0;
-  // focus at all objects vertically close to the highest object
-  for (var i=0; i<sn.parts.length; i++) {
-    var val = CloseRelationship.membership(2.5*Math.abs(sn.parts[i].states.start.top_pos.val-best));
+    var val = sn.parts[i].states.start.top_most.get_activity();
     sum += val;
     res[sn.parts[i].obj.id] = val;
   };
