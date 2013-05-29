@@ -25,7 +25,11 @@ a.box {
 }
 
 a.box:hover {
-  background: lightgray;
+  background: LightGray;
+}
+
+a.box:active {
+  background: silver;
 }
 
 a.impressum {
