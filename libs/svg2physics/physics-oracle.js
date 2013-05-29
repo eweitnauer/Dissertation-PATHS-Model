@@ -178,12 +178,13 @@ PhysicsOracle.ContactListener = function(parent) {
 	  var dv = Math.abs(contact.vel_a-contact.vel_b);
   	if (dv > 0.5) {
     	var bodya = contact.m_fixtureA.m_body, bodyb = contact.m_fixtureB.m_body;
+      var world = bodya.m_world;
     	if (Math.abs(contact.vel_a) > Math.abs(contact.vel_b)) {
       	//console.log(bodya.master_obj.id, 'hits', bodyb.master_obj.id, 'with', dv, 'at', world.curr_time);
-      	parent.collisions.push({a: bodya, b: bodyb, dv:dv, t:world.curr_time});
+      	parent.collisions.push({a: bodya, b: bodyb, dv:dv, t: world.curr_time});
     	} else {
       	//console.log(bodyb.master_obj.id, 'hits', bodya.master_obj.id, 'with', dv, 'at', world.curr_time);
-      	parent.collisions.push({a:bodyb, b:bodya, dv:dv, t:world.curr_time});
+      	parent.collisions.push({a:bodyb, b:bodya, dv:dv, t: world.curr_time});
     	}
     }
   }
