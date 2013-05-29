@@ -4,11 +4,11 @@
 SceneNode = function(scene, oracle) {
   this.scene = scene;
   this.oracle = oracle;
-  this.parts = [];      // list of objects or groups in the scene
+  this.objs = [];      // list of objects or groups in the scene
   this.ground = null;
   this.frame = null;
   this.collisions = []; // list of collisions
-  this.states = ['start', 'end'];
+  this.times = ['start', 'end'];
   this.init();
 }
 
@@ -37,9 +37,9 @@ SceneNode.prototype.perceiveCollisions = function() {
 /// at the beginning and one snapshot at the end of time.
 SceneNode.prototype.perceiveAll = function() {
   this.perceiveCollisions();
-  for (var s=0; s<this.states.length; s++) {
-    this.oracle.gotoState(this.states[s]);
-    this.perceiveCurrent(this.states[s]);
+  for (var t=0; t<this.times.length; t++) {
+    this.oracle.gotoState(this.times[t]);
+    this.perceiveCurrent(this.times[t]);
   }
 }
 
@@ -47,17 +47,17 @@ SceneNode.prototype.perceiveCurrent = function(state_name) {
   state_name = state_name || 'current';
   var movables = this.scene.shapes.filter(function(s) { return s.movable });
   for (var i=0; i<movables.length; i++) {
-    if (!this.parts[i]) this.parts.push(new ObjectNode(this, movables[i]));
+    if (!this.objs[i]) this.objs.push(new ObjectNode(this, movables[i]));
   }
-  for (var i=0; i<this.parts.length; i++) this.parts[i].perceive(state_name);
+  for (var i=0; i<this.objs.length; i++) this.objs[i].perceive(state_name);
 }
 
 /// Returns a human readable description of the scene.
 SceneNode.prototype.describe = function(prefix) {
   prefix = prefix || '';
   var res = [prefix+'Objects:'];
-  for (var i=0; i<this.parts.length; i++) {
-    res.push(this.parts[i].describe(prefix+'  '));
+  for (var i=0; i<this.objs.length; i++) {
+    res.push(this.objs[i].describe(prefix+'  '));
   };
   res.push(prefix+'Collisions:');
   for (var i=0; i<this.collisions.length; i++) {

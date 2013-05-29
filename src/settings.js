@@ -1,8 +1,8 @@
 var pbpSettings = {
-	max_dist: 0.06 // maximal distance of an objects to a spatial group to belong to it
- ,activation_threshold: 0.5
+/* TODO: use this everywhere */ max_dist: 0.06 // maximal distance of an objects to a spatial group to belong to it
+/* TODO: use this everywhere */,activation_threshold: 0.5
  ,attrs: {
- 	  //'count': CountAttribute
+ 	  //'count': CountAttribute // TODO: this is a group attribute and must be treated differently
     'left_pos': LeftAttribute
 	 ,'right_pos': RightAttribute
 	 ,'bottom_pos': BottomAttribute

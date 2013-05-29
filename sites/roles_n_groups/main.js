@@ -54,11 +54,11 @@ function option_callback(d) {
       p.svis.draw_scene();
     } else if (d.name == 'groups') {
       var groups;
-      if (opts.close) groups = group_by_distance(p.sn.parts, p.sn);
-      else if (opts.touch) groups = group_by_distance(p.sn.parts, p.sn, 0.001);
-      else if (opts.size) groups = group_by_attributes(p.sn.parts, ['small', 'large']);
-      else if (opts.shape) groups = group_by_shape(p.sn.parts);
-      else if (opts.moves) groups = group_by_attributes(p.sn.parts, ['moves']);
+      if (opts.close) groups = group_by_distance(p.sn.objs, p.sn);
+      else if (opts.touch) groups = group_by_distance(p.sn.objs, p.sn, 0.001);
+      else if (opts.size) groups = group_by_attributes(p.sn.objs, ['small', 'large']);
+      else if (opts.shape) groups = group_by_shape(p.sn.objs);
+      else if (opts.moves) groups = group_by_attributes(p.sn.objs, ['moves']);
       groups = inverse_aa(groups);
       p.svis.colorize_groups(function(groups) { return function(shape) { return groups[shape.id] }}(groups));
     } else if (d.name == 'attention') {
@@ -69,10 +69,10 @@ function option_callback(d) {
       p.svis.colorize_values(function(vals) { return function(shape) { return vals[shape.id] }}(vals));
     } else if (d.name == 'uniqueness') {
       var vals = [];
-      if (opts.shape) vals.push(get_uniqueness(group_by_shape(p.sn.parts)));
-      if (opts.size) vals.push(get_uniqueness(group_by_attributes(p.sn.parts, ['small', 'large'])));
-      if (opts.moves) vals.push(get_uniqueness(group_by_attributes(p.sn.parts, ['moves'])));
-      if (opts.spatial) vals.push(get_uniqueness(group_by_distance(p.sn.parts, p.sn)));
+      if (opts.shape) vals.push(get_uniqueness(group_by_shape(p.sn.objs)));
+      if (opts.size) vals.push(get_uniqueness(group_by_attributes(p.sn.objs, ['small', 'large'])));
+      if (opts.moves) vals.push(get_uniqueness(group_by_attributes(p.sn.objs, ['moves'])));
+      if (opts.spatial) vals.push(get_uniqueness(group_by_distance(p.sn.objs, p.sn)));
       vals = mean_map(vals);
       p.svis.colorize_values(function(vals) { return function(shape) { return vals[shape.id] }}(vals));
     }
@@ -131,12 +131,12 @@ function mean_map(maps) {
 
 function get_movement_attention(sn) {
   var sum=0, res = {};
-  for (var i=0; i<sn.parts.length; i++) {
+  for (var i=0; i<sn.objs.length; i++) {
     var val = 0;
-    if (sn.parts[i].states.start.moves.get_activity()>=0.5) val = 100;
-    else if (sn.parts[i].states.start.stability.get_label() == 'unstable') val = 50;
+    if (sn.objs[i].times.start.moves.get_activity()>=0.5) val = 100;
+    else if (sn.objs[i].times.start.stability.get_label() == 'unstable') val = 50;
     sum += val;
-    res[sn.parts[i].obj.id] = val;
+    res[sn.objs[i].obj.id] = val;
   };
   if (sum > 0) for (var id in res) res[id] /= sum *0.01;
   return res;
@@ -147,10 +147,10 @@ function get_movement_attention(sn) {
 function get_top_attention(sn) {
 
   var sum=0, res={}
-  for (var i=0; i<sn.parts.length; i++) {
-    var val = sn.parts[i].states.start.top_most.get_activity();
+  for (var i=0; i<sn.objs.length; i++) {
+    var val = sn.objs[i].times.start.top_most.get_activity();
     sum += val;
-    res[sn.parts[i].obj.id] = val;
+    res[sn.objs[i].obj.id] = val;
   };
   if (sum > 0) for (var id in res) res[id] /= sum *0.01;
   return res;
@@ -177,17 +177,17 @@ function inverse_aa(aa) {
 }
 
 function get_move_saliency(sn) {
-  var hg = group_by_attr(sn.parts, 'moves');
+  var hg = group_by_attr(sn.objs, 'moves');
   return get_uniqueness(hg);
 }
 
 function get_size_saliency(sn) {
-  var hg = group_by_attrs(sn.parts, ['small', 'large']);
+  var hg = group_by_attrs(sn.objs, ['small', 'large']);
   return get_uniqueness(hg);
 }
 
 function get_shape_saliency(sn) {
-  var hg = group_by_multivalued_attr(sn.parts, 'shape');
+  var hg = group_by_multivalued_attr(sn.objs, 'shape');
   // put rect, square and triangle in one subgroup
   if (hg.rectangle || hg.triangle || hg.square) {
     hg.N++;
@@ -213,10 +213,10 @@ function group_by_attributes(objs, attrs, min_activity) {
   for (var i=0; i<objs.length; i++) {
     var max_act = min_activity, max_attr = '_none_';
     for (var j=0; j<attrs.length; j++) {
-      var act = objs[i].states.start[attrs[j]].get_activity();
+      var act = objs[i].times.start[attrs[j]].get_activity();
       if (act >= max_act) {
         max_act = act;
-        max_attr = objs[i].states.start[attrs[j]].get_label();
+        max_attr = objs[i].times.start[attrs[j]].get_label();
       }
     }
     if (!(max_attr in res)) { res[max_attr] = [] }

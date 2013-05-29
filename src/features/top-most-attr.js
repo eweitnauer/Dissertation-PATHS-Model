@@ -1,17 +1,17 @@
 TopMostAttribute = function(obj, scene_node) {
   this.name = "top-most";
   this.constant = false;
-  this.adaptDomain(scene_node.parts);
+  this.adaptDomain(scene_node.objs);
   this.perceive(obj);
 }
 
-TopMostAttribute.prototype.adaptDomain = function(parts) {
+TopMostAttribute.prototype.adaptDomain = function(objs) {
   var best, best_obj = null;
-  for (var i=0; i<parts.length; i++) {
-    if (!(parts[i] instanceof ObjectNode)) continue;
-    var y = parts[i].obj.phys_obj.GetPosition().y;
+  for (var i=0; i<objs.length; i++) {
+    if (!(objs[i] instanceof ObjectNode)) continue;
+    var y = objs[i].obj.phys_obj.GetPosition().y;
     if (!best_obj || best > y) {
-      best_obj = parts[i];
+      best_obj = objs[i];
       best = y;
     }
   }

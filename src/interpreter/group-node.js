@@ -5,16 +5,16 @@
 GroupNode = function(scene_node, objs) {
   this.scene_node = scene_node;
   this.objs = objs || [];   // shapes
-  this.states = {};
+  this.times = {};
 }
 
 /// Creates and returns a single GroupNode of all objects of a scene. If the key_obj
 /// parameter is passed, the key_obj is not included in the group.
 GroupNode.groupAll = function(scene_node, key_obj) {
 	var g = new GroupNode(scene_node);
-  for (var i=0; i<scene_node.parts.length; i++) {
-    var on = scene_node.parts[i];
-    if (on != key_obj && on instanceof SceneNode) g.objs.push(on.obj);
+  for (var i=0; i<scene_node.objs.length; i++) {
+    var on = scene_node.objs[i];
+    if (on != key_obj && on instanceof ObjectNode) g.objs.push(on.obj);
   }
   return g;
 }
@@ -38,9 +38,9 @@ GroupNode.attrs = pbpSettings.attrs;
 /// list of all possible object relations
 GroupNode.rels = pbpSettings.rels;
 
-/// Perceives all attributes and all relations to all other parts in the scene
-/// at the current situation and saves the results under the passed state name.
-GroupNode.prototype.perceive = function(state) {
+/// Perceives all attributes and all relations to all other objs in the scene
+/// at the current situation and saves the results under the passed time.
+GroupNode.prototype.perceive = function(time) {
   var res = {};
   for (var a in GroupNode.attrs) {
     var attr = GroupNode.attrs[a];
@@ -49,22 +49,21 @@ GroupNode.prototype.perceive = function(state) {
   for (var r in GroupNode.rels) {
     res[r] = [];
     var rel = GroupNode.rels[r];
-    var parts = this.scene_node.parts;
-    for (var i=0; i<parts.length; i++) {
-      if (parts[i] == this) continue;
-      if (parts[i] instanceof GroupNode) {
-        if (rel.GroupToGroup) res[r].push(rel.GroupToGroup(this.objs, parts[i].objs, this.scene_node));
-      } else if (parts[i] instanceof ObjectNode) {
-        if (rel.GroupToObject) res[r].push(rel.GroupToObject(this.objs, parts[i].obj, this.scene_node));
+    var objs = this.scene_node.objs;
+    for (var i=0; i<objs.length; i++) {
+      if (objs[i] == this) continue;
+      if (objs[i] instanceof GroupNode) {
+        if (rel.GroupToGroup) res[r].push(rel.GroupToGroup(this.objs, objs[i].objs, this.scene_node));
+      } else if (objs[i] instanceof ObjectNode) {
+        if (rel.GroupToObject) res[r].push(rel.GroupToObject(this.objs, objs[i].obj, this.scene_node));
       }
     }
     if (res[r].length == 0) delete res[r];
   }
-  this.states[state] = res;
+  this.times[time] = res;
 }
 
-/// Prints a description of the active attribute and relationship labels for the group
-/// in each state.
+/// Prints a description of the GroupNode.
 GroupNode.prototype.describe = function() {
   console.log(this);
 }

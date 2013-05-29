@@ -19,7 +19,7 @@ Selector.prototype.add_attr = function(attr, time) {
 Selector.prototype.matches = function(on) {
 	return d3.entries(this.attrs).every(function(e){
 		var attr = e.value;
-		var obj_attr = on.states[attr.time][e.key];
+		var obj_attr = on.times[attr.time][e.key];
 		if (!obj_attr) return false;
 		var obj_active = obj_attr.get_activity() >= pbpSettings.activation_threshold;
 		return (obj_active == attr.active && obj_attr.get_label() == attr.label);
@@ -28,7 +28,7 @@ Selector.prototype.matches = function(on) {
 
 /// Returns an array with all objects in the scene that match the selector.
 Selector.prototype.select = function(scene_node) {
-	return scene_node.parts.filter(this.matches.bind(this));
+	return scene_node.objs.filter(this.matches.bind(this));
 };
 
 /// Returns a human readable description of the selector. If singular is passed
