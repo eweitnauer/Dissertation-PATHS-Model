@@ -1,11 +1,11 @@
 /// Object being left or right to another object on a scale from 1 (very) to 0 (not at all).
 BesideRelationship = function(obj, other) {
-  this.name = "beside";
-  this.arity = 2;
-  this.symmetric = true;
-  this.constant = false;
   this.perceive(obj, other);
 }
+BesideRelationship.prototype.key = "beside";
+BesideRelationship.prototype.arity = 2;
+BesideRelationship.prototype.symmetric = true;
+BesideRelationship.prototype.constant = false;
 
 BesideRelationship.prototype.perceive = function(obj, other) {
   this.obj = obj;

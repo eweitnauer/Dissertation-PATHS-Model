@@ -1,9 +1,9 @@
 TopMostAttribute = function(obj, scene_node) {
-  this.name = "top-most";
-  this.constant = false;
   this.adaptDomain(scene_node.objs);
   this.perceive(obj);
 }
+TopMostAttribute.prototype.key = "top_most";
+TopMostAttribute.prototype.constant = false;
 
 TopMostAttribute.prototype.adaptDomain = function(objs) {
   var best, best_obj = null;

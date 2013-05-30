@@ -1,9 +1,9 @@
 BottomAttribute = function(obj, scene_node) {
-  this.name = "bottom";
-  this.constant = false;
   this.adaptDomain(scene_node.ground);
   this.perceive(obj);
 }
+BottomAttribute.prototype.key = "bottom_pos";
+BottomAttribute.prototype.constant = false;
 
 BottomAttribute.prototype.adaptDomain = function(ground) {
 	var bb = ground.bounding_box();

@@ -1,7 +1,8 @@
 StabilityAttribute = function(obj) {
-  this.name = 'stable';
   this.perceive(obj);
 }
+StabilityAttribute.prototype.key = 'stability';
+StabilityAttribute.prototype.constant = false;
 
 /// Returns an StabilityAttribute instance, which is the perception of the passed
 /// object's stability. Possible values are 'very stable', 'stable', 'unstable'

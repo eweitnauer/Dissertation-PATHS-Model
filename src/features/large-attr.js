@@ -1,8 +1,8 @@
 LargeAttribute = function(obj) {
-  this.name = 'large';
-  this.constant = true;
   this.perceive(obj);
 }
+LargeAttribute.prototype.key = 'large';
+LargeAttribute.prototype.constant = true;
 
 // google: "plot from -10 to 1000, 1/(1+exp(4*(2-x/100)))"
 LargeAttribute.membership = function(area) {

@@ -1,10 +1,10 @@
 TouchRelationship = function(obj, other) {
-  this.name = "touches";
-  this.arity = 2;
-  this.symmetric = true;
-  this.constant = false;
   this.perceive(obj, other);
 }
+TouchRelationship.prototype.key = "touch";
+TouchRelationship.prototype.arity = 2;
+TouchRelationship.prototype.symmetric = true;
+TouchRelationship.prototype.constant = false;
 
 TouchRelationship.prototype.perceive = function(obj, other) {
   this.obj = obj;

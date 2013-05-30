@@ -1,11 +1,11 @@
 /// Object beeing above to other object on a scale from 1 (very) to 0 (not at all).
 AboveRelationship = function(obj, other) {
-  this.name = "above";
-  this.arity = 2;
-  this.symmetry = false;
-  this.constant = false;
   this.perceive(obj, other);
 }
+AboveRelationship.prototype.key = "above";
+AboveRelationship.prototype.arity = 2;
+AboveRelationship.prototype.symmetry = false;
+AboveRelationship.prototype.constant = false;
 
 AboveRelationship.prototype.perceive = function(obj, other) {
   this.obj = obj;

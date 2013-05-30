@@ -1,8 +1,8 @@
 SmallAttribute = function(obj) {
-  this.name = 'small';
-  this.constant = true;
   this.perceive(obj);
 }
+SmallAttribute.prototype.key = 'small';
+SmallAttribute.prototype.constant = true;
 
 // google: "plot from -10 to 1000, 1-1/(1+exp(4*(1.8-x/100)))"
 SmallAttribute.membership = function(area) {

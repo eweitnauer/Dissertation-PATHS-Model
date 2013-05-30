@@ -1,11 +1,11 @@
 /// Object beeing right to other object on a scale from 1 (very) to 0 (not at all).
 RightRelationship = function(obj, other) {
-  this.name = "right-of";
-  this.arity = 2;
-  this.symmetry = false;
-  this.constant = false;
   this.perceive(obj, other);
 }
+RightRelationship.prototype.key = "right_of";
+RightRelationship.prototype.arity = 2;
+RightRelationship.prototype.symmetry = false;
+RightRelationship.prototype.constant = false;
 
 RightRelationship.prototype.perceive = function(obj, other) {
   this.obj = obj;

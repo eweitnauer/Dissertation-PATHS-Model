@@ -1,9 +1,9 @@
 OnGroundAttribute = function(obj, scene_node) {
-  this.name = "on-ground";
-  this.constant = false;
-  this.ground = scene_node.ground;
+	this.ground = scene_node.ground;
   this.perceive(obj);
 }
+OnGroundAttribute.prototype.key = "on_ground";
+OnGroundAttribute.prototype.constant = false;
 
 OnGroundAttribute.prototype.perceive = function(obj) {
   this.obj = obj;

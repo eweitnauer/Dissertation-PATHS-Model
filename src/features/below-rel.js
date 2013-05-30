@@ -1,11 +1,11 @@
 /// Object beeing below to other object on a scale from 1 (very) to 0 (not at all).
 BelowRelationship = function(obj, other) {
-  this.name = "below";
-  this.arity = 2;
-  this.symmetry = false;
-  this.constant = false;
   this.perceive(obj, other);
 }
+BelowRelationship.prototype.key = "below";
+BelowRelationship.prototype.arity = 2;
+BelowRelationship.prototype.symmetry = false;
+BelowRelationship.prototype.constant = false;
 
 BelowRelationship.prototype.perceive = function(obj, other) {
   this.obj = obj;

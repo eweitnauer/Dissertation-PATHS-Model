@@ -1,8 +1,8 @@
 CountAttribute = function(objs) {
-  this.name = 'count';
-  this.constant = true;
   this.perceive(objs);
 }
+CountAttribute.prototype.key = 'count';
+CountAttribute.prototype.constant = true;
 
 CountAttribute.prototype.perceive = function(objs) {
   this.objs = objs;

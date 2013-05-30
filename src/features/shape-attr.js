@@ -1,8 +1,8 @@
 ShapeAttribute = function(obj) {
-  this.name = 'shape';
-  this.constant = true;
   this.perceive(obj);
 }
+ShapeAttribute.prototype.key = 'shape';
+ShapeAttribute.prototype.constant = true;
 
 /// Returns an ShapeAttribute instance, which is the perception of the passed
 /// object's shape. Possible shapes are circle, triangle, rectangle, square and

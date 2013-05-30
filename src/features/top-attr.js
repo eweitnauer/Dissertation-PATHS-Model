@@ -1,9 +1,10 @@
 TopAttribute = function(obj, scene_node) {
-  this.name = "top";
-  this.constant = false;
   this.adaptDomain(scene_node.ground);
   this.perceive(obj);
 }
+TopAttribute.prototype.key = "top_pos";
+TopAttribute.prototype.constant = false;
+
 
 TopAttribute.prototype.adaptDomain = function(ground) {
 	var bb = ground.bounding_box();

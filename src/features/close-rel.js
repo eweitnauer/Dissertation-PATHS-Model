@@ -1,10 +1,10 @@
 CloseRelationship = function(obj, other) {
-  this.name = "close";
-  this.arity = 2;
-  this.symmetric = true;
-  this.constant = false;
   this.perceive(obj, other);
 }
+CloseRelationship.prototype.key = "close";
+CloseRelationship.prototype.arity = 2;
+CloseRelationship.prototype.symmetric = true;
+CloseRelationship.prototype.constant = false;
 
 // Input this at google: plot 1/(1+exp(20*(0.35-x/100))) from -10 to 110, 1-1/(1+exp(30*(0.2-x/100)))
 CloseRelationship.membership = function(dist) {

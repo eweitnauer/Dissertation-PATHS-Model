@@ -1,10 +1,10 @@
 FarRelationship = function(obj, other) {
-  this.name = "far";
-  this.arity = 2;
-  this.symmetric = true;
-  this.constant = false;
   this.perceive(obj, other);
 }
+FarRelationship.prototype.key = "far";
+FarRelationship.prototype.arity = 2;
+FarRelationship.prototype.symmetric = true;
+FarRelationship.prototype.constant = false;
 
 // Input this at google: plot 1/(1+exp(20*(0.35-x/100))) from -10 to 110, 1-1/(1+exp(30*(0.2-x/100)))
 FarRelationship.membership = function(dist) {
