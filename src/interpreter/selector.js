@@ -8,7 +8,7 @@ var Selector = function() {
 /// Will extract the attributes name, activation and label. Pass the time
 /// at which the attribute values should match (default: 'start').
 Selector.prototype.add_attr = function(attr, time) {
-	this.attrs[attr.name] = { label: attr.get_label()
+	this.attrs[attr.key] = { label: attr.get_label()
 	                         ,active: attr.get_activity() >= pbpSettings.activation_threshold
 	                         ,time: time || 'start'
 	                         ,constant: attr.constant };
@@ -34,12 +34,10 @@ Selector.prototype.select = function(scene_node) {
 /// Returns a human readable description of the selector. If singular is passed
 /// as true, the statment is done in sigular.
 Selector.prototype.describe = function(singular) {
-	if (this.attrs.length == 0) return singular ? 'an object' : 'any object';
 	var res = d3.values(this.attrs).map(function(attr) {
 		return attr.label + (attr.constant ? '' : ' at the ' + attr.time);
 	});
 	var last = res.pop();
-	var pre = singular ? 'an object that is ' : 'objects that are ';
-	if (res.length > 0)	return pre + res.join(', ') + ' and ' + last;
-	else return pre + last;
+	if (res.length > 0)	return res.join(', ') + ' and ' + last;
+	else return last;
 };

@@ -30,4 +30,21 @@ function loadScenes() {
 
 function init() {
   loadScenes();
+  solve();
+}
+
+function solve() {
+  var s1, s2, sol;
+  s1 = new Selector();
+  s1.add_attr(sn2.objs[0].times.end.right_pos, 'end');
+  sol = new Solution.Exists(s1, 'right');
+  console.log(sol.describe() + ': ' + sol.check([sn1], [sn2]));
+
+  s1 = new Selector();
+  s1.add_attr(sn1.objs[0].times.start.shape);
+  s2 = new Selector();
+  s2.add_attr(sn2.objs[0].times.start.shape);
+  sol = new Solution.All(s1, s2, 'left');
+  console.log(sol.describe() + ': ' + sol.check([sn1], [sn2]));
+
 }

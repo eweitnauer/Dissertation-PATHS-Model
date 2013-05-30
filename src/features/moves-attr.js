@@ -19,7 +19,7 @@ MovesAttribute.prototype.perceive = function(obj) {
   var body = obj.phys_obj;
   this.val = body.m_linearVelocity.Length();
   // vel. in 0.1 seconds
-  obj.object_node.scene_node.oracle.analyzeFuture(0.1, (function() {
+  obj.object_node.scene_node.oracle.analyzeFuture(0.1, null, (function() {
   	this.val_soon = body.m_linearVelocity.Length();
   }).bind(this));
 }

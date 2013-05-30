@@ -13,7 +13,8 @@ var options = [
                          ,{name: 'touch'}
                          ,{name: 'size'}
                          ,{name: 'shape'}
-                         ,{name: 'moves'}]}
+                         ,{name: 'moves'}
+                         ,{name: 'stability'}]}
 ]
 
 function analyzeScene(sn, svis) {
@@ -59,6 +60,7 @@ function option_callback(d) {
       else if (opts.size) groups = group_by_attributes(p.sn.objs, ['small', 'large']);
       else if (opts.shape) groups = group_by_shape(p.sn.objs);
       else if (opts.moves) groups = group_by_attributes(p.sn.objs, ['moves']);
+      else if (opts.stability) groups = group_by_attributes(p.sn.objs, ['stability']);
       groups = inverse_aa(groups);
       p.svis.colorize_groups(function(groups) { return function(shape) { return groups[shape.id] }}(groups));
     } else if (d.name == 'attention') {

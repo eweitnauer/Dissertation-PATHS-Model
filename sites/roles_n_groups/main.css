@@ -6,6 +6,11 @@ body {
 
 svg, canvas {
 	background: white;
+	margin: 5px;
+}
+
+#svgs, #canvases {
+	width: 45%;
 }
 
 svg text {

@@ -1,20 +1,20 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 18;
+var pbp_idx = 5;//18;
 
 function loadScenes() {
-  var path = "../../libs/pbp-svgs/svgs/pbp" + pbps[pbp_idx].pbp;
-  document.getElementById('curr_num').innerText = 'PBP'+pbps[pbp_idx].pbp;
+  var path = "../../libs/pbp-svgs/svgs/" + pbps[pbp_idx].name;
+  document.getElementById('curr_num').innerText = pbps[pbp_idx].name;
+  var files = pbps[pbp_idx].files;
 
   d3.selectAll("svg").remove();
   d3.selectAll("canvas").remove();
-  create_html_elements();
+  create_html_elements(files);
   var adapter = new Box2DAdapter();
   problems = {};
 
-  for (var y=1; y<=5; y++) for (var x=1; x<=4; x++) {
-    console.log('loading and analyzing scene ' + y + '-' + x + ' of PBP ' + pbps[pbp_idx].pbp + '...');
-    //if (y!=4 || x!=1) continue;
-    var scene = SVGSceneParser.parseFile(path + "/" + y + "-" + x + '.svg', pixels_per_unit);
+  for (var y=0; y<files.length; y++) for (var x=0; x<files[y].length; x++) {
+    console.log('loading and analyzing scene ' + files[y][x] + ' of ' + pbps[pbp_idx].name + '...');
+    var scene = SVGSceneParser.parseFile(path + "/" + files[y][x] + '.svg', pixels_per_unit);
     scene.adjustStrokeWidth(0.5*pixels_per_unit/100);
 
     // create b2World
@@ -36,36 +36,34 @@ function loadScenes() {
     svis.draw_scene();
     analyzeScene(sn, svis);
 
-    problems[''+y+'-'+x] = {sn: sn, svis: svis};
+    problems[files[y][x]] = {sn: sn, svis: svis};
   }
 }
 
-function create_html_elements() {
+function create_html_elements(files) {
   var pos = [];
-  for (var y=1; y<=5; y++) for (var x=1; x<=4; x++) pos.push([y,x]);
+  for (var y=0; y<files.length; y++) for (var x=0; x<files[y].length; x++) pos.push({x:x, y:y});
   d3.select("#svgs")
-    .style("width", vis_scaling*110*4+"px")
-    .style("height", vis_scaling*110*4+"px")
     .selectAll("svg")
     .data(pos)
     .enter()
     .append("svg")
-    .attr("id", function(d) {return "s"+d[0]+"-"+d[1]})
-    .attr("width", 100*vis_scaling)
-    .attr("height", 100*vis_scaling)
-    .style("margin", "5px");
+    .attr("id", function(d) { return "s"+d.y+"-"+d.x })
+    // .style("left", function(d) { return d.x * (100 * vis_scaling + 10) })
+    // .style("top", function(d) { return d.y * (100 * vis_scaling + 10) })
+    .style("width", 100*vis_scaling)
+    .style("height", 100*vis_scaling);
 
 d3.select("#canvases")
-    .style("width", vis_scaling*110*4+"px")
-    .style("height", vis_scaling*110*4+"px")
-    .selectAll("canvas")
-    .data(pos)
-    .enter()
-    .append("canvas")
-    .attr("id", function(d) {return "c"+d[0]+"-"+d[1]})
-    .attr("width", 100*vis_scaling)
-    .attr("height", 100*vis_scaling)
-    .style("margin", "5px");
+  .selectAll("canvas")
+  .data(pos)
+  .enter()
+  .append("canvas")
+  .attr("id", function(d) { return "c"+d.y+"-"+d.x })
+  // .style("left", function(d) { return d.x * (100 * vis_scaling + 10) })
+  // .style("top", function(d) { return d.y * (100 * vis_scaling + 10) })
+  .attr("width", 100*vis_scaling)
+  .attr("height", 100*vis_scaling);
 }
 
 function next() {
@@ -133,27 +131,33 @@ function init() {
   loadScenes();
 }
 
+var default_files = [['1-1', '1-2', '1-3', '1-4']
+                    ,['2-1', '2-2', '2-3', '2-4']
+                    ,['3-1', '3-2', '3-3', '3-4']
+                    ,['4-1', '4-2', '4-3', '4-4']
+                    ,['5-1', '5-2', '5-3', '5-4']];
 var pbps = [
-  {pbp: '02',  solution: ["one object", "two objects"]},
-  {pbp: '12',  solution: ["small object falls off", "small object stays on top"]},
-  {pbp: '04',  solution: ["squares", "circles"]},
-  {pbp: '32',  solution: ["objects rotate a lot", "objects rotate little or no at all"]},
-  {pbp: '22',  solution: ["objects collide with each other", "objects don't collide with each other"]},
-  {pbp: '08',  solution: ["unstable situation", "stable situation"]},
-  {pbp: '31',  solution: ["circle can be picked up directly", "circle cannot be picked up directly"]},
-  {pbp: '27',  solution: ["(potential) chain reaction","no chain reaction"]},
-  {pbp: '18',  solution: ["object touch eventually", "objects don't touch eventually"]},
-  {pbp: '23',  solution: ["collision", "no collision"]},
-  {pbp: '26',  solution: ["circle moves right", "circle moves left"]},
-  {pbp: '13',  solution: ["objects form a tower", "objects form an arc"]},
-  {pbp: '30',  solution: ["less stable situation", "stable situation"]},
-  {pbp: '16',  solution: ["the circle is left of the square", "the square is left of the circle"]},
-  {pbp: '24',  solution: ["several possible outcomes", "one possible outcome"]},
-  {pbp: '20',  solution: ["eventually, the square supports other objects", "eventually, the square does not support other objects"]},
-  {pbp: '21',  solution: ["strong collision", "weak or no collision"]},
-  {pbp: '09',  solution: ["objects move in opposite directions", "objects move in same direction"]},
-  {pbp: '33',  solution: ["construction gets destroyed", "construction stays intact"]},
-  {pbp: '19',  solution: ["at least one object flies through the air", "all object always touch something"]},
-  {pbp: '28',  solution: ["rolls well", "does not roll well"]},
-  {pbp: '11b', solution: ["objects close to each other", "objects far from each other"]},
+  {name: 'pbp02',  files: default_files, solution: ["one object", "two objects"]},
+  {name: 'pbp12',  files: default_files, solution: ["small object falls off", "small object stays on top"]},
+  {name: 'pbp04',  files: default_files, solution: ["squares", "circles"]},
+  {name: 'pbp32',  files: default_files, solution: ["objects rotate a lot", "objects rotate little or no at all"]},
+  {name: 'pbp22',  files: default_files, solution: ["objects collide with each other", "objects don't collide with each other"]},
+  {name: 'pbp08',  files: default_files, solution: ["unstable situation", "stable situation"]},
+  {name: 'pbp31',  files: default_files, solution: ["circle can be picked up directly", "circle cannot be picked up directly"]},
+  {name: 'pbp27',  files: default_files, solution: ["(potential) chain reaction","no chain reaction"]},
+  {name: 'pbp18',  files: default_files, solution: ["object touch eventually", "objects don't touch eventually"]},
+  {name: 'pbp23',  files: default_files, solution: ["collision", "no collision"]},
+  {name: 'pbp26',  files: default_files, solution: ["circle moves right", "circle moves left"]},
+  {name: 'pbp13',  files: default_files, solution: ["objects form a tower", "objects form an arc"]},
+  {name: 'pbp30',  files: default_files, solution: ["less stable situation", "stable situation"]},
+  {name: 'pbp16',  files: default_files, solution: ["the circle is left of the square", "the square is left of the circle"]},
+  {name: 'pbp24',  files: default_files, solution: ["several possible outcomes", "one possible outcome"]},
+  {name: 'pbp20',  files: default_files, solution: ["eventually, the square supports other objects", "eventually, the square does not support other objects"]},
+  {name: 'pbp21',  files: default_files, solution: ["strong collision", "weak or no collision"]},
+  {name: 'pbp09',  files: default_files, solution: ["objects move in opposite directions", "objects move in same direction"]},
+  {name: 'pbp33',  files: default_files, solution: ["construction gets destroyed", "construction stays intact"]},
+  {name: 'pbp19',  files: default_files, solution: ["at least one object flies through the air", "all object always touch something"]},
+  {name: 'pbp28',  files: default_files, solution: ["rolls well", "does not roll well"]},
+  {name: 'pbp11b', files: default_files, solution: ["objects close to each other", "objects far from each other"]},
+  {name: 'stability_tests', files: [['1-1', '1-2', '1-3'], ['2-1', '2-2', '2-3'], ['3-1', '3-2', '3-3'], ['4-1', '4-2', '4-3'], ['5-1', '5-2'], ['6-1'], ['7-1', '7-2', '8-1', '8-2']]},
 ];
