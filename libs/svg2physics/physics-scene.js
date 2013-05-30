@@ -10,6 +10,7 @@ var PhysicsScene = function(world, dt) {
 	this.world.PushState(); // save initial state for reset
 	this.dt = dt || 1/50;
 	this.onWorldChange = new ListenerPattern(); // Emits world.curr_time each time the world changed.
+	this.emit_changes = true; // set to false to stop updating the world change listeners
 }
 
 PhysicsScene.prototype.pushState = function() {
@@ -18,7 +19,7 @@ PhysicsScene.prototype.pushState = function() {
 
 PhysicsScene.prototype.popState = function() {
 	this.world.PopState();
-	this.onWorldChange.emit(this.world.curr_time);
+	if (this.emit_changes) this.onWorldChange.emit(this.world.curr_time);
 }
 
 PhysicsScene.prototype.reset = function() {
@@ -41,7 +42,7 @@ PhysicsScene.prototype.step = function(dt) {
 	this.world.ClearForces(); // in case we set any forces like with mouse joints
 	this.world.Step(dt, 10, 10);
   this.world.curr_time += dt;
-  this.onWorldChange.emit(this.world.curr_time);
+  if (this.emit_changes) this.onWorldChange.emit(this.world.curr_time);
   return dt;
 }
 
@@ -60,6 +61,22 @@ PhysicsScene.prototype.simulateUntilSleep = function(max_time) {
 	while (t<=max_time && this.countAwake() > 0) t += this.step();
 	return t;
 }
+
+/// Simulates the world for the passed time, calls the callback and restores
+/// the previous world state.
+PhysicsScene.prototype.analyzeFuture = function(time, callback) {
+	if (time == 0) callback();
+	else if (time < 0) throw "You are mistaking the past for the future."
+	else {
+		var old_emit_changes = this.emit_changes;
+		this.emit_changes = false;
+		this.pushState();
+		this.simulate(time);
+		callback();
+		this.popState();
+		this.emit_changes = old_emit_changes;
+	}
+};
 
 PhysicsScene.prototype.forEachBody = function(f) {
   for (var b = this.world.m_bodyList; b; b = b.m_next) {

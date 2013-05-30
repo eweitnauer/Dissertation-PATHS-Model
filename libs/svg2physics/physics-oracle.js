@@ -23,6 +23,12 @@ PhysicsOracle.prototype.gotoState = function(state) {
   else throw 'unknown state "' + state + '"';
 }
 
+/// Simulates the world for the passed time, calls the callback and restores
+/// the previous world state.
+PhysicsOracle.prototype.analyzeFuture = function(time, callback) {
+  return this.pscene.analyzeFuture(time, callback);
+}
+
 /// Calls synch_to_phys for every body's master shape object. This updates the x, y and rot attributes of
 /// the shapes.
 PhysicsOracle.prototype.synchShapes = function() {
