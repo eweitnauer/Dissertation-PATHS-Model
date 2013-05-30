@@ -70,6 +70,7 @@ SceneVisualizer.prototype.draw_scene = function() {
 		  	if (d3.event.shiftKey) thiz.toggleSelection(d);
 		  	else thiz.selectShapes([d]);
 		  	if (thiz.value_getter) console.log(thiz.value_getter(d));
+		  	console.log(d.object_node.describe());
 		  });
 	}
 	var add_text = function(container) {
