@@ -62,20 +62,21 @@ PhysicsScene.prototype.simulateUntilSleep = function(max_time) {
 	return t;
 }
 
-/// Simulates the world for the passed time, calls the callback and restores
-/// the previous world state.
-PhysicsScene.prototype.analyzeFuture = function(time, callback) {
-	if (time == 0) callback();
-	else if (time < 0) throw "You are mistaking the past for the future."
-	else {
-		var old_emit_changes = this.emit_changes;
-		this.emit_changes = false;
-		this.pushState();
-		this.simulate(time);
-		callback();
-		this.popState();
-		this.emit_changes = old_emit_changes;
-	}
+/// It saves the world state, calls teh start_callback, simulates the world for the passed
+/// time, calls the end_callback and restores the previous world state. Returns the value
+/// returned by end_callback.
+/// The start_callback can be used to, e.g., apply an impulse. It can also be null.
+PhysicsScene.prototype.analyzeFuture = function(time, start_callback, end_callback) {
+	if (time < 0) throw "You are mistaking the past for the future."
+	var old_emit_changes = this.emit_changes;
+	this.emit_changes = false;
+	this.pushState();
+	if (start_callback) start_callback();
+	this.simulate(time);
+	var res = end_callback();
+	this.popState();
+	this.emit_changes = old_emit_changes;
+	return res;
 };
 
 PhysicsScene.prototype.forEachBody = function(f) {
@@ -98,6 +99,36 @@ PhysicsScene.prototype.getKineticEnergy = function() {
 		                +b.m_mass*b.m_linearVelocity.Length()*b.m_linearVelocity.Length());
 	});
 	return energy;
+}
+
+/// Returns the distance the body has travelled between the passed (old) transformation
+/// and the current transformation. For circles, the euclidian distance of the center is
+/// returned. For other shapes, the mean distance of all corners' distances is returned.
+/// If no transformation is passed, the transformation of the previous body state on its
+/// bodystates stack is used.
+PhysicsScene.prototype.getBodyDistance = function(body, xf) {
+	xf = xf || body.bodystates[body.bodystates.length-1].m_xf
+  if (body.m_fixtureList.m_shape.GetType() == b2Shape.e_circleShape) {
+    var d = body.m_xf.position.Copy();
+    d.Subtract(xf.position);
+    return d.Length();
+  } else {
+    return this.meanPointDistance(body.m_fixtureList.m_shape.GetVertices(), body.m_xf, xf);
+  }
+}
+
+/// Returns the mean distance of the passed points between their position in
+/// the first and the second transformation.
+/// This method is used by the getBodyDistance method.
+PhysicsScene.prototype.meanPointDistance = function(points, xf1, xf2) {
+  var dist = 0;
+  for (var i=0; i<points.length; i++) {
+    var p = points[i];
+    var d = p.Transformed(xf1);
+    d.Subtract(p.Transformed(xf2));
+    dist += d.Length();
+  }
+  return dist / points.length;
 }
 
 /// Returns the number of dynamic objects that are awake.

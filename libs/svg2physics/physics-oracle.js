@@ -23,16 +23,45 @@ PhysicsOracle.prototype.gotoState = function(state) {
   else throw 'unknown state "' + state + '"';
 }
 
-/// Simulates the world for the passed time, calls the callback and restores
-/// the previous world state.
-PhysicsOracle.prototype.analyzeFuture = function(time, callback) {
-  return this.pscene.analyzeFuture(time, callback);
+/// It saves the world state, calls teh start_callback, simulates the world for the passed
+/// time, calls the end_callback and restores the previous world state. Returns the value
+/// returned by end_callback.
+/// The start_callback can be used to, e.g., apply an impulse. It can also be null.
+PhysicsOracle.prototype.analyzeFuture = function(time, start_callback, end_callback) {
+  return this.pscene.analyzeFuture(time, start_callback, end_callback);
 }
 
 /// Calls synch_to_phys for every body's master shape object. This updates the x, y and rot attributes of
 /// the shapes.
 PhysicsOracle.prototype.synchShapes = function() {
   this.pscene.forEachBody(function(b) { b.master_obj.synch_to_phys() });
+}
+
+PhysicsOracle.prototype.isStatic = function(body) {
+  return body.m_type == b2Body.b2_staticBody;
+}
+
+/// Applies an impulse to the center of the passed object.
+/// Strength can either be a float (it is multiplied with the direction to get the
+/// input) or a string ('small', 'medium' or 'large' - the strength is set to
+/// 0.5, 1 or 1.5 of the body's mass). Dir can either be a b2Vec2 or a string
+/// ('left', 'right', 'up' or 'down').
+PhysicsOracle.prototype.applyCentralImpulse = function(body, dir, strength) {
+  /// Impulse is a b2Vec, where its direction is the direction of the impulse and
+  /// its length is the strength of the impulse in kg*(m/s) which is mass*velocity.
+  /// Point is a b2Vec and is the point to which the impulse is applied in body coords.
+  var applyImpulse = function(body, impulse, point) {
+    var p = point.Copy(); p.Add(body.m_sweep.c)
+    body.ApplyImpulse(impulse, p);
+  }
+  var strength_map = {'small': 0.5, 'medium': 1.0, 'large': 1.5};
+  var dir_map      = {'left': new b2Vec2(-1,0), 'right': new b2Vec2(1,0),
+                        'up': new b2Vec2(0,1),   'down': new b2Vec2(0,-1)};
+  if (typeof(strength) == 'string') strength = strength_map[strength] * body.m_mass;
+  if (typeof(dir) == 'string') dir = dir_map[dir];
+  var impulse = dir.Copy();
+  impulse.Multiply(strength);
+  applyImpulse(body, impulse, new b2Vec2(0,0));
 }
 
 /// Returns all objects grouped by touch. E.g "A  BC" will be returned as [[A], [B,C]]. Only
