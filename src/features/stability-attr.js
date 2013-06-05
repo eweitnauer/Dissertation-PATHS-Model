@@ -20,8 +20,8 @@ StabilityAttribute.prototype.get_activity = function() {
 }
 
 StabilityAttribute.prototype.get_label = function() {
-	if (this.val == 'stable') return 'stable';
-	if (this.val == 'moving' || this.val == 'unstable' || this.val == 'slightly unstable') return 'unstable';
+	if (this.val == 'stable' || this.val == 'slightly unstable') return 'stable';
+	if (this.val == 'moving' || this.val == 'unstable') return 'unstable';
 }
 
 /// Returns whether the object is 'stable', 'unstable' or 'moving'.
@@ -44,16 +44,16 @@ StabilityAttribute.prototype.checkStability = function(body, oracle) {
 		var rot0 = body.GetAngle();
 		var apply_impulse = function() {oracle.applyCentralImpulse(body, dir, soft ? 'small' : 'medium')};
     return oracle.analyzeFuture(0.3, apply_impulse, function() {
-    	console.log('pushing', soft ? 'softly' : '', 'to the', dir);
+    	//console.log('pushing', soft ? 'softly' : '', 'to the', dir);
     	var v = body.m_linearVelocity.Length();
     	var factor = soft ? 2/3 : 1.0;
-			console.log('  speed:',v);
+			//console.log('  speed:',v);
     	if (v >= max_v*factor) return false;
     	var dx = oracle.pscene.getBodyDistance(body);
-      console.log('  dist:',dx);
+      //console.log('  dist:',dx);
       if (dx >= max_dx*factor) return false;
       var drot = Point.norm_angle(body.GetAngle() - rot0);
-      console.log('  rot:',drot);
+      //console.log('  rot:',drot);
       if ( body.IsCircle() && Math.abs(drot) >= max_drot_circle*factor ||
           !body.IsCircle() && Math.abs(drot) >= max_drot*factor) return false;
       return true;
