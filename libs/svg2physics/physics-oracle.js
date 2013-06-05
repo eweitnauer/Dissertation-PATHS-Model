@@ -12,15 +12,34 @@ var PhysicsOracle = function(physics_scene) {
 	this.pscene = physics_scene;
   this.pscene.onWorldChange.addListener(this.synchShapes.bind(this));
 	this.contact_listener = new PhysicsOracle.ContactListener(this);
+  this.curr_state = "0";
+  this.states = {'0'    : {time: 0, pstate: null},
+                 'start': {time: 0.05, pstate: null},
+                 'end'  : {time: 'end', pstate: null}};
 }
 
-/// State can be one of
-/// 'start' ... goes to 0.1 seconds after the initial state (things start moving, "resting" objects settle down).
-/// 'end' ... goes to the state where all objects stopped moving (or max. 10 seconds after start)
+/// The state can be one of the ones defined in this.states. Each state gets saved the first time
+/// it is reached so the second time, no simulation is neccessary.
 PhysicsOracle.prototype.gotoState = function(state) {
-  if (state == 'start') this.pscene.seek(0.05);
-  else if (state == 'end') this.pscene.simulateUntilSleep();
-  else throw 'unknown state "' + state + '"';
+  if (this.curr_state === state) return;
+  if (!(state in this.states)) throw 'unknown state "' + state + '"';
+  var s = this.states[state];
+  if (s.pstate) this.setPhysicsState(s.pstate);
+  else {
+    if (this.states[state].time == 'end') this.pscene.simulateUntilSleep(15);
+    else this.pscene.seek(this.states[state].time);
+    this.states[state].pstate = this.getPhysicsState();
+  }
+}
+
+/// Get the current state of the physics simulation to revert to it later.
+PhysicsOracle.prototype.getPhysicsState = function() {
+  return this.pscene.getState();
+}
+
+/// Revert to a previously recorded state of the physics world.
+PhysicsOracle.prototype.setPhysicsState = function(pstate) {
+  this.pscene.setState(pstate);
 }
 
 /// It saves the world state, calls teh start_callback, simulates the world for the passed

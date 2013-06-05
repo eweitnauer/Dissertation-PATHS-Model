@@ -135,3 +135,17 @@ b2World.prototype.PopState = function() {
   }
 }
 
+/// Saves the state of the b2World and all dynamic b2Bodies into an array and returns it.
+b2World.prototype.GetState = function() {
+  var state = [];
+  state.push({el: this, state: new b2WorldState(this)});
+  for (var b = this.m_bodyList; b; b=b.m_next) {
+    if (b.m_type == b2Body.b2_dynamicBody) state.push({el: b, state: new b2BodyState(b)});
+  }
+  return state;
+}
+
+/// Pass the result of a former GetState call to set the world to that situation.
+b2World.prototype.SetState = function(state) {
+  state.forEach(function (e) { e.state.Apply(e.el) });
+}

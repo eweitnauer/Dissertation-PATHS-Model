@@ -22,6 +22,15 @@ PhysicsScene.prototype.popState = function() {
 	if (this.emit_changes) this.onWorldChange.emit(this.world.curr_time);
 }
 
+PhysicsScene.prototype.getState = function() {
+	return this.world.GetState();
+}
+
+PhysicsScene.prototype.setState = function(state) {
+	this.world.SetState(state);
+	if (this.emit_changes) this.onWorldChange.emit(this.world.curr_time);
+}
+
 PhysicsScene.prototype.reset = function() {
 	this.popState();
 	this.pushState();
