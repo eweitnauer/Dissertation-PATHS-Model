@@ -47,13 +47,20 @@ div#header #options {
 
 div#header {
 	background: #333;
-	color: #ddd;
+	color: whitesmoke;
 	font-size: 10pt;
-	padding: 5px 10px;
+	font-family: sans-serif;
+	font-weight: lighter;
+	padding-top: 5px;
 }
 
-div#header #options {
-	margin-bottom: 1em;
+div#header p {
+	margin: 0.5em 0;
+}
+
+div#header > div {
+	border-bottom: 1px solid silver;
+	padding: 5px;
 }
 
 div.opt-field {

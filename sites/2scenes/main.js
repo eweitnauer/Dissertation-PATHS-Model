@@ -4,9 +4,11 @@ var sim1, sim2, sn1, sn2, vis1, vis2, scene1, scene2;
 
 function loadScenes() {
   // load scenes from SVGs
-  scene1 = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp04/1-1.svg", pixels_per_unit);
+  //scene1 = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp04/1-1.svg", pixels_per_unit);
+  scene1 = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp12/1-1.svg", pixels_per_unit);
   scene1.adjustStrokeWidth(0.5*pixels_per_unit/100);
-  scene2 = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp04/1-3.svg", pixels_per_unit);
+  //scene2 = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp04/1-3.svg", pixels_per_unit);
+  scene2 = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp12/1-3.svg", pixels_per_unit);
   scene2.adjustStrokeWidth(0.5*pixels_per_unit/100);
 
   // setup physics and simulator
@@ -30,21 +32,20 @@ function loadScenes() {
 
 function init() {
   loadScenes();
-  solve();
+  //solve04();
 }
 
-function solve() {
+function solve04() {
   var s1, s2, sol;
   s1 = new Selector();
-  s1.add_attr(sn2.objs[0].times.end.right_pos, 'end');
+  s1.use_attr(sn2.objs[0].times.end.right_pos, 'end');
   sol = new Solution.Exists(s1, 'right');
   console.log(sol.describe() + ': ' + sol.check([sn1], [sn2]));
 
   s1 = new Selector();
-  s1.add_attr(sn1.objs[0].times.start.shape);
+  s1.use_attr(sn1.objs[0].times.start.shape);
   s2 = new Selector();
-  s2.add_attr(sn2.objs[0].times.start.shape);
+  s2.use_attr(sn2.objs[0].times.start.shape);
   sol = new Solution.All(s1, s2, 'left');
   console.log(sol.describe() + ': ' + sol.check([sn1], [sn2]));
-
 }

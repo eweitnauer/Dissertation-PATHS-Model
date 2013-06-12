@@ -25,7 +25,9 @@
     <script src="../../src/features/small-attr.js"></script>
     <script src="../../src/features/large-attr.js"></script>
     <script src="../../src/features/left-attr.js"></script>
+    <script src="../../src/features/left-most-attr.js"></script>
     <script src="../../src/features/right-attr.js"></script>
+    <script src="../../src/features/right-most-attr.js"></script>
     <script src="../../src/features/bottom-attr.js"></script>
     <script src="../../src/features/top-attr.js"></script>
     <script src="../../src/features/top-most-attr.js"></script>
@@ -38,9 +40,19 @@
     <script src="../../src/features/touch-rel.js"></script>
     <script src="../../src/features/ontop-rel.js"></script>
     <script src="../../src/features/far-rel.js"></script>
+    <script src="../../src/features/far-attr.js"></script>
     <script src="../../src/features/close-rel.js"></script>
+    <script src="../../src/features/close-attr.js"></script>
+    <script src="../../src/features/hits-rel.js"></script>
+    <script src="../../src/features/gets-hit-rel.js"></script>
+    <script src="../../src/features/collides-rel.js"></script>
+    <script src="../../src/features/count-attr.js"></script>
+    <script src="../../src/features/touch-attr.js"></script>
     <script src="../../src/settings.js"></script>
     <script src="../../src/interpreter/object-node.js"></script>
+    <script src="../../src/interpreter/group-node.js"></script>
+    <script src="../../src/interpreter/selector.js"></script>
+    <script src="../../src/interpreter/solution.js"></script>
     <script src="../../src/interpreter/scene-node.js"></script>
     <script src="loader.js"></script>
     <script src="main.js"></script>
@@ -48,10 +60,13 @@
   </head>
   <body onload="init();">
     <div id="header">
-      <div id="options">
+      <div id="options" style="display: none"></div>
+      <div id="solution" style="display: block">
+        <div id="sol-texts"></div>
       </div>
       <div id="main">
-        <button id="show-hide">highlight options</button>
+        <button id="show-hide-1">analyze</button>
+        <button id="show-hide-2">solve</button>
         <button type="button" id="btnPrev" onclick="prev()">Previous</button>
         <span id="curr_num">?</span>
         <button type="button" id="btnNext" onclick="next()">Next</button><br/>

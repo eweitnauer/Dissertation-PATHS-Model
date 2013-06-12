@@ -1,5 +1,78 @@
 var vis_scaling = 1.5, pixels_per_unit = 50;//, sim, scene, oracle;
 
+function analyzeScene(sn, svis) {
+  sn.registerObjects();
+  sn.perceiveCollisions();
+  //sn.perceiveAll();
+  //sn.oracle.gotoState('start');
+  //sn.perceiveCurrent('start');
+  //sn.oracle.pscene.reset();
+}
+
+function getSolutions(pbp) {
+  var sols = [];
+  if (pbp == 'pbp02') { // one vs. two objects
+    var s1 = new Selector('group');
+    s1.add_attr(new Selector.AttrMatcher('count', '2'));
+    sols.push(new Solution.IsX(s1, 'right'));
+  }
+  if (pbp == 'pbp04') { // square vs. circle
+    var s1 = new Selector('all'), s2 = new Selector('first');
+    s1.add_attr(new Selector.AttrMatcher('shape', 'square'));
+    s2.add_attr(new Selector.AttrMatcher('shape', 'circle'));
+    sols.push(new Solution.IsX(s1, 'left'));
+    sols.push(new Solution.IsX(s2, 'right'));
+  }
+  if (pbp == 'pbp08' || pbp == 'pbp30') { // stable vs. unstable
+    /// NEEDS 'slightly unstable' as 'stable' for pbp08 and as unstable for pbp30!
+    var s1 = new Selector('first'), s2 = new Selector('all');
+    s1.add_attr(new Selector.AttrMatcher('stability', 'unstable'));
+    s2.add_attr(new Selector.AttrMatcher('stability', 'stable'));
+    sols.push(new Solution.IsX(s1, 'left'));
+    sols.push(new Solution.IsX(s2, 'right'));
+  }
+  if (pbp == 'pbp11b') { // close vs. far
+    var s1 = new Selector('group');
+    s1.add_attr(new Selector.AttrMatcher('close', 'close'));
+    sols.push(new Solution.IsX(s1, 'left'));
+  }
+  if (pbp == 'pbp12') { // falls off vs. stays
+    var s = new Selector('unique'), other = new Selector('unique');
+    s.add_attr(new Selector.AttrMatcher('small', 'small'));
+    s.add_rel(new Selector.RelMatcher(other, 'on_top_of', 'on-top-of', true, 'end'));
+    sols.push(new Solution.IsX(s, 'right'));
+  }
+  if (pbp == 'pbp16') { // circle left vs. circle right
+    var s1 = new Selector('unique'), s2 = new Selector('unique'), s3 = new Selector('unique');
+    s1.add_attr(new Selector.AttrMatcher('shape', 'circle'));
+    s1.add_attr(new Selector.AttrMatcher('left_most', 'left-most'));
+    s2.add_attr(new Selector.AttrMatcher('shape', 'circle'));
+    s3.add_attr(new Selector.AttrMatcher('shape', 'square'));
+    s2.add_rel(new Selector.RelMatcher(s3, 'left_of', 'left-of'));
+    sols.push(new Solution.IsX(s1, 'left'));
+    sols.push(new Solution.IsX(s2, 'left'));
+  }
+  if (pbp == 'pbp18') { // touch
+    var s1 = new Selector('group');
+    s1.add_attr(new Selector.AttrMatcher('touching', 'touching', true, 'end'));
+    sols.push(new Solution.IsX(s1, 'left'));
+  }
+  if (pbp == 'pbp22') { // objects hit each other vs. not
+    var s1 = new Selector('first'), s2 = new Selector('all');
+    s1.add_rel(new Selector.RelMatcher(new Selector('unique'), 'hits', 'hits'));
+    s2.add_rel(new Selector.RelMatcher(new Selector('first'), 'collides', 'collides-with'));
+    sols.push(new Solution.IsX(s1));
+    sols.push(new Solution.IsX(s2));
+  }
+  if (pbp == 'pbp26') { // circle moves left vs. circle moves right; many objects
+    var s = new Selector('unique');
+    s.add_attr(new Selector.AttrMatcher('shape', 'circle'));
+    s.add_attr(new Selector.AttrMatcher('left_pos', 'left', true, 'end'));
+    sols.push(new Solution.IsX(s, 'right'));
+  }
+  return sols;
+}
+
 
 var options = [
   {name: 'none', checked: true, opts: []}
@@ -16,34 +89,6 @@ var options = [
                          ,{name: 'moves'}
                          ,{name: 'stability'}]}
 ]
-
-function analyzeScene(sn, svis) {
-  sn.oracle.gotoState('start');
-  sn.perceiveCurrent('start');
-  sn.oracle.pscene.reset();
-  return;
-  //sn.describe();
-  var move_att, top_att;
-   console.log('movement attention:', move_att = get_movement_attention(sn));
-  console.log('top attention:', top_att = get_top_attention(sn));
-  var s1, s2, s3, s4, s5, winner;
-  //console.log('spatial saliency:', s1=get_spatial_saliency(sn));
-  //console.log('size saliency:', s2=get_size_saliency(sn));
-  //console.log('shape saliency:', s3=get_shape_saliency(sn));
-  //console.log('movement saliency:', s4=get_move_saliency(sn));
-  //console.log('mean saliency:', s5=mean_hashes([s1,s2,s3,s4]));
-  // var winners = hash_get_maxima(s5);
-  // console.log('max saliency:', winners.keys, '==>', winners.value);
-  //sim.pscene.reset();
-  // var winner_shapes = [];
-  // for (var i=0; i<winners.keys.length; i++) {
-  //   scene.shapes[winners.keys[i]].renderInSvg(document, d3.select('svg g')[0][0]);
-  //   winner_shapes.push(scene.shapes[winners.keys[i]]);
-  // }
-  var spatial_grouping = get_spatial_saliency_grouping(sn);
-  //svis.colorize_values(function(shape) { return top_att[shape.id] });                      //////// use this
-  svis.colorize_groups(function(shape) { return spatial_grouping[shape.id] });        //////// OR this
-}
 
 function option_callback(d) {
   for (var i in problems) {

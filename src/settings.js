@@ -2,12 +2,15 @@ var pbpSettings = (function() {
 	res = {
     max_dist: 0.06 // maximal distance of an objects to a spatial group to belong to it /* TODO: use this everywhere */
    ,activation_threshold: 0.5 /* TODO: use this everywhere */
-   ,attrs: {}
-   ,rels: {}
+   ,obj_attrs: {}
+   ,obj_rels: {}
+   ,group_attrs: {}
 	};
-	// attributes
+	// object attributes
 	[LeftAttribute,
+	 LeftMostAttribute,
 	 RightAttribute,
+	 RightMostAttribute,
 	 BottomAttribute,
 	 TopAttribute,
 	 TopMostAttribute,
@@ -16,8 +19,14 @@ var pbpSettings = (function() {
 	 StabilityAttribute,
 	 SmallAttribute,
 	 LargeAttribute,
-	 MovesAttribute].forEach(function (attr) { res.attrs[attr.prototype.key] = attr });
-	// relations
+	 MovesAttribute].forEach(function (attr) { res.obj_attrs[attr.prototype.key] = attr });
+	// group attributes
+	[CloseAttribute,
+	 CountAttribute,
+	 FarAttribute,
+	 TouchAttribute
+	].forEach(function (attr) { res.group_attrs[attr.prototype.key] = attr });
+	// object relations
 	[AboveRelationship,
 	BelowRelationship,
 	LeftRelationship,
@@ -26,6 +35,9 @@ var pbpSettings = (function() {
 	FarRelationship,
 	CloseRelationship,
 	OnTopRelationship,
-	TouchRelationship].forEach(function (rel) { res.rels[rel.prototype.key] = rel });
+	TouchRelationship,
+	HitsRelationship,
+	GetsHitRelationship,
+	CollidesRelationship].forEach(function (rel) { res.obj_rels[rel.prototype.key] = rel });
 	return res;
 })();

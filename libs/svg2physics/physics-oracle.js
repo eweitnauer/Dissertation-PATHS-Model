@@ -26,7 +26,7 @@ PhysicsOracle.prototype.gotoState = function(state) {
   var s = this.states[state];
   if (s.pstate) this.setPhysicsState(s.pstate);
   else {
-    if (this.states[state].time == 'end') this.pscene.simulateUntilSleep(15);
+    if (this.states[state].time == 'end') this.pscene.simulateUntilSleep(12);
     else this.pscene.seek(this.states[state].time);
     this.states[state].pstate = this.getPhysicsState();
   }
@@ -115,9 +115,10 @@ PhysicsOracle.prototype.getTouchedBodies = function(body) {
 
 /// Returns all objects grouped by vicinity. E.g "A    B C" will be returned as [[A], [B,C]]
 /// if dist(A, B) > max_dist and dist(B,C) is <= max_dist. All static objects are ignored.
-PhysicsOracle.prototype.getSpatialGroups = function(max_dist) {
-  var links = [], bodies = [];
-  this.pscene.forEachDynamicBody(function(b) { bodies.push(b) });
+/// If no bodies are passed, all bodies in the scene are used.
+PhysicsOracle.prototype.getSpatialGroups = function(max_dist, bodies) {
+  var links = [];
+  if (!bodies) this.pscene.forEachDynamicBody(function(b) { bodies.push(b) });
   for (var i=0; i<bodies.length-1; i++) for (var j=i+1; j<bodies.length; j++) {
     if (bodies[i].distance(bodies[j]) <= max_dist) links.push([bodies[i], bodies[j]]);
   };
@@ -155,9 +156,11 @@ PhysicsOracle.prototype.observeCollisions = function() {
 	var old_cl = this.pscene.world.m_contactManager.m_contactListener;
 	this.pscene.world.SetContactListener(this.contact_listener);
 	this.collisions = [];
-	this.pscene.simulateUntilSleep(8);
+	this.pscene.simulateUntilSleep(12);
 	this.pscene.world.SetContactListener(old_cl);
 	this.collisions = PhysicsOracle.mergeCollisions(this.collisions, 0);
+  // save current state as end state
+  this.gotoState('end');
 	this.pscene.popState();
 	return this.collisions;
 }

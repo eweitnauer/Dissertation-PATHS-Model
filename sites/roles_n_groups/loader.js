@@ -1,10 +1,10 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 5;//18;
+var pbp_idx = 9;
+var curr_sols = [];
 
-function loadScenes() {
-  var path = "../../libs/pbp-svgs/svgs/" + pbps[pbp_idx].name;
-  document.getElementById('curr_num').innerText = pbps[pbp_idx].name;
-  var files = pbps[pbp_idx].files;
+function loadScenes(name, files) {
+  var path = "../../libs/pbp-svgs/svgs/" + name;
+  document.getElementById('curr_num').innerText = name;
 
   d3.selectAll("svg").remove();
   d3.selectAll("canvas").remove();
@@ -12,9 +12,9 @@ function loadScenes() {
   var adapter = new Box2DAdapter();
   problems = {};
 
-  for (var y=0; y<files.length; y++) for (var x=0; x<files[y].length; x++) {
-    console.log('loading and analyzing scene ' + files[y][x] + ' of ' + pbps[pbp_idx].name + '...');
-    var scene = SVGSceneParser.parseFile(path + "/" + files[y][x] + '.svg', pixels_per_unit);
+  for (var i=0; i<files.length; i++) {
+    console.log('loading and analyzing scene ' + files[i] + ' of ' + name + '...');
+    var scene = SVGSceneParser.parseFile(path + "/" + files[i] + '.svg', pixels_per_unit);
     scene.adjustStrokeWidth(0.5*pixels_per_unit/100);
 
     // create b2World
@@ -24,44 +24,40 @@ function loadScenes() {
     adapter.loadScene(world, scene, true, false);
 
     // create PhysicsScene, Simulator and SceneNode with PhysicsOracle
-    var el_canvas = document.getElementById('c'+y+"-"+x);
+    var el_canvas = document.getElementById('c'+files[i]);
     var ps = new PhysicsScene(world);
     var sim = new Simulator(ps, el_canvas, scene.pixels_per_unit*vis_scaling, true);
     var sn = new SceneNode(scene, new PhysicsOracle(ps));
 
     // create SceneVisualizer
-    var el_svg = document.getElementById('s'+y+"-"+x);
+    var el_svg = document.getElementById('s'+files[i]);
     var svis = new SceneVisualizer(scene, sn, el_svg, vis_scaling);
     ps.onWorldChange.addListener(function(svis) { return function() {svis.draw_scene()} }(svis))
     svis.draw_scene();
     analyzeScene(sn, svis);
 
-    problems[files[y][x]] = {sn: sn, svis: svis};
+    problems[files[i]] = {sn: sn, svis: svis};
   }
+
+  update_solutions(getSolutions(name));
 }
 
 function create_html_elements(files) {
-  var pos = [];
-  for (var y=0; y<files.length; y++) for (var x=0; x<files[y].length; x++) pos.push({x:x, y:y});
   d3.select("#svgs")
     .selectAll("svg")
-    .data(pos)
+    .data(files)
     .enter()
     .append("svg")
-    .attr("id", function(d) { return "s"+d.y+"-"+d.x })
-    // .style("left", function(d) { return d.x * (100 * vis_scaling + 10) })
-    // .style("top", function(d) { return d.y * (100 * vis_scaling + 10) })
+    .attr("id", function(d) { return "s"+d })
     .style("width", 100*vis_scaling)
     .style("height", 100*vis_scaling);
 
 d3.select("#canvases")
   .selectAll("canvas")
-  .data(pos)
+  .data(files)
   .enter()
   .append("canvas")
-  .attr("id", function(d) { return "c"+d.y+"-"+d.x })
-  // .style("left", function(d) { return d.x * (100 * vis_scaling + 10) })
-  // .style("top", function(d) { return d.y * (100 * vis_scaling + 10) })
+  .attr("id", function(d) { return "c"+d })
   .attr("width", 100*vis_scaling)
   .attr("height", 100*vis_scaling);
 }
@@ -69,17 +65,17 @@ d3.select("#canvases")
 function next() {
   pbp_idx += 1;
   if (pbp_idx >= pbps.length) pbp_idx = 0;
-  loadScenes();
+  loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
 }
 
 function prev() {
   pbp_idx -= 1;
   if (pbp_idx < 0) pbp_idx = pbps.length-1;
-  loadScenes();
+  loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
 }
 
 function setup_options() {
-  d3.select('#show-hide')
+  d3.select('#show-hide-1')
     .on('click', function () {
       var n = d3.select('#options');
       n.style('display', n.style('display') == 'none' ? 'block' : 'none')
@@ -125,32 +121,67 @@ function setup_options() {
         .text(function (d) { return d.name });
 }
 
+function setup_solve() {
+  d3.select('#show-hide-2')
+  .on('click', function () {
+    var n = d3.select('#solution');
+    n.style('display', n.style('display') == 'none' ? 'block' : 'none')
+  });
+}
+
+function update_solutions(sols) {
+  var texts = d3.select('#sol-texts')
+    .selectAll('p')
+    .remove();
+
+  var texts = d3.select('#sol-texts')
+    .selectAll('p')
+    .data(sols)
+    .enter()
+    .append("p")
+    .text(function (d) { return d.describe() })
+    .append("button")
+    .text("check")
+    .on('click', function(d) {
+       var ls = [], rs = [], svis = [];
+       d3.keys(problems).forEach(function (sid) {
+         if (sid.split('-')[1] && sid.split('-')[1] >= 3) rs.push(problems[sid].sn);
+         else ls.push(problems[sid].sn);
+         svis.push(problems[sid].svis);
+      });
+      console.log(d.describe(), ':', d.check(ls, rs));
+      svis.forEach(function (svis) { svis.draw_scene() })
+    });
+}
+
 function init() {
   span = document.getElementById('curr_num');
   setup_options();
-  loadScenes();
+  setup_solve();
+  loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
 }
 
-var default_files = [['1-1', '1-2', '1-3', '1-4']
-                    ,['2-1', '2-2', '2-3', '2-4']
-                    ,['3-1', '3-2', '3-3', '3-4']
-                    ,['4-1', '4-2', '4-3', '4-4']
-                    ,['5-1', '5-2', '5-3', '5-4']];
+var default_files = ['1-1', '1-2', '1-3', '1-4'
+                    ,'2-1', '2-2', '2-3', '2-4'
+                    ,'3-1', '3-2', '3-3', '3-4'
+                    ,'4-1', '4-2', '4-3', '4-4'
+                    ,'5-1', '5-2', '5-3', '5-4'];
 var pbps = [
   {name: 'pbp02',  files: default_files, solution: ["one object", "two objects"]},
-  {name: 'pbp12',  files: default_files, solution: ["small object falls off", "small object stays on top"]},
   {name: 'pbp04',  files: default_files, solution: ["squares", "circles"]},
-  {name: 'pbp32',  files: default_files, solution: ["objects rotate a lot", "objects rotate little or no at all"]},
-  {name: 'pbp22',  files: default_files, solution: ["objects collide with each other", "objects don't collide with each other"]},
   {name: 'pbp08',  files: default_files, solution: ["unstable situation", "stable situation"]},
-  {name: 'pbp31',  files: default_files, solution: ["circle can be picked up directly", "circle cannot be picked up directly"]},
-  {name: 'pbp27',  files: default_files, solution: ["(potential) chain reaction","no chain reaction"]},
+  {name: 'pbp11b', files: default_files, solution: ["objects close to each other", "objects far from each other"]},
+  {name: 'pbp12',  files: default_files, solution: ["small object falls off", "small object stays on top"]},
+  {name: 'pbp16',  files: default_files, solution: ["the circle is left of the square", "the square is left of the circle"]},
+  {name: 'pbp22',  files: default_files, solution: ["objects collide with each other", "objects don't collide with each other"]},
+  {name: 'pbp26',  files: default_files, solution: ["circle moves right", "circle moves left"]},
   {name: 'pbp18',  files: default_files, solution: ["object touch eventually", "objects don't touch eventually"]},
   {name: 'pbp23',  files: default_files, solution: ["collision", "no collision"]},
-  {name: 'pbp26',  files: default_files, solution: ["circle moves right", "circle moves left"]},
+  {name: 'pbp32',  files: default_files, solution: ["objects rotate a lot", "objects rotate little or no at all"]},
+  {name: 'pbp31',  files: default_files, solution: ["circle can be picked up directly", "circle cannot be picked up directly"]},
+  {name: 'pbp27',  files: default_files, solution: ["(potential) chain reaction","no chain reaction"]},
   {name: 'pbp13',  files: default_files, solution: ["objects form a tower", "objects form an arc"]},
   {name: 'pbp30',  files: default_files, solution: ["less stable situation", "stable situation"]},
-  {name: 'pbp16',  files: default_files, solution: ["the circle is left of the square", "the square is left of the circle"]},
   {name: 'pbp24',  files: default_files, solution: ["several possible outcomes", "one possible outcome"]},
   {name: 'pbp20',  files: default_files, solution: ["eventually, the square supports other objects", "eventually, the square does not support other objects"]},
   {name: 'pbp21',  files: default_files, solution: ["strong collision", "weak or no collision"]},
@@ -158,6 +189,5 @@ var pbps = [
   {name: 'pbp33',  files: default_files, solution: ["construction gets destroyed", "construction stays intact"]},
   {name: 'pbp19',  files: default_files, solution: ["at least one object flies through the air", "all object always touch something"]},
   {name: 'pbp28',  files: default_files, solution: ["rolls well", "does not roll well"]},
-  {name: 'pbp11b', files: default_files, solution: ["objects close to each other", "objects far from each other"]},
-  {name: 'stability_tests', files: [['1-1', '1-2', '1-3'], ['2-1', '2-2', '2-3'], ['3-1', '3-2', '3-3'], ['4-1', '4-2', '4-3'], ['5-1', '5-2'], ['6-1'], ['7-1', '7-2', '8-1', '8-2']]},
+  {name: 'stability_tests', files: ['1-1', '1-2', '1-3', '2-1', '2-2', '2-3', '3-1', '3-2', '3-3', '4-1', '4-2', '4-3', '5-1', '5-2', '6-1', '7-1', '7-2', '8-1', '8-2']},
 ];

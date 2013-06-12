@@ -2,8 +2,8 @@ var scale = 3, sim, scene, oracle;
 
 function loadScene() {
   //scene = SVGSceneParser.parseFile("2-1.svg");
-  scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp30/1-1.svg");
-  //scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/interpretation_tests/1-2.svg");
+  //scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/pbp30/1-1.svg");
+  scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/interpretation_tests/1-2.svg");
   //scene = SVGSceneParser.parseFile("../../libs/pbp-svgs/svgs/stability_tests/2-2.svg");
   // well now we could display the scenes, no?
   var display1 = document.getElementById('svg');
@@ -21,7 +21,7 @@ function loadScene() {
   var display2 = document.getElementById('canvas');
   if (sim) sim.release();
   var ps = new PhysicsScene(world);
-  sim = new Simulator(ps, display2, scene.pixels_per_unit*scale, true);
+  sim = new Simulator(ps, display2, scene.pixels_per_unit*scale, true, false);
   //sim.play();
   oracle = new PhysicsOracle(ps);
 

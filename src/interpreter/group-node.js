@@ -10,7 +10,7 @@ GroupNode = function(scene_node, objs) {
 
 /// Creates and returns a single GroupNode of all objects of a scene. If the key_obj
 /// parameter is passed, the key_obj is not included in the group.
-GroupNode.groupAll = function(scene_node, key_obj) {
+GroupNode.sceneGroup = function(scene_node, key_obj) {
 	var g = new GroupNode(scene_node);
   for (var i=0; i<scene_node.objs.length; i++) {
     var on = scene_node.objs[i];
@@ -21,10 +21,9 @@ GroupNode.groupAll = function(scene_node, key_obj) {
 
 /// Creates a GroupNodes for each set of spatially close objects in the scene
 /// that has more than one object.
-GroupNode.groupSpatial = function(scene_node, max_dist) {
+GroupNode.spatialGroups = function(scene_node, max_dist) {
   var gns = [];
   if (typeof(max_dist) === 'undefined') max_dist = 0.06;
-  var g = new GroupNode(scene_node);
   var sg = scene_node.oracle.getSpatialGroups(max_dist);
   for (var i=0; i<sg.length; i++) {
     if (sg[i].length > 0) gns.push(new GroupNode(scene_node, sg[i].map(function (body) { return body.master_obj.obj })))
@@ -33,10 +32,7 @@ GroupNode.groupSpatial = function(scene_node, max_dist) {
 }
 
 /// list of all possible group attributes
-GroupNode.attrs = pbpSettings.attrs;
-
-/// list of all possible object relations
-GroupNode.rels = pbpSettings.rels;
+GroupNode.attrs = pbpSettings.group_attrs;
 
 /// Perceives all attributes and all relations to all other objs in the scene
 /// at the current situation and saves the results under the passed time.
@@ -44,23 +40,20 @@ GroupNode.prototype.perceive = function(time) {
   var res = {};
   for (var a in GroupNode.attrs) {
     var attr = GroupNode.attrs[a];
-    if (attr.forGroup) res[a] = attr.forGroup(this.objs, this.scene_node);
-  }
-  for (var r in GroupNode.rels) {
-    res[r] = [];
-    var rel = GroupNode.rels[r];
-    var objs = this.scene_node.objs;
-    for (var i=0; i<objs.length; i++) {
-      if (objs[i] == this) continue;
-      if (objs[i] instanceof GroupNode) {
-        if (rel.GroupToGroup) res[r].push(rel.GroupToGroup(this.objs, objs[i].objs, this.scene_node));
-      } else if (objs[i] instanceof ObjectNode) {
-        if (rel.GroupToObject) res[r].push(rel.GroupToObject(this.objs, objs[i].obj, this.scene_node));
-      }
-    }
-    if (res[r].length == 0) delete res[r];
+    res[a] = new attr(this);
   }
   this.times[time] = res;
+}
+
+/// Returns the attribute for the passed time (default is 'start'). If it was not
+/// perceived yet, it is perceived now.
+GroupNode.prototype.get = function(key, time) {
+  time = time || 'start';
+  if ((time in this.times) && (key in this.times[time])) return this.times[time][key];
+  // need to perceive it
+  this.scene_node.oracle.gotoState(time);
+  if (!(time in this.times)) this.times[time] = {};
+  return this.times[time][key] = new GroupNode.attrs[key](this);
 }
 
 /// Prints a description of the GroupNode.
