@@ -21,6 +21,17 @@ SceneNode.prototype.init = function() {
   }
 }
 
+/// Creates an empty ObjectNode for each shape in the scene that does not have an
+/// associated ObjectNode yet.
+SceneNode.prototype.registerObjects = function() {
+  var movables = this.scene.shapes.filter(function(s) { return s.movable });
+  for (var i=0; i<movables.length; i++) {
+    if (!movables[i].object_node) this.objs.push(new ObjectNode(this, movables[i]));
+  }
+}
+
+/// Records the start state, simulates till the end state while recording all
+/// collisions and records the end state.
 SceneNode.prototype.perceiveCollisions = function() {
   this.oracle.gotoState("start");
   this.collisions = this.oracle.observeCollisions();
@@ -45,10 +56,7 @@ SceneNode.prototype.perceiveAll = function() {
 
 SceneNode.prototype.perceiveCurrent = function(state_name) {
   state_name = state_name || 'current';
-  var movables = this.scene.shapes.filter(function(s) { return s.movable });
-  for (var i=0; i<movables.length; i++) {
-    if (!this.objs[i]) this.objs.push(new ObjectNode(this, movables[i]));
-  }
+  this.registerObjects();
   for (var i=0; i<this.objs.length; i++) this.objs[i].perceive(state_name);
 }
 
