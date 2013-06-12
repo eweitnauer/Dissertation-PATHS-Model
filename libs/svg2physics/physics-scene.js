@@ -45,10 +45,13 @@ PhysicsScene.prototype.seek = function(t) {
 	this.simulate(t - this.world.curr_time);
 }
 
+PhysicsScene.prototype.clearForces = function() {
+	this.world.ClearForces();
+}
+
 /// dt is optional, returns dt.
 PhysicsScene.prototype.step = function(dt) {
 	dt = dt || this.dt;
-	this.world.ClearForces(); // in case we set any forces like with mouse joints
 	this.world.Step(dt, 10, 10);
   this.world.curr_time += dt;
   if (this.emit_changes) this.onWorldChange.emit(this.world.curr_time);
