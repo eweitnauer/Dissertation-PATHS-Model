@@ -115,8 +115,16 @@ SceneVisualizer.prototype.draw_scene = function() {
 			.filter(function(d) {return d.movable})
 		  .style('fill', '#aaa');
 	}
+
 	// remove
 	gs.exit().remove();
+
+	// color scene background according to 'fits_solution' attribute
+	var color = 'none';
+	if (this.sn.fits_solution === true) color = '#efe';
+	else if (this.sn.fits_solution === false) color = '#fee';
+	d3.select(this.svg).style('background-color', color);//typeof(this.sn.fits_solution) === 'undefined' ? 'none'
+		                                  //: this.sn.fits_solution ? 'green' : 'rgba(255,0,0,0.2)');
 }
 
 // SVGScene.prototype.renderInSvg = function(doc, parent, x, y, scale, show_numbers) {
