@@ -19,7 +19,8 @@ var pbpSettings = (function() {
 	 StabilityAttribute,
 	 SmallAttribute,
 	 LargeAttribute,
-	 MovesAttribute].forEach(function (attr) { res.obj_attrs[attr.prototype.key] = attr });
+	 MovesAttribute,
+	 MovableUpAttribute].forEach(function (attr) { res.obj_attrs[attr.prototype.key] = attr });
 	// group attributes
 	[CloseAttribute,
 	 CountAttribute,

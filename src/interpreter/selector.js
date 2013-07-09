@@ -139,7 +139,7 @@ Selector.AttrMatcher.fromAttribute = function(attr, time) {
 Selector.AttrMatcher.prototype.matches = function(node) {
 	var attr = node.get(this.key, this.time);
 	if (!attr) return false;
-	console.log(this.key,'has activity',attr.get_activity());
+	//console.log(this.key,'has activity',attr.get_activity());
 	var active = attr.get_activity() >= pbpSettings.activation_threshold;
 	return (active == this.active && attr.get_label() == this.label);
 }
