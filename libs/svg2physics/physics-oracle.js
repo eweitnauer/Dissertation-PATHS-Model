@@ -100,6 +100,7 @@ PhysicsOracle.prototype.getTouchGroups = function() {
 }
 
 /// Returns a list with all touched bodies, possibly including the ground or the frame.
+/// Each touched body is only in the list once, even if touched at several places.
 PhysicsOracle.prototype.getTouchedBodies = function(body) {
   var res = [];
   var gb = body.m_world.m_groundBody;
@@ -108,7 +109,26 @@ PhysicsOracle.prototype.getTouchedBodies = function(body) {
     var a = c.m_fixtureA.m_body, b = c.m_fixtureB.m_body;
     if (a != body && b != body) continue;
     if (a == gb || b == gb) continue;
-    res.push(a == body ? b : a);
+    a = (a == body ? b : a);
+    if (res.indexOf(a) == -1) res.push(a);
+  }
+  return res;
+}
+
+/// Returns a list of {body: touched_body, pts: [world_pos]} objects. If an object is
+/// touched at several places, it might be in the list several times.
+PhysicsOracle.prototype.getTouchedBodiesWithPos = function(body) {
+  var res = [];
+  var gb = body.m_world.m_groundBody;
+  var wm = new Box2D.Collision.b2WorldManifold();
+  for (var c = body.m_world.GetContactList(); c; c=c.m_next) {
+    if (!c.IsTouching()) continue;
+    var a = c.m_fixtureA.m_body, b = c.m_fixtureB.m_body;
+    if (a != body && b != body) continue;
+    if (a == gb || b == gb) continue;
+    c.GetWorldManifold(wm);
+    var pts = wm.m_points.slice(0, c.m_manifold.m_pointCount);
+    res.push({body: (a == body ? b : a), pts: pts});
   }
   return res;
 }
