@@ -1,5 +1,5 @@
-BottomAttribute = function(obj, scene_node) {
-  this.adaptDomain(scene_node.ground);
+BottomAttribute = function(obj) {
+  this.adaptDomain(obj.object_node.scene_node.ground);
   this.perceive(obj);
 }
 BottomAttribute.prototype.key = "bottom_pos";

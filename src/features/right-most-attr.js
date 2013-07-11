@@ -1,5 +1,5 @@
-RightMostAttribute = function(obj, scene_node) {
-  this.adaptDomain(scene_node.objs);
+RightMostAttribute = function(obj) {
+  this.adaptDomain(obj.object_node.scene_node.objs);
   this.perceive(obj);
 }
 RightMostAttribute.prototype.key = "right_most";

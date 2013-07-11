@@ -1,5 +1,5 @@
-OnGroundAttribute = function(obj, scene_node) {
-	this.ground = scene_node.ground;
+OnGroundAttribute = function(obj) {
+	this.ground = obj.object_node.scene_node.ground;
   this.perceive(obj);
 }
 OnGroundAttribute.prototype.key = "on_ground";

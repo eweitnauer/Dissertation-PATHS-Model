@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 9;
+var pbp_idx = 10;
 var curr_sols = [];
 
 function loadScenes(name, files) {
@@ -177,11 +177,11 @@ var pbps = [
   {name: 'pbp26',  files: default_files, solution: ["circle moves right", "circle moves left"]},
   {name: 'pbp18',  files: default_files, solution: ["object touch eventually", "objects don't touch eventually"]},
   {name: 'pbp31',  files: default_files, solution: ["circle can be picked up directly", "circle cannot be picked up directly"]},
+  {name: 'pbp30',  files: default_files, solution: ["less stable situation", "stable situation"]},
+  {name: 'pbp13',  files: default_files, solution: ["objects form a tower", "objects form an arc"]},
   {name: 'pbp23',  files: default_files, solution: ["collision", "no collision"]},
   {name: 'pbp32',  files: default_files, solution: ["objects rotate a lot", "objects rotate little or no at all"]},
   {name: 'pbp27',  files: default_files, solution: ["(potential) chain reaction","no chain reaction"]},
-  {name: 'pbp13',  files: default_files, solution: ["objects form a tower", "objects form an arc"]},
-  {name: 'pbp30',  files: default_files, solution: ["less stable situation", "stable situation"]},
   {name: 'pbp24',  files: default_files, solution: ["several possible outcomes", "one possible outcome"]},
   {name: 'pbp20',  files: default_files, solution: ["eventually, the square supports other objects", "eventually, the square does not support other objects"]},
   {name: 'pbp21',  files: default_files, solution: ["strong collision", "weak or no collision"]},

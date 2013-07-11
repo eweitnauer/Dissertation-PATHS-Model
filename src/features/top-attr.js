@@ -1,5 +1,5 @@
-TopAttribute = function(obj, scene_node) {
-  this.adaptDomain(scene_node.ground);
+TopAttribute = function(obj) {
+  this.adaptDomain(obj.object_node.scene_node.ground);
   this.perceive(obj);
 }
 TopAttribute.prototype.key = "top_pos";

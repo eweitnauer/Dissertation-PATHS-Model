@@ -51,16 +51,26 @@ ObjectNode.prototype.perceive = function(time) {
   this.times[time] = res;
 }
 
-/// Returns the attribute or relation for the passed time (default is 'start'). If it was not
-/// perceived yet, it is perceived now.
+/// Returns the attribute or relation for the passed time. If no time or null is passed as time,
+/// the current state of the oracle is used. If the oracle is in no named state, the perceived
+/// attribute or relation is not cached, otherwise if its not in the cache yet it is perceived
+/// and cached.
 ObjectNode.prototype.get = function(key, time, other) {
-  time = time || 'start';
+  // if time was not passed, use the current state of the oracle
+  if (!time) time = this.scene_node.oracle.curr_state;
+  // if the feature is cached, just return it
   if ((time in this.times) && (key in this.times[time])) return this.times[time][key];
-  // need to perceive it
-  this.scene_node.oracle.gotoState(time);
-  if (!(time in this.times)) this.times[time] = {};
-  if (key in ObjectNode.attrs) return this.times[time][key] = new ObjectNode.attrs[key](this.obj, this.scene_node);
-  else if (key in ObjectNode.rels) return this.times[time][key] = new ObjectNode.rels[key](this.obj, other.obj);
+  // otherwise, goto the state and perceive it
+  if (time) this.scene_node.oracle.gotoState(time);
+  // cache it, if the state is a known one
+  var res;
+  if (key in ObjectNode.attrs) res = new ObjectNode.attrs[key](this.obj);
+  else if (key in ObjectNode.rels) res = new ObjectNode.rels[key](this.obj, other.obj);
+  if (time) {
+    if (!this.times[time]) this.times[time] = {};
+    this.times[time][key] = res;
+  }
+  return res;
 }
 
 /// Returns a human readable description of the active attribute and relationship labels for

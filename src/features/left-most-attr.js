@@ -1,5 +1,5 @@
-LeftMostAttribute = function(obj, scene_node) {
-  this.adaptDomain(scene_node.objs);
+LeftMostAttribute = function(obj) {
+  this.adaptDomain(obj.object_node.scene_node.objs);
   this.perceive(obj);
 }
 LeftMostAttribute.prototype.key = "left_most";

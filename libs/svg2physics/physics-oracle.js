@@ -10,9 +10,9 @@ This class provides all functionality of the "physics black box" to the PBP Inte
 /// Pass a b2World.
 var PhysicsOracle = function(physics_scene) {
 	this.pscene = physics_scene;
-  this.pscene.onWorldChange.addListener(this.synchShapes.bind(this));
+  this.pscene.onWorldChange.addListener(this.onWorldChange.bind(this));
 	this.contact_listener = new PhysicsOracle.ContactListener(this);
-  this.curr_state = "0";
+  this.curr_state = "0"; // null if unknown
   this.states = {'0'    : {time: 0, pstate: null},
                  'start': {time: 0.05, pstate: null},
                  'end'  : {time: 'end', pstate: null}};
@@ -22,23 +22,27 @@ var PhysicsOracle = function(physics_scene) {
 /// it is reached so the second time, no simulation is neccessary.
 PhysicsOracle.prototype.gotoState = function(state) {
   if (this.curr_state === state) return;
-  if (!(state in this.states)) throw 'unknown state "' + state + '"';
+  if (!(state in this.states)) {
+    this.curr_state = null;
+    throw 'unknown state "' + state + '"';
+  }
   var s = this.states[state];
-  if (s.pstate) this.setPhysicsState(s.pstate);
+  if (s.pstate) this.loadPhysicsState(s.pstate);
   else {
     if (this.states[state].time == 'end') this.pscene.simulateUntilSleep(12);
     else this.pscene.seek(this.states[state].time);
-    this.states[state].pstate = this.getPhysicsState();
+    this.states[state].pstate = this.savePhysicsState();
   }
+  this.curr_state = state;
 }
 
 /// Get the current state of the physics simulation to revert to it later.
-PhysicsOracle.prototype.getPhysicsState = function() {
+PhysicsOracle.prototype.savePhysicsState = function() {
   return this.pscene.getState();
 }
 
 /// Revert to a previously recorded state of the physics world.
-PhysicsOracle.prototype.setPhysicsState = function(pstate) {
+PhysicsOracle.prototype.loadPhysicsState = function(pstate) {
   this.pscene.setState(pstate);
 }
 
@@ -48,6 +52,12 @@ PhysicsOracle.prototype.setPhysicsState = function(pstate) {
 /// The start_callback can be used to, e.g., apply an impulse. It can also be null.
 PhysicsOracle.prototype.analyzeFuture = function(time, start_callback, end_callback) {
   return this.pscene.analyzeFuture(time, start_callback, end_callback);
+}
+
+/// Called when the world changed, calls synchShapes and sets curr_state to null.
+PhysicsOracle.prototype.onWorldChange = function() {
+  this.curr_state = null;
+  this.synchShapes();
 }
 
 /// Calls synch_to_phys for every body's master shape object. This updates the x, y and rot attributes of

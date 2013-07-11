@@ -76,6 +76,12 @@ function getSolutions(pbp) {
     s.add_attr(new Selector.AttrMatcher('can_move_up', 'can-move-up'));
     sols.push(new Solution.IsX(s, 'left'));
   }
+  if (pbp == 'pbp13') { // can move up
+    var s = new Selector('unique');
+    s.add_attr(new Selector.AttrMatcher('shape', 'circle'));
+    s.add_attr(new Selector.AttrMatcher('can_move_up', 'can-move-up'));
+    sols.push(new Solution.IsX(s, 'left'));
+  }
   return sols;
 }
 
