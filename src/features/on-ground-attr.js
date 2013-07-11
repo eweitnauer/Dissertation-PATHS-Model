@@ -7,7 +7,8 @@ OnGroundAttribute.prototype.constant = false;
 
 OnGroundAttribute.prototype.perceive = function(obj) {
   this.obj = obj;
-  this.val = (new TouchRelationship(this.obj, this.ground)).val;
+  var touch = obj.object_node.get('touch', null, this.ground.object_node);
+  this.val = touch.get_activity();
 }
 
 OnGroundAttribute.prototype.get_activity = function() {

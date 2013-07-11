@@ -28,6 +28,7 @@ SceneNode.prototype.registerObjects = function() {
   for (var i=0; i<movables.length; i++) {
     if (!movables[i].object_node) this.objs.push(new ObjectNode(this, movables[i]));
   }
+  if (!this.ground.object_node) this.ground.object_node = new ObjectNode(this, this.ground);
 }
 
 /// Records the start state, simulates till the end state while recording all

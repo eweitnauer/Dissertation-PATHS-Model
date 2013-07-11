@@ -54,19 +54,19 @@ Solution.XIsY.prototype.check = function(scenes_l, scenes_r) {
 	var sel1 = this.sel1, sel2 = this.sel2;
 	return a.every(function (scene) {
 			var objs = sel1.select(scene.objs, scene);
-			var okay = sel1.mode == 'all' ? objs.length == scene.objs.length
-							                     : objs.length > 0;
+			var okay = sel1.mode == 'unique' ? objs.length == 1
+							                         : objs.length > 0;
 			if (okay) {
 				var objs2 = sel2.select(objs, scene);
 				okay = sel2.mode == 'all' ? objs2.length == objs.length
-							                    : objs2.length > 0;
+							                    : (objs2.length > 0 || sel2.mode == 'group');
 			}
 			scene.fits_solution = okay;
 			return okay;
 	  }) && b.every(function (scene) {
 	  	var objs = sel1.select(scene.objs, scene);
-			var okay = sel1.mode == 'all' ? objs.length == scene.objs.length
-							                     : objs.length > 0;
+			var okay = sel1.mode == 'unique' ? objs.length == 1
+							                         : (objs.length > 0 || sel2.mode == 'group');
 			if (okay) {
 				var objs2 = sel2.select(objs, scene);
 				okay = sel2.mode == 'all' ? objs2.length < objs.length
