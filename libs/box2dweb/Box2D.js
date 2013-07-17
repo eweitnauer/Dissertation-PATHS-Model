@@ -5327,7 +5327,7 @@ Box2D.postDefs = [];
    }
    b2Fixture.prototype.SetFilterData = function (filter) {
       this.m_filter = filter.Copy();
-      if (this.m_body) return;
+      if (!this.m_body) return;
       var edge = this.m_body.GetContactList();
       while (edge) {
          var contact = edge.contact;
