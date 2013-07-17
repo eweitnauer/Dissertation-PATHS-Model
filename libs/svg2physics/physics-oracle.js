@@ -14,7 +14,7 @@ var PhysicsOracle = function(physics_scene) {
 	this.contact_listener = new PhysicsOracle.ContactListener(this);
   this.curr_state = "0"; // null if unknown
   this.states = {'0'    : {time: 0, pstate: null},
-                 'start': {time: 0.05, pstate: null},
+                 'start': {time: 0.08, pstate: null},
                  'end'  : {time: 'end', pstate: null}};
 }
 
@@ -46,12 +46,15 @@ PhysicsOracle.prototype.loadPhysicsState = function(pstate) {
   this.pscene.setState(pstate);
 }
 
-/// It saves the world state, calls teh start_callback, simulates the world for the passed
+/// It saves the world state, calls the start_callback, simulates the world for the passed
 /// time, calls the end_callback and restores the previous world state. Returns the value
-/// returned by end_callback.
+/// returned by end_callback. Since pscene.analyzeFuture temporarily deactivates the worldChanged
+/// callbacks, the PhysicsOracle will still be in the same state after simulation, as it was before.
 /// The start_callback can be used to, e.g., apply an impulse. It can also be null.
-PhysicsOracle.prototype.analyzeFuture = function(time, start_callback, end_callback) {
-  return this.pscene.analyzeFuture(time, start_callback, end_callback);
+/// If untilSleep is passed as true, the simulation might stop before `time`, if all bodies in
+/// the scene are at rest.
+PhysicsOracle.prototype.analyzeFuture = function(time, start_callback, end_callback, untilSleep) {
+  return this.pscene.analyzeFuture(time, start_callback, end_callback, untilSleep);
 }
 
 /// Called when the world changed, calls synchShapes and sets curr_state to null.
@@ -182,17 +185,19 @@ PhysicsOracle.prototype.groupLinkedNodes = function(nodes, links) {
 /// Gives back an array of collision events {a, b, dv, t} where a is the 'hitter' and b the
 /// 'hit' body.
 PhysicsOracle.prototype.observeCollisions = function() {
-	this.pscene.pushState();
 	var old_cl = this.pscene.world.m_contactManager.m_contactListener;
 	this.pscene.world.SetContactListener(this.contact_listener);
 	this.collisions = [];
-	this.pscene.simulateUntilSleep(12);
-	this.pscene.world.SetContactListener(old_cl);
-	this.collisions = PhysicsOracle.mergeCollisions(this.collisions, 0);
-  // save current state as end state
-  this.gotoState('end');
-	this.pscene.popState();
-	return this.collisions;
+  var thiz = this;
+
+  this.analyzeFuture(12, null, function() {
+    thiz.pscene.world.SetContactListener(old_cl);
+    thiz.collisions = PhysicsOracle.mergeCollisions(thiz.collisions, 0);
+    // save current state as end state, if we didn't cache it yet
+    if (!thiz.states.end.pstate) thiz.states.end.pstate = thiz.savePhysicsState();
+  }, true);
+
+  return this.collisions;
 }
 
 /// Merges collision of any body pair that are temporally closer than `max_dt` default: 0.25 s.
