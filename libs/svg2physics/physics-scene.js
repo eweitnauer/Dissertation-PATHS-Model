@@ -74,29 +74,37 @@ PhysicsScene.prototype.simulateUntilSleep = function(max_time) {
 	return t;
 }
 
-/// It saves the world state, calls teh start_callback, simulates the world for the passed
+/// It saves the world state, calls the start_callback, simulates the world for the passed
 /// time, calls the end_callback and restores the previous world state. Returns the value
 /// returned by end_callback.
+/// Temporarily disables the onWorldChange events.
 /// The start_callback can be used to, e.g., apply an impulse. It can also be null.
-PhysicsScene.prototype.analyzeFuture = function(time, start_callback, end_callback) {
+/// If untilSleep is passed as true, the simulation might stop before `time`, if all bodies in
+/// the scene are at rest.
+PhysicsScene.prototype.analyzeFuture = function(time, start_callback, end_callback, untilSleep) {
 	if (time < 0) throw "You are mistaking the past for the future."
 	var old_emit_changes = this.emit_changes;
 	this.emit_changes = false;
 	this.pushState();
 	if (start_callback) start_callback();
-	this.simulate(time);
+	if (time > 0) {
+		if (untilSleep) this.simulateUntilSleep(time);
+		else this.simulate(time);
+	}
 	var res = end_callback();
 	this.popState();
 	this.emit_changes = old_emit_changes;
 	return res;
 };
 
+/// Calls the passed function for all bodies that have a master_object.
 PhysicsScene.prototype.forEachBody = function(f) {
   for (var b = this.world.m_bodyList; b; b = b.m_next) {
   	if (b.master_obj) f(b);
   }
 }
 
+/// Calls the passed function for all dynamic bodies that have a master_object.
 PhysicsScene.prototype.forEachDynamicBody = function(f) {
   for (var b = this.world.m_bodyList; b; b = b.m_next) {
   	if (b.GetType() == b2Body.b2_dynamicBody) f(b);
@@ -141,6 +149,11 @@ PhysicsScene.prototype.meanPointDistance = function(points, xf1, xf2) {
     dist += d.Length();
   }
   return dist / points.length;
+}
+
+/// Wakes up all bodies.
+PhysicsScene.prototype.wakeUp = function () {
+	for (var b = this.world.m_bodyList; b; b = b.m_next) b.SetAwake(true);
 }
 
 /// Returns the number of dynamic objects that are awake.
