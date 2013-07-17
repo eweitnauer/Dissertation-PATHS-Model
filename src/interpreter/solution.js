@@ -79,7 +79,8 @@ Solution.XIsY.prototype.check = function(scenes_l, scenes_r) {
 
 /// Returns a human readable description of the solution.
 Solution.XIsY.prototype.describe = function() {
-	return "Only in the " + this.main_side + " scenes, " + this.sel1.describe() + " are " + this.sel2.describe2();
+	return "Only in the " + this.main_side + " scenes, " + this.sel1.describe() +
+	       (this.sel1.mode == "all" ? " are " : " is ") + this.sel2.describe2();
 };
 
 /// Solution of the type "There is always an xxx on the main_side, but not on the other_side." ///////////////////////////

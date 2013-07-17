@@ -10,9 +10,10 @@ OnTopRelationship.prototype.constant = false;
 OnTopRelationship.prototype.perceive = function(obj, other) {
   this.obj = obj;
   this.other = other;
-  var touch = obj.object_node.get('touch', null, other.object_node);
-  var above = obj.object_node.get('above', null, other.object_node);
-  this.val = touch.get_activity() * above.get_activity();
+  var touch = obj.object_node.getRel('touch', other.object_node).get_activity();
+  var above = Math.max(obj.object_node.getRel('above', other.object_node).get_activity()
+                      ,other.object_node.getRel('below', obj.object_node).get_activity());
+  this.val = touch * above;
 }
 
 OnTopRelationship.prototype.get_activity = function() {

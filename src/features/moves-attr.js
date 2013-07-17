@@ -1,5 +1,5 @@
 /// Reflects whether an object is moving at the moment or will be moving 0.1 seconds
-/// in the future. The activation is 0.5 for a linear velocity of 0.25.
+/// in the future. The activation is 0.5 for a linear velocity of 0.1.
 MovesAttribute = function(obj) {
   this.perceive(obj);
 }
@@ -9,7 +9,7 @@ MovesAttribute.prototype.constant = true;
 // google: "plot from -0.5 to 5, 1/(1+exp(20*(0.25-x)))"
 MovesAttribute.membership = function(lin_vel) {
   var a = 20; // steepness of sigmoid function
-  var m = 0.25; // linear velocity at which sigmoid is 0.5
+  var m = 0.1; // linear velocity at which sigmoid is 0.5
   return 1/(1+Math.exp(a*(m-lin_vel)));
 }
 

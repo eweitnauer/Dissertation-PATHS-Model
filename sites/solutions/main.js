@@ -57,6 +57,18 @@ function getSolutions(pbp) {
     s1.add_attr(new Selector.AttrMatcher('touching', 'touching', true, 'end'));
     sols.push(new Solution.IsX(s1, 'left'));
   }
+  if (pbp == 'pbp20') { // support
+    var s1 = new Selector('first');
+    s1.add_attr(new Selector.AttrMatcher('shape', 'square'));
+    s1.add_rel(new Selector.RelMatcher(new Selector('first'), 'supports', 'supporting'));
+    sols.push(new Solution.IsX(s1, 'left'));
+
+    var s1a = new Selector('unique');
+    s1a.add_attr(new Selector.AttrMatcher('shape', 'square'));
+    var s1b = new Selector('unique');
+    s1b.add_rel(new Selector.RelMatcher(new Selector('first'), 'supports', 'supporting'));
+    sols.push(new Solution.XIsY(s1a, s1b, 'left'));
+  }
   if (pbp == 'pbp22') { // objects hit each other vs. not
     var s1 = new Selector('first'), s2 = new Selector('all');
     s1.add_rel(new Selector.RelMatcher(new Selector('unique'), 'hits', 'hits'));
@@ -273,10 +285,11 @@ function group_by_attributes(objs, attrs, min_activity) {
   for (var i=0; i<objs.length; i++) {
     var max_act = min_activity, max_attr = '_none_';
     for (var j=0; j<attrs.length; j++) {
-      var act = objs[i].times.start[attrs[j]].get_activity();
+      var attr = objs[i].getAttr(attrs[j]);
+      var act = attr.get_activity();
       if (act >= max_act) {
         max_act = act;
-        max_attr = objs[i].times.start[attrs[j]].get_label();
+        max_attr = attr.get_label();
       }
     }
     if (!(max_attr in res)) { res[max_attr] = [] }

@@ -110,7 +110,7 @@ Selector.prototype.describe2 = function() {
 	var res = attrs.concat(rels).join(" and ");
 	if (this.mode == 'all') return 'all objects are ' + res;
 	if (this.mode == 'unique') return 'exactly one object is ' + res;
-	if (this.mode == 'first') return 'there is an object that is ' + res;
+	if (this.mode == 'first') return 'an object is ' + res;
 	if (this.mode == 'group') return 'the group of objects is ' + res;
 };
 
@@ -137,7 +137,7 @@ Selector.AttrMatcher.fromAttribute = function(attr, time) {
 /// Returns true if the passed node can supply the attribute and its activation and
 /// label match.
 Selector.AttrMatcher.prototype.matches = function(node) {
-	var attr = node.get(this.key, this.time);
+	var attr = node.getAttr(this.key, this.time);
 	if (!attr) return false;
 	//console.log(this.key,'has activity',attr.get_activity());
 	var active = attr.get_activity() >= pbpSettings.activation_threshold;
@@ -171,7 +171,7 @@ Selector.RelMatcher.prototype.matches = function(node, others) {
 	others = others || node.scene_node.objs.filter(function (on) { return on !== node });
 	var res = this.other_sel.select(others, node.scene_node, (function (other) {
 		if (other === node) return false;
-		var rel = node.get(this.key, this.time, other);
+		var rel = node.getRel(this.key, other, this.time);
 		if (!rel) return false;
 	  var active = rel.get_activity() >= pbpSettings.activation_threshold;
 		return (active == this.active && rel.get_label() == this.label);

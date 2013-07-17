@@ -47,14 +47,25 @@ GroupNode.prototype.perceive = function(time) {
 
 /// Returns the attribute for the passed time (default is 'start'). If it was not
 /// perceived yet, it is perceived now.
-GroupNode.prototype.get = function(key, time) {
-  time = time || 'start';
-  if ((time in this.times) && (key in this.times[time])) return this.times[time][key];
-  // need to perceive it
-  this.scene_node.oracle.gotoState(time);
-  if (!(time in this.times)) this.times[time] = {};
-  return this.times[time][key] = new GroupNode.attrs[key](this);
+GroupNode.prototype.getAttr = function(key, time) {
+  // if time was not passed, use the current state of the oracle
+  if (!time) time = this.scene_node.oracle.curr_state;
+  // if the attr is cached, just return it
+  //NO CACHINGif ((time in this.times) && (key in this.times[time])) return this.times[time][key];
+  // otherwise, goto the state and perceive it
+  if (time) this.scene_node.oracle.gotoState(time);
+  var res = new GroupNode.attrs[key](this);
+  // cache it, if the state is a known one
+  if (time) {
+    if (!this.times[time]) this.times[time] = {};
+    this.times[time][key] = res;
+  }
+  return res;
 }
+
+
+
+GroupNode.prototype.get = GroupNode.prototype.getAttr;
 
 /// Prints a description of the GroupNode.
 GroupNode.prototype.describe = function() {

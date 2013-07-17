@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 11;
+var pbp_idx = 0;
 var curr_sols = [];
 
 function loadScenes(name, files) {
@@ -172,22 +172,23 @@ var pbps = [
   {name: 'pbp08',  files: default_files, solution: ["unstable situation", "stable situation"]},
   {name: 'pbp11b', files: default_files, solution: ["objects close to each other", "objects far from each other"]},
   {name: 'pbp12',  files: default_files, solution: ["small object falls off", "small object stays on top"]},
+  {name: 'pbp13',  files: default_files, solution: ["objects form a tower", "objects form an arc"]},
   {name: 'pbp16',  files: default_files, solution: ["the circle is left of the square", "the square is left of the circle"]},
+  {name: 'pbp18',  files: default_files, solution: ["object touch eventually", "objects don't touch eventually"]},
+  {name: 'pbp20',  files: default_files, solution: ["the square supports other objects", "the square does not support other objects"]},
   {name: 'pbp22',  files: default_files, solution: ["objects collide with each other", "objects don't collide with each other"]},
   {name: 'pbp26',  files: default_files, solution: ["circle moves right", "circle moves left"]},
-  {name: 'pbp18',  files: default_files, solution: ["object touch eventually", "objects don't touch eventually"]},
-  {name: 'pbp31',  files: default_files, solution: ["circle can be picked up directly", "circle cannot be picked up directly"]},
   {name: 'pbp30',  files: default_files, solution: ["less stable situation", "stable situation"]},
-  {name: 'pbp13',  files: default_files, solution: ["objects form a tower", "objects form an arc"]},
+  {name: 'pbp31',  files: default_files, solution: ["circle can be picked up directly", "circle cannot be picked up directly"]},
   {name: 'pbp23',  files: default_files, solution: ["collision", "no collision"]},
   {name: 'pbp32',  files: default_files, solution: ["objects rotate a lot", "objects rotate little or no at all"]},
   {name: 'pbp27',  files: default_files, solution: ["(potential) chain reaction","no chain reaction"]},
   {name: 'pbp24',  files: default_files, solution: ["several possible outcomes", "one possible outcome"]},
-  {name: 'pbp20',  files: default_files, solution: ["eventually, the square supports other objects", "eventually, the square does not support other objects"]},
   {name: 'pbp21',  files: default_files, solution: ["strong collision", "weak or no collision"]},
   {name: 'pbp09',  files: default_files, solution: ["objects move in opposite directions", "objects move in same direction"]},
   {name: 'pbp33',  files: default_files, solution: ["construction gets destroyed", "construction stays intact"]},
   {name: 'pbp19',  files: default_files, solution: ["at least one object flies through the air", "all object always touch something"]},
   {name: 'pbp28',  files: default_files, solution: ["rolls well", "does not roll well"]},
   {name: 'stability_tests', files: ['1-1', '1-2', '1-3', '2-1', '2-2', '2-3', '3-1', '3-2', '3-3', '4-1', '4-2', '4-3', '5-1', '5-2', '6-1', '7-1', '7-2', '8-1', '8-2']},
+  {name: 'support_tests', files: ['1-1', '1-2', '1-3', '1-4', '2-1', '2-2', '2-3', '3-1', '3-2']},
 ];

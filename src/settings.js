@@ -39,6 +39,7 @@ var pbpSettings = (function() {
 	TouchRelationship,
 	HitsRelationship,
 	GetsHitRelationship,
-	CollidesRelationship].forEach(function (rel) { res.obj_rels[rel.prototype.key] = rel });
+	CollidesRelationship,
+	SupportsRelationship].forEach(function (rel) { res.obj_rels[rel.prototype.key] = rel });
 	return res;
 })();
