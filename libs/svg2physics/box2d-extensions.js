@@ -45,6 +45,22 @@ b2Body.prototype.distance = function(other) {
   return min_dist;
 }
 
+/// Will set the categoryBits, maskBits and groupIndex fields passed in
+/// the filter_options object. If an field is not set, the old values of the
+/// filter will be kept.
+/// Example: setCollisionFilter({maskBits: 0x0000}).
+/// See http://www.iforce2d.net/b2dtut/collision-filtering.
+b2Body.prototype.setCollisionFilter = function(filter_options) {
+  var filter;
+  for (var f=this.m_fixtureList; f; f = f.m_next) {
+    filter = f.GetFilterData();
+    if ('maskBits' in filter_options) filter.maskBits = filter_options.maskBits;
+    if ('categoryBits' in filter_options) filter.categoryBits = filter_options.categoryBits;
+    if ('groupIndex' in filter_options) filter.groupIndex = filter_options.groupIndex;
+    f.SetFilterData(filter);
+  }
+}
+
 function b2BodyState(body) {
   this.Init(body);
 }
@@ -93,6 +109,7 @@ b2BodyState.prototype.Apply = function(body) {
     body.SetAwake(true);
   }
   body.m_flags = this.m_flags;
+  body.SynchronizeFixtures();
 }
 
 function b2WorldState(world) {
@@ -133,6 +150,7 @@ b2World.prototype.PopState = function() {
   for (var b = this.m_bodyList; b; b=b.m_next) {
     if (b.m_type == b2Body.b2_dynamicBody) b.PopState();
   }
+  this.m_contactManager.FindNewContacts();
 }
 
 /// Saves the state of the b2World and all dynamic b2Bodies into an array and returns it.
