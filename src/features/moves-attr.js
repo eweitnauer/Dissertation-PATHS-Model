@@ -6,9 +6,9 @@ MovesAttribute = function(obj) {
 MovesAttribute.prototype.key = 'moves';
 MovesAttribute.prototype.constant = true;
 
-// google: "plot from -0.5 to 5, 1/(1+exp(20*(0.25-x)))"
+// google: "plot from -0.5 to 5, 1/(1+exp(40*(0.1-x)))"
 MovesAttribute.membership = function(lin_vel) {
-  var a = 20; // steepness of sigmoid function
+  var a = 40; // steepness of sigmoid function
   var m = 0.1; // linear velocity at which sigmoid is 0.5
   return 1/(1+Math.exp(a*(m-lin_vel)));
 }
