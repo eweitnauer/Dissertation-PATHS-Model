@@ -43,3 +43,12 @@ var pbpSettings = (function() {
 	SupportsRelationship].forEach(function (rel) { res.obj_rels[rel.prototype.key] = rel });
 	return res;
 })();
+
+var PBP = PBP || {};
+
+/// Adds all keys+values in b to a (overwrites if exists) and returns a. If b is not an object, just
+/// return a.
+PBP.extend = function(a, b) {
+  if (typeof(b) === 'object') for (var key in b) a[key] = b[key];
+  return a;
+}
