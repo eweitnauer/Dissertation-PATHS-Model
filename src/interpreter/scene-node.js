@@ -3,6 +3,7 @@
 /// A SceneNode is a collection of several objects.
 SceneNode = function(scene, oracle) {
   this.scene = scene;
+  this.side = scene.side;
   this.oracle = oracle;
   this.objs = [];      // list of objects or groups in the scene
   this.ground = null;
