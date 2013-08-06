@@ -17,7 +17,17 @@ CloseRelationship.membership = function(dist) {
 CloseRelationship.prototype.perceive = function(obj, other) {
   this.obj = obj;
   this.other = other;
-  this.val = obj.phys_obj.distance(other.phys_obj) / obj.phys_scale;
+  // if both objects are in the same scene, use the physics engine to get
+  // the minimum distance between their surfaces
+  if (obj.object_node.scene_node === other.object_node.scene_node) {
+    this.val = obj.phys_obj.distance(other.phys_obj) / obj.phys_scale;
+  }
+  /// if the objects are from different scenes, simply compare the distance
+  /// of their positions
+  else {
+    // a bit of scaling to be more permissive
+    this.val = Point.len(obj.x-other.x, obj.y-other.y)*2/3;
+  }
 }
 
 CloseRelationship.prototype.get_activity = function() {
