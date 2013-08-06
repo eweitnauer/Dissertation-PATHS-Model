@@ -77,56 +77,63 @@ ObjectNode.prototype.perceive = function(time) {
 //   return res;
 // }
 
-/// Dynamically retrieves and caches an attribute or feature. When getting an attribute
-/// feature, optionally pass the time as `arg2`. When getting a relationship feature, pass
-/// the other ObjectNode as `arg2` and optinally the time as `arg3`.
-ObjectNode.prototype.get = function(key, arg2, arg3) {
-  if (key in ObjectNode.attrs) return this.getAttr(key, arg2);
-  else if (key in ObjectNode.rels) return this.getRel(key, arg2, arg3);
+/// Dynamically retrieves and caches an attribute or feature. Optionally pass the time
+/// as `time` field in the `opts` object. When getting a relationship feature, pass the
+/// other ObjectNode as `other` field in `opts`.
+/// To just get a perception from the cache and return false if its not there, put
+/// `from_cache: true` in the `opts`.
+ObjectNode.prototype.get = function(key, opts) {
+  if (key in ObjectNode.attrs) return this.getAttr(key, opts);
+  else if (key in ObjectNode.rels) return this.getRel(key, opts);
   else throw "unknown feature '" + key + "'";
 }
 
-/// Returns the attribute named `key` for the passed `time`. If no time or null is passed as time,
-/// the current state of the oracle is used. If the oracle is in no named state, the perceived
-/// attribute is not cached, otherwise its returned if in cache or perceived, cached and returned
-/// if not in cache.
-ObjectNode.prototype.getAttr = function(key, time) {
+/// Returns the attribute named `key`. If given, the `time` in the `opts` object is used,
+/// otherwise the current state of the oracle is used. If the oracle is in no named state,
+/// the perceived attribute is not cached, otherwise its returned if in cache or perceived,
+/// cached and returned if not in cache.
+ObjectNode.prototype.getAttr = function(key, opts) {
+  var o = PBP.extend({}, opts);
   // if time was not passed, use the current state of the oracle
-  if (!time) time = this.scene_node.oracle.curr_state;
+  if (!o.time) o.time = this.scene_node.oracle.curr_state;
   // if the attr is cached, just return it
-  //NO CACHINGif ((time in this.times) && (key in this.times[time])) return this.times[time][key];
+  if ((o.time in this.times) && (key in this.times[o.time])) return this.times[o.time][key];
+  if (o.from_cache) return false;
   // otherwise, goto the state and perceive it
-  if (time) this.scene_node.oracle.gotoState(time);
+  if (o.time) this.scene_node.oracle.gotoState(o.time);
   var res = new ObjectNode.attrs[key](this.obj);
   // cache it, if the state is a known one
-  if (time) {
-    if (!this.times[time]) this.times[time] = {};
-    this.times[time][key] = res;
+  if (o.time) {
+    if (!this.times[o.time]) this.times[o.time] = {};
+    this.times[o.time][key] = res;
   }
   return res;
 }
 
-/// Returns the relationship named `key` for the passed `time`. If no time or null is passed as time,
-/// the current state of the oracle is used. If the oracle is in no named state, the perceived
-/// relationship is not cached, otherwise its returned if in cache or perceived, cached and returned
-/// if not in cache.
-ObjectNode.prototype.getRel = function(key, other, time) {
+/// Returns the relationship named `key` with the `other` object node in the `opts` object.
+/// If given, the `time` in the `opts` object is used,
+/// otherwise the current state of the oracle is used. If the oracle is in no named state,
+/// the perceived relationship is not cached, otherwise its returned if in cache or perceived,
+/// cached and returned if not in cache.
+ObjectNode.prototype.getRel = function(key, opts) {
+  var o = PBP.extend({}, opts);
   // if time was not passed, use the current state of the oracle
-  if (!time) time = this.scene_node.oracle.curr_state;
+  if (!o.time) o.time = this.scene_node.oracle.curr_state;
   // if the rel is cached, return it
-  //NO CACHINGif ((time in this.times) && (key in this.times[time])) {
-  //  var cache = this.times[time][key];
-  //  var res = cache.filter(function (rel) { return rel.other == other.obj })[0];
-  //  if (res) return res;
-  //}
+  if ((o.time in this.times) && (key in this.times[o.time])) {
+   var cache = this.times[o.time][key];
+   var res = cache.filter(function (rel) { return rel.other == o.other.obj })[0];
+   if (res) return res;
+  }
+  if (o.from_cache) return false;
   // otherwise, goto the state and perceive it
-  if (time) this.scene_node.oracle.gotoState(time);
-  var res = new ObjectNode.rels[key](this.obj, other.obj);
+  if (o.time) this.scene_node.oracle.gotoState(o.time);
+  var res = new ObjectNode.rels[key](this.obj, o.other.obj);
   // cache it, if the state is a known one
-  if (time) {
-    if (!this.times[time]) this.times[time] = {};
-    if (!this.times[time][key]) this.times[time][key] = [];
-    this.times[time][key].push(res);
+  if (o.time) {
+    if (!this.times[o.time]) this.times[o.time] = {};
+    if (!this.times[o.time][key]) this.times[o.time][key] = [];
+    this.times[o.time][key].push(res);
   }
   return res;
 }
