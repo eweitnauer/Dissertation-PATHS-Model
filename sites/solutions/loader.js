@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 0;
+var pbp_idx = 1;
 var curr_sols = [];
 
 function loadScenes(name, files) {
@@ -15,6 +15,11 @@ function loadScenes(name, files) {
   for (var i=0; i<files.length; i++) {
     console.log('loading and analyzing scene ' + files[i] + ' of ' + name + '...');
     var scene = SVGSceneParser.parseFile(path + "/" + files[i] + '.svg', pixels_per_unit);
+    // quick hack to extract side from the file name
+    if (files[i].split('-').length == 2 && Number(files[i].split('-')[1]) >= 3) {
+      scene.side = 'right';
+    } else scene.side = 'left';
+
     scene.adjustStrokeWidth(0.5*pixels_per_unit/100);
 
     // create b2World
@@ -144,10 +149,10 @@ function update_solutions(sols) {
     .text("check")
     .on('click', function(d) {
        var ls = [], rs = [], svis = [];
-       d3.keys(problems).forEach(function (sid) {
-         if (sid.split('-')[1] && sid.split('-')[1] >= 3) rs.push(problems[sid].sn);
-         else ls.push(problems[sid].sn);
-         svis.push(problems[sid].svis);
+       d3.values(problems).forEach(function (p) {
+         if (p.sn.side == 'right') rs.push(p.sn);
+         else ls.push(p.sn);
+         svis.push(p.svis);
       });
       console.log(d.describe(), ':', d.check(ls, rs));
       svis.forEach(function (svis) { svis.draw_scene() })
