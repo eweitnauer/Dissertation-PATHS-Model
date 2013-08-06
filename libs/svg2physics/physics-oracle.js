@@ -151,7 +151,10 @@ PhysicsOracle.prototype.getTouchedBodiesWithPos = function(body) {
 /// If no bodies are passed, all bodies in the scene are used.
 PhysicsOracle.prototype.getSpatialGroups = function(max_dist, bodies) {
   var links = [];
-  if (!bodies) this.pscene.forEachDynamicBody(function(b) { bodies.push(b) });
+  if (!bodies) {
+    bodies = [];
+    this.pscene.forEachDynamicBody(function(b) { bodies.push(b) });
+  }
   for (var i=0; i<bodies.length-1; i++) for (var j=i+1; j<bodies.length; j++) {
     if (bodies[i].distance(bodies[j]) <= max_dist) links.push([bodies[i], bodies[j]]);
   };
