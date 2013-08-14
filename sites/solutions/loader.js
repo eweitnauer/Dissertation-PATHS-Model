@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 1;
+var pbp_idx = 10;
 var curr_sols = [];
 
 function loadScenes(name, files) {
@@ -19,6 +19,7 @@ function loadScenes(name, files) {
     if (files[i].split('-').length == 2 && Number(files[i].split('-')[1]) >= 3) {
       scene.side = 'right';
     } else scene.side = 'left';
+    scene.name = files[i];
 
     scene.adjustStrokeWidth(0.5*pixels_per_unit/100);
 

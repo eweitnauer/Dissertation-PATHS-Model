@@ -4,8 +4,10 @@
 SceneNode = function(scene, oracle) {
   this.scene = scene;
   this.side = scene.side;
+  this.id = scene.name || ('s'+Math.round(Math.random()*10000));
   this.oracle = oracle;
-  this.objs = [];      // list of objects or groups in the scene
+  this.objs = [];      // list of objects in the scene
+  this.groups = [];    // list of object groups in the scene
   this.ground = null;
   this.frame = null;
   this.collisions = []; // list of collisions

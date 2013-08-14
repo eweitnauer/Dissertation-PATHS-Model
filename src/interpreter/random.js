@@ -26,6 +26,6 @@ Random.int = function(upper) {
 }
 
 /// Returns a random element from the passed array.
-Random.pick_uniform = function(vals) {
+Random.pick = function(vals) {
 	return vals[Random.int(vals.length)];
 }

@@ -6,6 +6,16 @@ GroupNode = function(scene_node, objs) {
   this.scene_node = scene_node;
   this.objs = objs || [];   // shapes
   this.times = {};
+  this.selector = null;  // will be set if the group is constructed using a selector
+}
+
+/// Creating a group by using a selector.
+GroupNode.fromSelector = function(scene_node, selector) {
+  if (selector.mode == 'group') throw 'groups of groups not implemented'
+  var g = new GroupNode(scene_node);
+  g.selector = selector;
+  g.objs = selector.select(scene_node.objs, scene_node).map(function (on) { return on.obj });
+  return g;
 }
 
 /// Creates and returns a single GroupNode of all objects of a scene. If the key_obj
@@ -45,24 +55,25 @@ GroupNode.prototype.perceive = function(time) {
   this.times[time] = res;
 }
 
-/// Returns the attribute for the passed time (default is 'start'). If it was not
-/// perceived yet, it is perceived now.
-GroupNode.prototype.getAttr = function(key, time) {
+/// Returns the attribute for the passed time in the opts object (default is 'start').
+/// If it was not perceived yet, it is perceived now, unless 'cache_only' is true in opts.
+GroupNode.prototype.getAttr = function(key, opts) {
+  var o = PBP.extend({}, opts);
   // if time was not passed, use the current state of the oracle
-  if (!time) time = this.scene_node.oracle.curr_state;
+  if (!o.time) o.time = this.scene_node.oracle.curr_state;
   // if the attr is cached, just return it
-  //NO CACHINGif ((time in this.times) && (key in this.times[time])) return this.times[time][key];
+  if ((o.time in this.times) && (key in this.times[o.time])) return this.times[o.time][key];
+  if (o.from_cache) return false;
   // otherwise, goto the state and perceive it
-  if (time) this.scene_node.oracle.gotoState(time);
+  if (o.time) this.scene_node.oracle.gotoState(o.time);
   var res = new GroupNode.attrs[key](this);
   // cache it, if the state is a known one
-  if (time) {
-    if (!this.times[time]) this.times[time] = {};
-    this.times[time][key] = res;
+  if (o.time) {
+    if (!this.times[o.time]) this.times[o.time] = {};
+    this.times[o.time][key] = res;
   }
   return res;
 }
-
 
 
 GroupNode.prototype.get = GroupNode.prototype.getAttr;
