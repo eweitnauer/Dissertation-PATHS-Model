@@ -98,8 +98,9 @@ Selector.prototype.describe = function() {
 	if (this.mode == 'group') return 'the group of all objects that is' + attrs + (rels == '' ? '' : ' and ' + rels);
 };
 
-Selector.prototype.describe2 = function() {
+Selector.prototype.describe2 = function(omit_mode) {
 	if (this.empty()) {
+		if (omit_mode) return '*';
 		if (this.mode == 'all') return 'all are objects';
 		if (this.mode == 'unique') return 'there is exactly one object';
 		if (this.mode == 'first') return 'this is an object';
@@ -108,6 +109,7 @@ Selector.prototype.describe2 = function() {
 	var attrs = this.attrs.map(function (attr) { return attr.describe() });
 	var rels = this.rels.map(function (rel) { return rel.describe() });
 	var res = attrs.concat(rels).join(" and ");
+	if (omit_mode) return res;
 	if (this.mode == 'all') return 'all objects are ' + res;
 	if (this.mode == 'unique') return 'exactly one object is ' + res;
 	if (this.mode == 'first') return 'an object is ' + res;
@@ -137,7 +139,7 @@ Selector.AttrMatcher.fromAttribute = function(attr, time) {
 /// Returns true if the passed node can supply the attribute and its activation and
 /// label match.
 Selector.AttrMatcher.prototype.matches = function(node) {
-	var attr = node.getAttr(this.key, this.time);
+	var attr = node.getAttr(this.key, {time: this.time});
 	if (!attr) return false;
 	//console.log(this.key,'has activity',attr.get_activity());
 	var active = attr.get_activity() >= pbpSettings.activation_threshold;
@@ -171,7 +173,7 @@ Selector.RelMatcher.prototype.matches = function(node, others) {
 	others = others || node.scene_node.objs.filter(function (on) { return on !== node });
 	var res = this.other_sel.select(others, node.scene_node, (function (other) {
 		if (other === node) return false;
-		var rel = node.getRel(this.key, other, this.time);
+		var rel = node.getRel(this.key, {other: other, time: this.time});
 		if (!rel) return false;
 	  var active = rel.get_activity() >= pbpSettings.activation_threshold;
 		return (active == this.active && rel.get_label() == this.label);
