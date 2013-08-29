@@ -83,141 +83,141 @@ Solution.XIsY.prototype.describe = function() {
 	       (this.sel1.mode == "all" ? " are " : " is ") + this.sel2.describe2(true);
 };
 
-/// Solution of the type "There is always an xxx on the main_side, but not on the other_side." ///////////////////////////
-/// main_side is either 'left' or 'right' (default: 'left').
-Solution.Exists = function(sel, main_side) {
-	this.sel = sel;
-	this.main_side = main_side || 'left';
-	this.other_side = {left: 'right', right: 'left'}[this.main_side];
-}
+// /// Solution of the type "There is always an xxx on the main_side, but not on the other_side." ///////////////////////////
+// /// main_side is either 'left' or 'right' (default: 'left').
+// Solution.Exists = function(sel, main_side) {
+// 	this.sel = sel;
+// 	this.main_side = main_side || 'left';
+// 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
+// }
 
-/// Returns true if all scenes match the respecive selector.
-Solution.Exists.prototype.check = function(scenes_l, scenes_r) {
-	var a = this.main_side == 'left'  ? scenes_l : scenes_r
-	   ,b = this.main_side == 'right' ? scenes_l : scenes_r;
-	var thiz = this;
-	return a.every(function (scene) { return thiz.sel.selectFirst(scene) }) &&
-	    	 b.every(function (scene) { return !thiz.sel.selectFirst(scene) });
-};
+// /// Returns true if all scenes match the respecive selector.
+// Solution.Exists.prototype.check = function(scenes_l, scenes_r) {
+// 	var a = this.main_side == 'left'  ? scenes_l : scenes_r
+// 	   ,b = this.main_side == 'right' ? scenes_l : scenes_r;
+// 	var thiz = this;
+// 	return a.every(function (scene) { return thiz.sel.selectFirst(scene) }) &&
+// 	    	 b.every(function (scene) { return !thiz.sel.selectFirst(scene) });
+// };
 
-/// Returns a human readable description of the solution.
-Solution.Exists.prototype.describe = function() {
-	return "There is an object that is " + this.sel.describe() +
-	       " in the " + this.main_side + " scenes, but not in the " +
-	       {left: 'right', right: 'left'}[this.main_side] + " scenes";
-};
-
-
-/// Solution of the type "On the main_side, every X is Y." ///////////////////////////
-/// main_side is either 'left' or 'right' (default: 'left').
-Solution.All = function(sel, desc, main_side) {
-	this.main_side = main_side || 'left';
-	this.other_side = {left: 'right', right: 'left'}[this.main_side];
-	this.sel = sel || new ElementSelector();
-	this.desc = desc;
-}
-
-/// Returns true if all scenes match the respecive selector.
-Solution.All.prototype.check = function(scenes_l, scenes_r) {
-	var thiz = this;
-	var f = function(sn, value) {
-		var ons = thiz.sel.selectAll(sn), N = ons.length;
-		return N != 0 && thiz.desc.matchesAll(ons) == value;
-	}
-	return scenes_l.every(function (scene) { return f(scene, thiz.main_side == 'left')  }) &&
-				 scenes_r.every(function (scene) { return f(scene, thiz.main_side == 'right') });
-};
-
-/// Returns a human readable description of the solution.
-Solution.All.prototype.describe = function() {
-	return "On the "  +this.main_side+  " every " +
-	       (this.sel.empty() ? 'object' : "[" + this.sel.describe() + "]") +
-	       " is " + this.desc.describe();
-};
+// /// Returns a human readable description of the solution.
+// Solution.Exists.prototype.describe = function() {
+// 	return "There is an object that is " + this.sel.describe() +
+// 	       " in the " + this.main_side + " scenes, but not in the " +
+// 	       {left: 'right', right: 'left'}[this.main_side] + " scenes";
+// };
 
 
-/// Solution of the type "On the main_side, the X is R to the Y." ///////////////////////////
-/// main_side is either 'left' or 'right' (default: 'left').
-Solution.HasRelation = function(psel, main_side) {
-	this.main_side = main_side || 'left';
-	this.other_side = {left: 'right', right: 'left'}[this.main_side];
-	this.psel = psel;
-}
+// /// Solution of the type "On the main_side, every X is Y." ///////////////////////////
+// /// main_side is either 'left' or 'right' (default: 'left').
+// Solution.All = function(sel, desc, main_side) {
+// 	this.main_side = main_side || 'left';
+// 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
+// 	this.sel = sel || new ElementSelector();
+// 	this.desc = desc;
+// }
 
-/// Returns true if there is exactly one X, one Y and they are in relation R to
-/// each other.
-Solution.HasRelation.prototype.check = function(scenes_l, scenes_r) {
-	var thiz = this;
-	var for_left = this.main_side == 'left';
-	return scenes_l.every(function (scene) {
-				   return for_left == (thiz.psel.selectThisAndThis(scene)!=null)
-				 }) &&
-				 scenes_r.every(function (scene) {
-				   return for_left == (thiz.psel.selectThisAndThis(scene)==null)
-				 });
-};
+// /// Returns true if all scenes match the respecive selector.
+// Solution.All.prototype.check = function(scenes_l, scenes_r) {
+// 	var thiz = this;
+// 	var f = function(sn, value) {
+// 		var ons = thiz.sel.selectAll(sn), N = ons.length;
+// 		return N != 0 && thiz.desc.matchesAll(ons) == value;
+// 	}
+// 	return scenes_l.every(function (scene) { return f(scene, thiz.main_side == 'left')  }) &&
+// 				 scenes_r.every(function (scene) { return f(scene, thiz.main_side == 'right') });
+// };
 
-/// Returns a human readable description of the solution.
-Solution.HasRelation.prototype.describe = function() {
-	return "On the "  +this.main_side+  " the " + this.psel.describe();
-};
-
-
-/// Solution of the type "On the main_side, the X is Y." ///////////////////////////
-/// main_side is either 'left' or 'right' (default: 'left').
-Solution.HasAttribute = function(sel, desc, main_side) {
-	this.main_side = main_side || 'left';
-	this.other_side = {left: 'right', right: 'left'}[this.main_side];
-	this.sel = sel || new ElementSelector();
-	this.desc = desc;
-}
-
-/// Returns true if all scenes match the respecive selector.
-Solution.HasAttribute.prototype.check = function(scenes_l, scenes_r) {
-	var thiz = this;
-	var f = function(sn, value) {
-		var on = thiz.sel.selectThis(sn);
-		if (!on) return false;
-		return value == thiz.desc.matches(on);
-	}
-	return scenes_l.every(function (scene) { return f(scene, thiz.main_side == 'left')  }) &&
-				 scenes_r.every(function (scene) { return f(scene, thiz.main_side == 'right') });
-};
-
-/// Returns a human readable description of the solution.
-Solution.HasAttribute.prototype.describe = function() {
-	return "On the "  +this.main_side+  " the " +
-	       (this.sel.empty() ? 'object' : "[" + this.sel.describe() + "]") +
-	       " is " + this.desc.describe();
-};
+// /// Returns a human readable description of the solution.
+// Solution.All.prototype.describe = function() {
+// 	return "On the "  +this.main_side+  " every " +
+// 	       (this.sel.empty() ? 'object' : "[" + this.sel.describe() + "]") +
+// 	       " is " + this.desc.describe();
+// };
 
 
-/// Solution of the type "On the main_side, the group of all objects is X." ///////////////////////////
-/// main_side is either 'left' or 'right' (default: 'left').
-Solution.SceneHasAttribute = function(desc, main_side) {
-	this.main_side = main_side || 'left';
-	this.other_side = {left: 'right', right: 'left'}[this.main_side];
-	this.desc = desc;
-}
+// /// Solution of the type "On the main_side, the X is R to the Y." ///////////////////////////
+// /// main_side is either 'left' or 'right' (default: 'left').
+// Solution.HasRelation = function(psel, main_side) {
+// 	this.main_side = main_side || 'left';
+// 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
+// 	this.psel = psel;
+// }
 
-/// Returns true if all scenes match the respecive selector.
-Solution.SceneHasAttribute.prototype.check = function(scenes_l, scenes_r) {
-	var thiz = this;
-	var f = function(sn, value) {
-		var on = thiz.sel.selectThis(sn);
-		if (!on) return false;
-		return value == thiz.desc.matches(on);
-	}
-	return scenes_l.every(function (scene) { return f(scene, thiz.main_side == 'left')  }) &&
-				 scenes_r.every(function (scene) { return f(scene, thiz.main_side == 'right') });
-};
+// /// Returns true if there is exactly one X, one Y and they are in relation R to
+// /// each other.
+// Solution.HasRelation.prototype.check = function(scenes_l, scenes_r) {
+// 	var thiz = this;
+// 	var for_left = this.main_side == 'left';
+// 	return scenes_l.every(function (scene) {
+// 				   return for_left == (thiz.psel.selectThisAndThis(scene)!=null)
+// 				 }) &&
+// 				 scenes_r.every(function (scene) {
+// 				   return for_left == (thiz.psel.selectThisAndThis(scene)==null)
+// 				 });
+// };
 
-/// Returns a human readable description of the solution.
-Solution.HasAttribute.prototype.describe = function() {
-	return "On the "  +this.main_side+  " the " +
-	       (this.sel.empty() ? 'object' : "[" + this.sel.describe() + "]") +
-	       " is " + this.desc.describe();
-};
+// /// Returns a human readable description of the solution.
+// Solution.HasRelation.prototype.describe = function() {
+// 	return "On the "  +this.main_side+  " the " + this.psel.describe();
+// };
+
+
+// /// Solution of the type "On the main_side, the X is Y." ///////////////////////////
+// /// main_side is either 'left' or 'right' (default: 'left').
+// Solution.HasAttribute = function(sel, desc, main_side) {
+// 	this.main_side = main_side || 'left';
+// 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
+// 	this.sel = sel || new ElementSelector();
+// 	this.desc = desc;
+// }
+
+// /// Returns true if all scenes match the respecive selector.
+// Solution.HasAttribute.prototype.check = function(scenes_l, scenes_r) {
+// 	var thiz = this;
+// 	var f = function(sn, value) {
+// 		var on = thiz.sel.selectThis(sn);
+// 		if (!on) return false;
+// 		return value == thiz.desc.matches(on);
+// 	}
+// 	return scenes_l.every(function (scene) { return f(scene, thiz.main_side == 'left')  }) &&
+// 				 scenes_r.every(function (scene) { return f(scene, thiz.main_side == 'right') });
+// };
+
+// /// Returns a human readable description of the solution.
+// Solution.HasAttribute.prototype.describe = function() {
+// 	return "On the "  +this.main_side+  " the " +
+// 	       (this.sel.empty() ? 'object' : "[" + this.sel.describe() + "]") +
+// 	       " is " + this.desc.describe();
+// };
+
+
+// /// Solution of the type "On the main_side, the group of all objects is X." ///////////////////////////
+// /// main_side is either 'left' or 'right' (default: 'left').
+// Solution.SceneHasAttribute = function(desc, main_side) {
+// 	this.main_side = main_side || 'left';
+// 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
+// 	this.desc = desc;
+// }
+
+// /// Returns true if all scenes match the respecive selector.
+// Solution.SceneHasAttribute.prototype.check = function(scenes_l, scenes_r) {
+// 	var thiz = this;
+// 	var f = function(sn, value) {
+// 		var on = thiz.sel.selectThis(sn);
+// 		if (!on) return false;
+// 		return value == thiz.desc.matches(on);
+// 	}
+// 	return scenes_l.every(function (scene) { return f(scene, thiz.main_side == 'left')  }) &&
+// 				 scenes_r.every(function (scene) { return f(scene, thiz.main_side == 'right') });
+// };
+
+// /// Returns a human readable description of the solution.
+// Solution.HasAttribute.prototype.describe = function() {
+// 	return "On the "  +this.main_side+  " the " +
+// 	       (this.sel.empty() ? 'object' : "[" + this.sel.describe() + "]") +
+// 	       " is " + this.desc.describe();
+// };
 
 // /// Solution of the type "The xxx object is yyy on the main_side and zzz on the other_side." ///////////////////////////
 // /// main_side is either 'left' or 'right' (default: 'left').

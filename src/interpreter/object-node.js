@@ -14,6 +14,8 @@ ObjectNode.attrs = pbpSettings.obj_attrs;
 /// list of all possible object relations
 ObjectNode.rels = pbpSettings.obj_rels;
 
+/// The ObjectNode will send 'perceived' and 'retrieved' events {feature, target}.
+asEventListener.call(ObjectNode.prototype);
 
 /// Returns true if there is the passed relation type with the passed activity
 /// with the passed other object node.
@@ -97,7 +99,11 @@ ObjectNode.prototype.getAttr = function(key, opts) {
   // if time was not passed, use the current state of the oracle
   if (!o.time) o.time = this.scene_node.oracle.curr_state;
   // if the attr is cached, just return it
-  if ((o.time in this.times) && (key in this.times[o.time])) return this.times[o.time][key];
+  if ((o.time in this.times) && (key in this.times[o.time])) {
+    var res = this.times[o.time][key];
+    this.dispatchEvent('retrieved', {feature: res, target: this});
+    return res;
+  }
   if (o.from_cache) return false;
   // otherwise, goto the state and perceive it
   if (o.time) this.scene_node.oracle.gotoState(o.time);
@@ -107,6 +113,7 @@ ObjectNode.prototype.getAttr = function(key, opts) {
     if (!this.times[o.time]) this.times[o.time] = {};
     this.times[o.time][key] = res;
   }
+  this.dispatchEvent('perceived', {feature: res, target: this});
   return res;
 }
 
@@ -121,9 +128,12 @@ ObjectNode.prototype.getRel = function(key, opts) {
   if (!o.time) o.time = this.scene_node.oracle.curr_state;
   // if the rel is cached, return it
   if ((o.time in this.times) && (key in this.times[o.time])) {
-   var cache = this.times[o.time][key];
-   var res = cache.filter(function (rel) { return rel.other == o.other.obj })[0];
-   if (res) return res;
+    var cache = this.times[o.time][key];
+    var res = cache.filter(function (rel) { return rel.other == o.other.obj })[0];
+    if (res) {
+      this.dispatchEvent('retrieved', {feature: res, target: this});
+      return res;
+    }
   }
   if (o.from_cache) return false;
   // otherwise, goto the state and perceive it
@@ -135,6 +145,7 @@ ObjectNode.prototype.getRel = function(key, opts) {
     if (!this.times[o.time][key]) this.times[o.time][key] = [];
     this.times[o.time][key].push(res);
   }
+  this.dispatchEvent('perceived', {feature: res, target: this});
   return res;
 }
 

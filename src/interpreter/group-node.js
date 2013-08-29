@@ -9,14 +9,8 @@ GroupNode = function(scene_node, objs) {
   this.selector = null;  // will be set if the group is constructed using a selector
 }
 
-/// Creating a group by using a selector.
-GroupNode.fromSelector = function(scene_node, selector) {
-  if (selector.mode == 'group') throw 'groups of groups not implemented'
-  var g = new GroupNode(scene_node);
-  g.selector = selector;
-  g.objs = selector.select(scene_node.objs, scene_node).map(function (on) { return on.obj });
-  return g;
-}
+/// The ObjectNode will send 'perceived' and 'retrieved' events {feature, target}.
+asEventListener.call(GroupNode.prototype);
 
 /// Creates and returns a single GroupNode of all objects of a scene. If the key_obj
 /// parameter is passed, the key_obj is not included in the group.
@@ -62,7 +56,11 @@ GroupNode.prototype.getAttr = function(key, opts) {
   // if time was not passed, use the current state of the oracle
   if (!o.time) o.time = this.scene_node.oracle.curr_state;
   // if the attr is cached, just return it
-  if ((o.time in this.times) && (key in this.times[o.time])) return this.times[o.time][key];
+  if ((o.time in this.times) && (key in this.times[o.time])) {
+    var res = this.times[o.time][key];
+    this.dispatchEvent('retrieved', {feature: res, target: this});
+    return res;
+  }
   if (o.from_cache) return false;
   // otherwise, goto the state and perceive it
   if (o.time) this.scene_node.oracle.gotoState(o.time);
@@ -72,6 +70,7 @@ GroupNode.prototype.getAttr = function(key, opts) {
     if (!this.times[o.time]) this.times[o.time] = {};
     this.times[o.time][key] = res;
   }
+  this.dispatchEvent('perceived', {feature: res, target: this});
   return res;
 }
 
