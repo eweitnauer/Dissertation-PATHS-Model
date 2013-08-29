@@ -12,9 +12,9 @@ function analyzeScene(sn, svis) {
 function getSolutions(pbp) {
   var sols = [];
   if (pbp == 'pbp02') { // one vs. two objects
-    var s1 = new Selector('group');
-    s1.add_attr(new Selector.AttrMatcher('count', '2'));
-    sols.push(new Solution.IsX(s1, 'right'));
+    var s = new Selector('first');
+    s.add_attr(new Selector.AttrMatcher('count', '2'));
+    sols.push(new Solution.XIsY(new Selector('group'), s, 'right'));
   }
   if (pbp == 'pbp04') { // square vs. circle
     var s1 = new Selector('all'), s2 = new Selector('first');
@@ -32,15 +32,22 @@ function getSolutions(pbp) {
     sols.push(new Solution.IsX(s2, 'right'));
   }
   if (pbp == 'pbp11b') { // close vs. far
-    var s1 = new Selector('group');
-    s1.add_attr(new Selector.AttrMatcher('close', 'close'));
-    sols.push(new Solution.IsX(s1, 'left'));
+    var s = new Selector('group');
+    s.add_attr(new Selector.AttrMatcher('close', 'close'));
+    sols.push(new Solution.XIsY(new Selector('group'), s, 'left'));
   }
   if (pbp == 'pbp12') { // falls off vs. stays
     var s = new Selector('unique'), other = new Selector('unique');
     s.add_attr(new Selector.AttrMatcher('small', 'small'));
     s.add_rel(new Selector.RelMatcher(other, 'on_top_of', 'on-top-of', true, 'end'));
     sols.push(new Solution.IsX(s, 'right'));
+  }
+  if (pbp == 'pbp13') { // tower vs. arc
+    var s = new Selector('group');
+    s.add_attr(new Selector.AttrMatcher('on_ground', 'on-ground', true, 'end'));
+    var s2 = new Selector('first');
+    s2.add_attr(new Selector.AttrMatcher('count', '1'))
+    sols.push(new Solution.XIsY(s, s2, 'left'));
   }
   if (pbp == 'pbp16') { // circle left vs. circle right
     var s1 = new Selector('unique'), s2 = new Selector('unique'), s3 = new Selector('unique');
@@ -53,9 +60,9 @@ function getSolutions(pbp) {
     sols.push(new Solution.IsX(s2, 'left'));
   }
   if (pbp == 'pbp18') { // touch
-    var s1 = new Selector('group');
+    var s1 = new Selector('unique');
     s1.add_attr(new Selector.AttrMatcher('touching', 'touching', true, 'end'));
-    sols.push(new Solution.IsX(s1, 'left'));
+    sols.push(new Solution.XIsY(new Selector('group'), s1, 'left'));
   }
   if (pbp == 'pbp20') { // support
     var s1 = new Selector('first');
@@ -81,19 +88,18 @@ function getSolutions(pbp) {
     s.add_attr(new Selector.AttrMatcher('shape', 'circle'));
     s.add_attr(new Selector.AttrMatcher('left_pos', 'left', true, 'end'));
     sols.push(new Solution.IsX(s, 'right'));
+
+    var s1 = new Selector('unique');
+    s1.add_attr(new Selector.AttrMatcher('shape', 'circle'));
+    var s2 = new Selector('unique');
+    s2.add_attr(new Selector.AttrMatcher('left_most', 'left-most', true, 'end'));
+    sols.push(new Solution.XIsY(s1, s2, 'right'));
   }
   if (pbp == 'pbp31') { // can move up
     var s = new Selector('unique');
     s.add_attr(new Selector.AttrMatcher('shape', 'circle'));
     s.add_attr(new Selector.AttrMatcher('can_move_up', 'can-move-up'));
     sols.push(new Solution.IsX(s, 'left'));
-  }
-  if (pbp == 'pbp13') { // tower vs. arc
-    var s = new Selector('all');
-    s.add_attr(new Selector.AttrMatcher('on_ground', 'on-ground'));
-    var s2 = new Selector('group');
-    s2.add_attr(new Selector.AttrMatcher('count', '1'))
-    sols.push(new Solution.XIsY(s, s2, 'left'));
   }
   return sols;
 }
@@ -102,7 +108,8 @@ function getSolutions(pbp) {
 var options = [
   {name: 'none', checked: true, opts: []}
  ,{name: 'attention', multiple: true, opts: [{name: 'moves', checked: true}
-                            ,{name: 'top-most'}]}
+                            ,{name: 'top-most'}
+                            ,{name: 'single'}]}
  ,{name: 'uniqueness', multiple: true, opts: [{name: 'spatial', checked: true}
                            ,{name: 'size'}
                            ,{name: 'shape'}
@@ -125,8 +132,8 @@ function option_callback(d) {
       p.svis.draw_scene();
     } else if (d.name == 'groups') {
       var groups;
-      if (opts.close) groups = group_by_distance(p.sn.objs, p.sn);
-      else if (opts.touch) groups = group_by_distance(p.sn.objs, p.sn, 0.001);
+      if (opts.close) groups = group_by_distance(p.sn);
+      else if (opts.touch) groups = group_by_distance(p.sn, 0.001);
       else if (opts.size) groups = group_by_attributes(p.sn.objs, ['small', 'large']);
       else if (opts.shape) groups = group_by_shape(p.sn.objs);
       else if (opts.moves) groups = group_by_attributes(p.sn.objs, ['moves']);
@@ -137,6 +144,7 @@ function option_callback(d) {
       var vals = [];
       if (opts['top-most']) vals.push(get_top_attention(p.sn));
       if (opts.moves) vals.push(get_movement_attention(p.sn));
+      if (opts.single) vals.push(get_single_attention(p.sn));
       vals = mean_map(vals);
       p.svis.colorize_values(function(vals) { return function(shape) { return vals[shape.id] }}(vals));
     } else if (d.name == 'uniqueness') {
@@ -144,7 +152,7 @@ function option_callback(d) {
       if (opts.shape) vals.push(get_uniqueness(group_by_shape(p.sn.objs)));
       if (opts.size) vals.push(get_uniqueness(group_by_attributes(p.sn.objs, ['small', 'large'])));
       if (opts.moves) vals.push(get_uniqueness(group_by_attributes(p.sn.objs, ['moves'])));
-      if (opts.spatial) vals.push(get_uniqueness(group_by_distance(p.sn.objs, p.sn)));
+      if (opts.spatial) vals.push(get_uniqueness(group_by_distance(p.sn)));
       vals = mean_map(vals);
       p.svis.colorize_values(function(vals) { return function(shape) { return vals[shape.id] }}(vals));
     }
@@ -166,13 +174,14 @@ var group_by_shape = function(objs) {
   return res;
 }
 
-var group_by_distance = function(objs, sn, max_dist) {
+var group_by_distance = function(sn, max_dist) {
   if (typeof(max_dist) === 'undefined') max_dist = 0.06;
   var sg = sn.oracle.getSpatialGroups(max_dist);
   var res = {};
   for (var i=0; i<sg.length; i++) res[i] = sg[i].map(function(body) { return body.master_obj });
   return res;
 }
+
 
 function hash_get_maxima(h) {
   var keys=[], val=-Infinity;
@@ -205,8 +214,8 @@ function get_movement_attention(sn) {
   var sum=0, res = {};
   for (var i=0; i<sn.objs.length; i++) {
     var val = 0;
-    if (sn.objs[i].times.start.moves.get_activity()>=0.5) val = 100;
-    else if (sn.objs[i].times.start.stability.get_label() == 'unstable') val = 50;
+    if (sn.objs[i].get('moves').get_activity()>=0.5) val = 100;
+    else if (sn.objs[i].get('stability').get_label() == 'unstable') val = 50;
     sum += val;
     res[sn.objs[i].obj.id] = val;
   };
@@ -217,10 +226,9 @@ function get_movement_attention(sn) {
 /// All attention on the top-most object and vertically close objects (using the
 /// membership function of the CloseRelationship on 2.5 times the vertical distance).
 function get_top_attention(sn) {
-
   var sum=0, res={}
   for (var i=0; i<sn.objs.length; i++) {
-    var val = sn.objs[i].times.start.top_most.get_activity();
+    var val = sn.objs[i].get('top_most').get_activity();
     sum += val;
     res[sn.objs[i].obj.id] = val;
   };
@@ -228,6 +236,20 @@ function get_top_attention(sn) {
   return res;
 }
 
+/// All attention on the objects that are singled out spatially.
+var get_single_attention = function(scene) {
+  var g = scene.oracle.getSpatialGroups(0.06);
+  var sum=0, res={}
+  for (var i=0; i<g.length; i++) {
+    if (g[i].length != 1) g[i].forEach(function (on) { res[on.master_obj.id] = 0 });
+    else {
+      res[g[i][0].master_obj.id] = 1;
+      sum++;
+    }
+  }
+  if (sum > 0) for (var id in res) res[id] /= sum *0.01;
+  return res;
+}
 
 /// Inverses the values and keys of the passes associative array, but uses ids as new keys and
 /// successive numbers as values. For nested arrays just considers the leaves.

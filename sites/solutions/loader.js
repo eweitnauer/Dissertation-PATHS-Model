@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 10;
+var pbp_idx = 8;
 var curr_sols = [];
 
 function loadScenes(name, files) {
@@ -132,6 +132,30 @@ function setup_solve() {
   .on('click', function () {
     var n = d3.select('#solution');
     n.style('display', n.style('display') == 'none' ? 'block' : 'none')
+  });
+
+  d3.select('#solve')
+  .on('click', function () {
+    console.log("scenes = []; for (p in problems) scenes.push(problems[p].sn);");
+    scenes = []; for (p in problems) scenes.push(problems[p].sn);
+
+    console.log("tester = new PITester(PI.v0_2_4, scenes, 100, 1000, 1, 'warn')");
+    tester = new PITester(PI.v0_2_4, scenes, 100, 1000, 1, 'warn');
+
+    console.log("tester.run()");
+    tester.run();
+  });
+
+  d3.select('#solve-debug')
+  .on('click', function () {
+    console.log("scenes = []; for (p in problems) scenes.push(problems[p].sn);");
+    scenes = []; for (p in problems) scenes.push(problems[p].sn);
+
+    console.log("tester = new PITester(PI.v0_2_4, scenes, 1, 1000, 1, 'info')");
+    tester = new PITester(PI.v0_2_4, scenes, 1, 1000, 1, 'info');
+
+    console.log("tester.run()");
+    tester.run();
   });
 }
 
