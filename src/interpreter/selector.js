@@ -6,7 +6,7 @@
 /// - all ... selects all matching nodes
 /// - first ... selects first of the matching nodes
 /// - unique ... only selects a node if its the only matching one
-/// - group ... all passed nodes are first put into a group
+/// - group ... all matching nodes are returned as a group, if at least one object matches
 ///
 /// The select method returns an array of ObjectNodes or GroupNodes according to
 /// the mode. The array is empty if nothing matched.
@@ -24,11 +24,20 @@ Selector.prototype.empty = function() {
 /// Will extract the attribute's key, label, activation and constant property. Pass the time
 /// at which the attribute values should match (default: 'start').
 Selector.prototype.use_attr = function(attr, time) {
-	this.attrs.push(Selector.AttrMatcher.fromAttribute(attr, time));
+	this.add_attr(Selector.AttrMatcher.fromAttribute(attr, time));
 };
 
-/// Adds the passed AttrMatcher.
+/// Adds the passed AttrMatcher. Will replace if an attr with the same key and time is in the list already.
 Selector.prototype.add_attr = function(attr_matcher) {
+	// if we have an attr of same type, replace
+	for (var i=0; i<this.attrs.length; i++) {
+		var attr = this.attrs[i];
+	  if (attr.key === attr_matcher.key && attr.time === attr_matcher.time) {
+	  	this.attrs[i] = attr_matcher;
+	  	return;
+	  }
+	}
+	// its new, add to list
 	this.attrs.push(attr_matcher);
 };
 
@@ -36,13 +45,48 @@ Selector.prototype.add_attr = function(attr_matcher) {
 /// at which the attribute values should match (default: 'start'). Pass a selector that selects the other
 /// object.
 Selector.prototype.use_rel = function(other, rel, time) {
-	this.rels.push(Selector.RelMatcher(other, rel, time));
+	this.add_rel(Selector.RelMatcher.fromRelationship(other, rel, time));
 };
 
-/// Adds the passed RelMatcher.
+/// Adds the passed RelMatcher. Will replace if a rel with the same key, target object
+/// and time is in the list already.
 Selector.prototype.add_rel = function(rel_matcher) {
+	// if we have an attr of same type, replace
+	for (var i=0; i<this.rels.length; i++) {
+		var rel = this.rels[i];
+	  if (rel.key === rel_matcher.key && rel.time == rel_matcher.time &&
+	  	  rel.other_sel.equals(rel_matcher.other_sel)) {
+	  	this.rels[i] = rel_matcher;
+	  	return;
+	  }
+	}
+	// its new, add to list
 	this.rels.push(rel_matcher);
 };
+
+/// Returns true if the passed other selector has the same relationships and attributes.
+/// They might be in a different order.
+Selector.prototype.equals = function(other) {
+	if (!other) return false;
+	if (this.attrs.length !== other.attrs.length) return false;
+	if (this.rels.length !== other.rels.length) return false;
+	if (!this.attrs.every(function (this_attr) {
+		return other.attrs.some(function (other_attr) {
+		  return this_attr.equals(other_attr)
+		})
+	})) return false;
+	if (!this.rels.every(function (this_rel) {
+		return other.rels.some(function (other_rel) {
+		  return this_rel.equals(other_rel)
+		})
+	})) return false;
+	return true;
+}
+
+/// Returns true if the selector has no attributes or relationships so it will match any object.
+Selector.prototype.empty = function() {
+	return this.attrs.length == 0 && this.rels.length == 0;
+}
 
 /// Returns true if the passed object node matches the selectors attributes and relations.
 /// Optionally, an array of nodes that will be condisered as relationship partners can be
@@ -61,23 +105,25 @@ Selector.prototype.matches = function(on, others, test_fn) {
 /// - all ... selects all matching nodes
 /// - one ... selects one of the matching nodes (the first one found)
 /// - unique ... only selects a node if its the only matching one
-/// - group ... puts all nodes in a group and returns it if it matches
+/// - group ... all matching nodes are returned as a group, if at least one object matches
 /// If a test_fn is passed, it is called for each node that matches the selector
 /// attributes and only if the function returns true, the node is used. The relationships
 /// of the selector are not used in this case.
 Selector.prototype.select = function(nodes, scene_node, test_fn) {
 	var res = [];
-	if (this.mode == 'group') {
-		group_node = new GroupNode(scene_node, nodes.map(function (on) { return on.obj }));
-		nodes = [group_node];
-	}
 	for (var i=0; i<nodes.length; i++) {
 		var node = nodes[i];
 		if (!this.matches(node, null, test_fn)) continue;
 		else if (this.mode == 'first') return [node];
 		else res.push(node);
 	}
-	if (this.mode == 'unique') return res.length == 1 ? res : [];
+	if (this.mode == 'group') {
+		if (res.length == 0) return [];
+		var gn = new GroupNode(scene_node, res.map(function (on) { return on.obj }));
+		gn.selector = this;
+		return [gn];
+	}
+	else if (this.mode == 'unique') return res.length == 1 ? res : [];
 	else return res;
 };
 
@@ -136,6 +182,12 @@ Selector.AttrMatcher.fromAttribute = function(attr, time) {
 	 ,time);
 }
 
+/// Returns true if the other AttrMatcher is the same as this one.
+Selector.AttrMatcher.prototype.equals = function(other) {
+	return (this.key === other.key && this.label === other.label &&
+	        this.active === other.active && this.time === other.time);
+}
+
 /// Returns true if the passed node can supply the attribute and its activation and
 /// label match.
 Selector.AttrMatcher.prototype.matches = function(node) {
@@ -161,6 +213,13 @@ Selector.RelMatcher = function(other_sel, key, label, active, time) {
 	this.constant = pbpSettings.obj_rels[key].prototype.constant;
 	this.symmetric = pbpSettings.obj_rels[key].prototype.symmetric;
 	this.time = time || 'start';
+}
+
+/// Returns true if the other RelMatcher is the same as this one.
+Selector.RelMatcher.prototype.equals = function(other) {
+	return (this.key === other.key && this.label === other.label &&
+	        this.active === other.active && this.time === other.time &&
+	        this.other_sel.equals(other.other_sel));
 }
 
 /// First uses its 'other' selector on the passed 'others' array of nodes. Returns true
