@@ -7,7 +7,6 @@ TouchRelationship.prototype.symmetric = true;
 TouchRelationship.prototype.constant = false;
 
 TouchRelationship.membership = function(dist) {
-	console.log(dist);
 	return dist <= 0.5 ? 1 : 0;
 }
 

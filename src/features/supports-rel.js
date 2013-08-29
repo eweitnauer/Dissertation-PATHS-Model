@@ -54,7 +54,7 @@ SupportsRelationship.prototype.checkSupports = function(A, B, oracle) {
   if (B.getAttr('moves').get_activity() > moves_threshold) return 'not';
 
   // is A touching B?
-  var touch = A.getRel('touch', B).get_activity() > touches_threshold;
+  var touch = A.getRel('touch', {other: B}).get_activity() > touches_threshold;
 
   // is B moving when A is removed?
   var bodyA = A.obj.phys_obj;
@@ -67,11 +67,11 @@ SupportsRelationship.prototype.checkSupports = function(A, B, oracle) {
   if (B_moves) return touch ? 'directly': 'indirectly';
 
   // B does not depend on A, but is it on-top-of A?
-  var ontop = B.getRel('on_top_of', A).get_activity() > ontopof_threshold;
+  var ontop = B.getRel('on_top_of', {other: A}).get_activity() > ontopof_threshold;
   if (ontop) return 'stabilizes';
 
   // is B near A and stable, but unstable without A?
-  var near = A.getRel('close', B).get_activity() > close_threshold;
+  var near = A.getRel('close', {other: B}).get_activity() > close_threshold;
   if (near) {
     var B_stable = B.getAttr('stability').get_label() == 'stable';
     if (B_stable) {
