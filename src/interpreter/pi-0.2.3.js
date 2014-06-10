@@ -106,8 +106,8 @@ PI.v0_2_3 = (function() {
 		if (sel.equals(this.key_sel)) return true;
 		var chance = 0.25;	// take new selector with 25%
 		if (!this.key_sel) chance = 1; // if we had none, take it with 100%
-		if (this.key_sel && sel.empty() && !this.key_sel.empty()) chance = 0.1; // if the new one matches everything, but the old one not, take it with 10%
-		if (this.key_sel && !sel.empty() && this.key_sel.empty()) chance = 0.9; // if the current one matches everything, but the new one not, take it with 90%
+		if (this.key_sel && sel.blank() && !this.key_sel.blank()) chance = 0.1; // if the new one matches everything, but the old one not, take it with 10%
+		if (this.key_sel && !sel.blank() && this.key_sel.blank()) chance = 0.9; // if the current one matches everything, but the new one not, take it with 90%
 		if (Math.random() < chance) {
 			this.log(3, 'setting "'+sel.describe()+'" as key selector');
 			this.key_sel = sel;

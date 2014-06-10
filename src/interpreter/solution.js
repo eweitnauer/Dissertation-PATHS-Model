@@ -38,7 +38,9 @@ Solution.IsX.prototype.describe = function() {
 
 
 
-/// Solution of the type "All/a/the object/group is X"
+/// Solution composed of a first selector of type 'group', 'unique' or 'all'
+/// and a second selector of type 'all', 'first' or 'unique'. The second selector
+/// is applied to the output of the first selector.
 /// main_side is either 'left' or 'right' (default: 'left').
 Solution.XIsY = function(sel1, sel2, main_side) {
 	this.sel1 = sel1;
@@ -79,8 +81,13 @@ Solution.XIsY.prototype.check = function(scenes_l, scenes_r) {
 
 /// Returns a human readable description of the solution.
 Solution.XIsY.prototype.describe = function() {
-	return "Only in the " + this.main_side + " scenes, " + this.sel1.describe() +
-	       (this.sel1.mode == "all" ? " are " : " is ") + this.sel2.describe2(true);
+	var str = "Only in the " + this.main_side + " scenes, ";
+	if (this.sel1.mode == 'all') {
+		if (this.sel2.mode == 'all') return str + this.sel1.describe() + ' are ' + this.sel2.describe2(true);
+		else return str + 'among ' + this.sel1.describe() + ' ' + this.sel2.describe2();
+	} else {
+		return str + this.sel1.describe() + ' is ' + this.sel2.describe2(true);
+	}
 };
 
 // /// Solution of the type "There is always an xxx on the main_side, but not on the other_side." ///////////////////////////
@@ -131,7 +138,7 @@ Solution.XIsY.prototype.describe = function() {
 // /// Returns a human readable description of the solution.
 // Solution.All.prototype.describe = function() {
 // 	return "On the "  +this.main_side+  " every " +
-// 	       (this.sel.empty() ? 'object' : "[" + this.sel.describe() + "]") +
+// 	       (this.sel.blank() ? 'object' : "[" + this.sel.describe() + "]") +
 // 	       " is " + this.desc.describe();
 // };
 
@@ -187,7 +194,7 @@ Solution.XIsY.prototype.describe = function() {
 // /// Returns a human readable description of the solution.
 // Solution.HasAttribute.prototype.describe = function() {
 // 	return "On the "  +this.main_side+  " the " +
-// 	       (this.sel.empty() ? 'object' : "[" + this.sel.describe() + "]") +
+// 	       (this.sel.blank() ? 'object' : "[" + this.sel.describe() + "]") +
 // 	       " is " + this.desc.describe();
 // };
 
@@ -215,7 +222,7 @@ Solution.XIsY.prototype.describe = function() {
 // /// Returns a human readable description of the solution.
 // Solution.HasAttribute.prototype.describe = function() {
 // 	return "On the "  +this.main_side+  " the " +
-// 	       (this.sel.empty() ? 'object' : "[" + this.sel.describe() + "]") +
+// 	       (this.sel.blank() ? 'object' : "[" + this.sel.describe() + "]") +
 // 	       " is " + this.desc.describe();
 // };
 

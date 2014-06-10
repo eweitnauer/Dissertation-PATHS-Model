@@ -170,7 +170,6 @@ var group_by_shape = function(objs) {
       }
     });
   }
-  console.log(res);
   return res;
 }
 

@@ -1,19 +1,18 @@
-// Copyright 2013, Erik Weitnauer.
+// Copyright 2014, Erik Weitnauer.
 
-/// The Selector is used to focus on a subset of objects in a scene based on
-/// a number of attributes and relations that must be fullfilled. The selector
-/// can be in one of 4 modes:
-/// - all ... selects all matching nodes
-/// - first ... selects first of the matching nodes
-/// - unique ... only selects a node if its the only matching one
-/// - group ... all matching nodes are returned as a group, if at least one object matches
-///
-/// The select method returns an array of ObjectNodes or GroupNodes according to
-/// the mode. The array is empty if nothing matched.
-var Selector = function(mode) {
-	this.mode = mode || 'all';
-	this.attrs = [];
-	this.rels = [];
+/** The Selector is used to focus on a subset of objects in a scene based on
+ * a number of attributes and relations that must be fullfilled.
+ * The selector can either have group or object attributes & relationships.
+ * For obj. attrs, select() collects all matching objects inside a new group.
+ * For group attrs, select() will return the whole group if it matches or
+ * an empty group if it does not match.
+ * The selector can be in unique mode, which means that result groups with more
+ * than one element are returned as empty groups instead. */
+var Selector = function() {
+	this.attrs = [];	     // object & group attributes
+	this.rels = [];        // object relationships
+	this.unique = false;
+	this.type = '';        // can be '', 'object' or 'group'
 }
 
 /// Returns true if the selector matches anything
@@ -29,10 +28,16 @@ Selector.prototype.use_attr = function(attr, time) {
 
 /// Adds the passed AttrMatcher. Will replace if an attr with the same key and time is in the list already.
 Selector.prototype.add_attr = function(attr_matcher) {
+	// check for constraint: either group or object attributes
+	if (this.type && this.type != attr_matcher.type) {
+		throw "can't combine group and objects attrs in a single selector.";
+	}
+	this.type = attr_matcher.type;
 	// if we have an attr of same type, replace
 	for (var i=0; i<this.attrs.length; i++) {
 		var attr = this.attrs[i];
-	  if (attr.key === attr_matcher.key && attr.time === attr_matcher.time) {
+	  if (attr.key === attr_matcher.key && attr.time === attr_matcher.time
+	  	 && attr.type === attr.type) {
 	  	this.attrs[i] = attr_matcher;
 	  	return;
 	  }
@@ -51,6 +56,12 @@ Selector.prototype.use_rel = function(other, rel, time) {
 /// Adds the passed RelMatcher. Will replace if a rel with the same key, target object
 /// and time is in the list already.
 Selector.prototype.add_rel = function(rel_matcher) {
+	// check for constraint: either group or object attributes
+	if (this.type == 'group') {
+		throw "can't combine group and objects attrs in a single selector.";
+	}
+	this.type = 'object';
+
 	// if we have an attr of same type, replace
 	for (var i=0; i<this.rels.length; i++) {
 		var rel = this.rels[i];
@@ -83,11 +94,6 @@ Selector.prototype.equals = function(other) {
 	return true;
 }
 
-/// Returns true if the selector has no attributes or relationships so it will match any object.
-Selector.prototype.empty = function() {
-	return this.attrs.length == 0 && this.rels.length == 0;
-}
-
 /// Returns true if the passed object node matches the selectors attributes and relations.
 /// Optionally, an array of nodes that will be condisered as relationship partners can be
 /// passed as second parameter. If it isn't, all objects in the scene except `on` are used.
@@ -103,73 +109,60 @@ Selector.prototype.matches = function(on, others, test_fn) {
 
 /// Returns an array with the matching object or group nodes, depending on the mode.
 /// - all ... selects all matching nodes
-/// - one ... selects one of the matching nodes (the first one found)
-/// - unique ... only selects a node if its the only matching one
-/// - group ... all matching nodes are returned as a group, if at least one object matches
 /// If a test_fn is passed, it is called for each node that matches the selector
 /// attributes and only if the function returns true, the node is used. The relationships
 /// of the selector are not used in this case.
-Selector.prototype.select = function(nodes, scene_node, test_fn) {
-	var res = [];
+Selector.prototype.select = function(group_node, scene_node, test_fn) {
+	var res = []
+	   ,nodes = group_node.map(function (obj) { return obj.object_node });
 	for (var i=0; i<nodes.length; i++) {
 		var node = nodes[i];
 		if (!this.matches(node, null, test_fn)) continue;
 		else if (this.mode == 'first') return [node];
 		else res.push(node);
 	}
-	if (this.mode == 'group') {
-		if (res.length == 0) return [];
-		var gn = new GroupNode(scene_node, res.map(function (on) { return on.obj }));
-		gn.selector = this;
-		return [gn];
-	}
-	else if (this.mode == 'unique') return res.length == 1 ? res : [];
-	else return res;
+	if (this.unique && res.length !== 1) res = [];
+	var gn = new GroupNode(scene_node, res.map(function (on) { return on.obj }));
+	gn.selector = this;
+	return res;
 };
 
 /// Returns a human readable description of the attributes used in this selector.
 Selector.prototype.describe = function() {
-	if (this.blank()) {
-		if (this.mode == 'all') return 'all objects';
-		if (this.mode == 'unique') return 'the object';
-		if (this.mode == 'first') return 'an object';
-		if (this.mode == 'group') return 'the group of all objects'
-	}
+	if (this.blank()) return (this.unique ? 'the object' : 'all objects');
 	var attrs = this.attrs.map(function (attr) { return attr.describe() }).join(" and ");
 	if (attrs != '') attrs = ' ' + attrs;
 	var rels = this.rels.map(function (rel) { return rel.describe() }).join(" and ");
-	if (this.mode == 'all') return 'all' + attrs + ' objects' + (rels == '' ? '' : ' that are ' + rels);
-	if (this.mode == 'unique') return 'the' + attrs + ' object' + (rels == '' ? '' : ' that is ' + rels);
-	if (this.mode == 'first') return 'a' + attrs + ' object' + (rels == '' ? '' : ' that is ' + rels);
-	if (this.mode == 'group') return 'the group of all objects that is' + attrs + (rels == '' ? '' : ' and ' + rels);
+	if (this.unique) return 'the' + attrs + ' object' + (rels == '' ? '' : ' that is ' + rels);
+	return 'all' + attrs + ' objects' + (rels == '' ? '' : ' that are ' + rels);
 };
 
 Selector.prototype.describe2 = function(omit_mode) {
 	if (this.blank()) {
 		if (omit_mode) return '*';
-		if (this.mode == 'all') return 'all are objects';
-		if (this.mode == 'unique') return 'there is exactly one object';
-		if (this.mode == 'first') return 'this is an object';
-		if (this.mode == 'group') return '*'
+		return (this.unique ? 'there is exactly one object' : 'all objects');
 	}
 	var attrs = this.attrs.map(function (attr) { return attr.describe() });
 	var rels = this.rels.map(function (rel) { return rel.describe() });
 	var res = attrs.concat(rels).join(" and ");
 	if (omit_mode) return res;
-	if (this.mode == 'all') return 'all objects are ' + res;
-	if (this.mode == 'unique') return 'exactly one object is ' + res;
-	if (this.mode == 'first') return 'an object is ' + res;
-	if (this.mode == 'group') return 'the group of objects is ' + res;
+	if (this.unique) return 'exactly one object is ' + res;
+	else return 'all objects are ' + res;
 };
 
 
 
-Selector.AttrMatcher = function(key, label, active, time) {
+Selector.AttrMatcher = function(key, label, active, time, type) {
 	this.key = key;
 	this.label = label;
 	this.active = typeof(active) === 'undefined' ? true : active;
-	if (key in pbpSettings.obj_attrs) this.constant = pbpSettings.obj_attrs[key].prototype.constant;
-	else this.constant = pbpSettings.group_attrs[key].prototype.constant;
+	if ((key in pbpSettings.obj_attrs) {
+		this.type = "object";
+		this.constant = pbpSettings.obj_attrs[key].prototype.constant;
+	} else {
+		this.type = "group";
+		this.constant = pbpSettings.group_attrs[key].prototype.constant;
+	}
 	this.time = time || 'start';
 }
 

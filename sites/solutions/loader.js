@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 8;
+var pbp_idx = 10;
 var curr_sols = [];
 
 function loadScenes(name, files) {
@@ -139,11 +139,11 @@ function setup_solve() {
     console.log("scenes = []; for (p in problems) scenes.push(problems[p].sn);");
     scenes = []; for (p in problems) scenes.push(problems[p].sn);
 
-    console.log("tester = new PITester(PI.v0_2_4, scenes, 100, 1000, 1, 'warn')");
-    tester = new PITester(PI.v0_2_4, scenes, 100, 1000, 1, 'warn');
+    console.log("tester = new PITester('current', scenes, 100, 1000, 1, 'warn')");
+    tester = new PITester('current', scenes, 100, 1000, 1, 'warn');
 
-    console.log("tester.run()");
-    tester.run();
+    console.log("res = tester.run()");
+    res = tester.run();
   });
 
   d3.select('#solve-debug')
@@ -151,11 +151,15 @@ function setup_solve() {
     console.log("scenes = []; for (p in problems) scenes.push(problems[p].sn);");
     scenes = []; for (p in problems) scenes.push(problems[p].sn);
 
-    console.log("tester = new PITester(PI.v0_2_4, scenes, 1, 1000, 1, 'info')");
-    tester = new PITester(PI.v0_2_4, scenes, 1, 1000, 1, 'info');
+    console.log("tester = new PITester('current', scenes, 1, 1000, 1, 'debug')");
+    tester = new PITester('current', scenes, 1, 1000, 1, 'debug');
 
-    console.log("tester.run()");
-    tester.run();
+    console.log("res = tester.run()");
+    res = tester.run();
+
+    for (p in problems) problems[p].svis.colorize_values(function(on) {
+      return on.object_node.getActivity();
+    });
   });
 }
 

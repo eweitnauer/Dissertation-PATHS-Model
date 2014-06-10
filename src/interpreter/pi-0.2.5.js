@@ -1,6 +1,16 @@
 var PI = PI || {};
 
 /*
+Version 0.2.5
+ - attempts to solve complex PBPs faster by looking for key-objects top-down,
+   the new SearchKeyObjectBehavior's activity is set to 10, so should run every 10th step
+   it won't run at all for problems with a single object per scene.
+ - on creation, the workspace will call asActivatible on all objects and set their activity
+   to 100/#objs per scene
+ - the workspace.getRandomObject() method now takes each object's activity into account but
+   ignores which object is the key-object. Instead, give a big activity boost to all key-objects
+   when setting a new key-selector.
+
 Version 0.2.4
  - solves new PBP 18 by using group attribute touching
  - solves new PBP 31 by using the can-move-up attribute
@@ -30,17 +40,63 @@ Version 0.1.1
  - added GroupAllCodelet
 */
 
-PI.v0_2_4 = (function() {
+PI.v0_2_5 = (function() {
+	var version = '0.2.5';
+
+	/// Mixin Pattern, call asActivatible.call(TargetClass.prototype);
+	var asActivatible = function() {
+	  this._activity = 0;
+	  var thiz = this;
+
+	  this.setActivity = function(activity) { thiz._activity = activity }
+	  this.getActivity = function() { return thiz._activity }
+
+	  this.incActivity = function() {
+	  	thiz._activity = Math.min(100, thiz._activity * 10/9);
+	  }
+
+	  this.decActivity = function() {
+	  	thiz._activity = Math.max(1, thiz._activity * 9/10);
+	  }
+
+	  /// Random result, based on activity (100 => always true, 0 => always false).
+	  this.isActive = function() {
+	  	return (Math.random() < (thiz._activity/100));
+	  }
+
+	  return this;
+	};
+
+var asActivatibleInstance = function() {
+		this._activity = 0;
+
+	  this.setActivity = function(activity) { this._activity = activity }
+	  this.getActivity = function() { return this._activity }
+
+	  this.incActivity = function() {
+	  	this._activity = Math.min(100, this._activity * 10/9);
+	  }
+
+	  this.decActivity = function() {
+	  	this._activity = Math.max(1, this._activity * 9/10);
+	  }
+
+	  /// Random result, based on activity (100 => always true, 0 => always false).
+	  this.isActive = function() {
+	  	return (Math.random() < (this._activity/100));
+	  }
+
+	  return this;
+	};
+	asActivatibleInstance.call(ObjectNode.prototype);
+
 	/// The workspace is a container for all objects the interpreter works with
 	/// and has some utility functions for accessing them.
 	var Workspace = function(scenes, log_level) {
-		this.coderack = new Coderack(this);
-		var pb = new PerceptionBehavior(this.coderack, ['shape','stability','count','close','left_pos','right_pos','left_most','right_most','touching','can_move_up']);
-		this.coderack.behaviors.push(pb);
-
 		this.scenes = scenes;
 		this.left_scenes = scenes.filter(function(sn) { return sn.side == 'left'});
 		this.right_scenes = scenes.filter(function(sn) { return sn.side == 'right'});
+		this.set_activities();
 		this.perception_count = 0;
 		this.retrieval_count = 0;
 		this.register_events();
@@ -51,6 +107,11 @@ PI.v0_2_4 = (function() {
 		this.log_level = {debug: 4, info: 3, warn: 2, error: 1, no: 0}[log_level || 'no'];
 		this.log_symbol = {1: 'EE', 2: 'WW', 3: 'II', 4: 'DB'};
 		this.step = 1;
+
+		this.coderack = new Coderack(this);
+		var pb = new PerceptionBehavior(this.coderack, ['shape','stability','count','close','left_pos','right_pos','left_most','right_most','touching','can_move_up']);
+		this.coderack.behaviors.push(pb);
+		this.coderack.behaviors.push(new SearchKeyObjectBehavior(this.coderack));
 	}
 
 	Workspace.prototype.perceived_feature = function() {
@@ -74,10 +135,21 @@ PI.v0_2_4 = (function() {
 		}
 	}
 
+	Workspace.prototype.set_activities = function() {
+		this.scenes.forEach(function (sn) {
+			var N = sn.objs.length;
+			sn.objs.forEach(function (on) { on.setActivity(100/N); });
+		});
+	}
+
 	Workspace.prototype.log = function(level, msg) {
 		if (this.log_level < level) return;
 		arguments[0] = this.log_symbol[level] + '[' + this.step + ']';
 		console.log.apply(console, arguments);
+	}
+
+	Workspace.prototype.getRandomTime = function() {
+		return Random.pick(['start', 'end']);
 	}
 
 	Workspace.prototype.getRandomScene = function() {
@@ -86,14 +158,7 @@ PI.v0_2_4 = (function() {
 
 	Workspace.prototype.getRandomObject = function(scene) {
 		if (typeof(scene) == 'undefined') scene = this.getRandomScene();
-		if (this.key_sel) {
-			var N = scene.objs.length;
-			if (N==1) return scene.objs[0];
-			var thiz = this;
-			return Random.pick_weighted(scene.objs, function (o) { return thiz.key_sel.matches(o) ? 2*(N-1) : 1});
-		} else {
-			return Random.pick(scene.objs);
-		}
+		return Random.pick_weighted(scene.objs, function (on) { return on.getActivity() });
 	}
 
 	Workspace.prototype.checkSolution = function(sol) {
@@ -113,8 +178,22 @@ PI.v0_2_4 = (function() {
 		if (this.key_sel && sel.blank() && !this.key_sel.blank()) chance = 0.1; // if the new one matches everything, but the old one not, take it with 10%
 		if (this.key_sel && !sel.blank() && this.key_sel.blank()) chance = 0.9; // if the current one matches everything, but the new one not, take it with 90%
 		if (Math.random() < chance) {
+			if (this.key_sel) {
+				// TODO: we might reduce the activity of the old key-objects here
+			}
 			this.log(2, 'setting "'+sel.describe()+'" as key selector');
 			this.key_sel = sel;
+			// boost activity of objects that are key-objects in each scene, but only if the selector is not a group selector
+			// afterwards, normalize so the activity sum is 100
+			if (sel.mode != 'group') {
+				this.scenes.forEach(function (sn) {
+					var N = sn.objs.length;
+					var obj = sel.select(sn.objs, sn)[0];
+					obj.setActivity(obj.getActivity() + 50);
+					var total_activity = sn.objs.map(function (on) { return on.getActivity() }).reduce(function (a,b) { return a+b });
+					sn.objs.forEach(function (on) { on.setActivity(on.getActivity()*100/total_activity) });
+				});
+			}
 			return true;
 		}
 		return false;
@@ -215,29 +294,7 @@ PI.v0_2_4 = (function() {
 	}
 
 
-	/// Mixin Pattern, call asActivatible.call(TargetClass.prototype);
-	var asActivatible = function() {
-	  this._activity = 0;
-	  var thiz = this;
 
-	  this.setActivity = function(activity) { thiz._activity = activity }
-	  this.getActivity = function() { return thiz._activity }
-
-	  this.incActivity = function() {
-	  	thiz._activity = Math.min(100, thiz._activity * 10/9);
-	  }
-
-	  this.decActivity = function() {
-	  	thiz._activity = Math.max(1, thiz._activity * 9/10);
-	  }
-
-	  /// Random result, based on activity (100 => always true, 0 => always false).
-	  this.isActive = function() {
-	  	return (Math.random() < (thiz._activity/100));
-	  }
-
-	  return this;
-	};
 
 
 	/// Capsulates the perception behavior. It will create new codelets based
@@ -284,9 +341,31 @@ PI.v0_2_4 = (function() {
 		}
 	}
 
+	/// Creates new top-down codelets that search for single key-objects.
+	var SearchKeyObjectBehavior = function(coderack, activity) {
+		this.name = 'SearchKeyObjectBehavior';
+		this.cr = coderack;
+		this.adaptActivity();
+	}
+	asActivatible.call(SearchKeyObjectBehavior.prototype);
+	// the more objects, the more often this should be called. but for now, just use
+	// a simple threshold: if we have only one object per scene, never run, otherwise
+	// run with 10% probability
+	SearchKeyObjectBehavior.prototype.adaptActivity = function() {
+		var obj_count = this.cr.ws.scenes.map(function (sn) { return sn.objs.length }).reduce(function (a,b) { return a+b });
+		this.setActivity(obj_count == this.cr.ws.scenes.length ? 0 : 10);
+	}
+	SearchKeyObjectBehavior.prototype.describe = function() {
+		return this.name;
+	}
+	SearchKeyObjectBehavior.prototype.run = function() {
+		if (this.isActive()) this.cr.insert(new SearchKeyObjectCodelet(this.cr));
+	}
+
 	/// Target can be scene or object node or nothing.
 	/// When run, the codelet will perceive its attribute for its object node.
-	/// It may spawn a hypothesis constructor codelet using its attribute.
+	/// May spawn a hypothesis constructor codelet using its attribute.
+	/// May spawn a key object codelet if there are >1 objects in the scene
 	var AttrCodelet = function(coderack, attr_key, target) {
 		this.attr_key = attr_key;
 		this.attr = pbpSettings.obj_attrs[attr_key];
@@ -331,6 +410,7 @@ PI.v0_2_4 = (function() {
 	}
 
 	/// Uses an all selector to groups all objects in the target scene into one group.
+	/// May spawn a key object codelet.
 	var GroupAllCodelet = function(coderack, scene) {
 		this.coderack = coderack;
 		this.ws = coderack.ws;
@@ -413,6 +493,38 @@ PI.v0_2_4 = (function() {
 		return res;
 	}
 
+	/// Will rate the objects in a scene by how likely they seem to be a key object. Uses the
+	/// given (or random) scene and the given (or random) time.
+	var SearchKeyObjectCodelet = function(coderack, scene, time) {
+		this.coderack = coderack;
+		this.ws = coderack.ws;
+		this.followup = [];
+		this.scene = scene;
+		this.time = time;
+	}
+	SearchKeyObjectCodelet.prototype.describe = function() {
+		return 'SearchKeyObjectCodelet('+(this.scene ? this.scene.id : '?')+','+(this.time||'?')+')';
+	}
+	SearchKeyObjectCodelet.prototype.run = function() {
+		this.ws.log(2, 'running ' + this.describe());
+		if (!this.time) this.time = this.ws.getRandomTime();
+		if (!this.scene) this.scene = this.ws.getRandomScene();
+		// if there is just one object in this scene, don't do anything
+		if (this.scene.objs.length == 1) return false;
+
+		// look for an odd shape
+		var activations = get_uniqueness(group_by_shape(this.scene.objs));
+		this.scene.objs.forEach(function (on) {
+			on.setActivity(activations[on.obj.id])
+		});
+		return true;
+
+		// look for the top-most object
+
+		// look for an spatially single object
+	}
+
+
 	/// Will create a selector based on the passed attr and time (default: random pick) and check
 	/// whether the selector just matches a single object per scene. If yes, it will use it as the
 	/// new key-selector in the workspace. Every HypAttrCodelet might now choose to use it in its
@@ -431,7 +543,7 @@ PI.v0_2_4 = (function() {
 	}
 	KeyObjCodelet.prototype.run = function() {
 		this.ws.log(3, 'running ' + this.describe());
-		if (!this.time) this.time = Random.pick(['start', 'end']);
+		if (!this.time) this.time = this.ws.getRandomTime();
 		if (!this.mode) this.mode = 'unique';
 		if (this.mode != 'unique') this.mode = 'group';
 		var sel = new Selector(this.mode);
@@ -459,13 +571,14 @@ PI.v0_2_4 = (function() {
 		this.selector = selector;
 	}
 	HypAttrCodelet.prototype.describe = function () {
-		return 'HypAttrCodelet('+(this.attr.key||'?')+','
-			                      +(this.mode||'?')+
-			                      +(this.selector?','+this.selector.describe2():'')+')';
+		return 'HypAttrCodelet('+(this.attr.key ? this.attr.key+'='+this.attr.get_label() : '?')+','
+			                      +(this.mode||'?')+','
+			                      +(this.selector ? ','+this.selector.describe2() : '?')+','
+			                      +(this.side || '?') + ')';
 	}
 	HypAttrCodelet.prototype.run = function() {
 		if (!this.side) this.side = Random.pick(['left', 'right']);
-		if (!this.time) this.time = Random.pick(['start', 'end']);
+		if (!this.time) this.time = this.ws.getRandomTime();
 		if (!this.mode) this.mode = Random.pick(['all', 'first']);
 
 		// parameter selector based solution
@@ -506,13 +619,6 @@ PI.v0_2_4 = (function() {
 
 	return {Workspace: Workspace
 	       ,Coderack: Coderack
+	       ,version: version
 	     	 };
 })();
-
-/** Testing
-var pi = PI.v0_1_0;
-scenes = []; for (p in problems) scenes.push(problems[p].sn);
-var ws = new pi.Workspace(scenes, true);
-ws.coderack.step(); ws.describe();
-*/
-
