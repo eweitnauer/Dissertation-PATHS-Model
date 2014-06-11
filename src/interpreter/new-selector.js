@@ -8,11 +8,11 @@
  * an empty group if it does not match.
  * The selector can be in unique mode, which means that result groups with more
  * than one element are returned as empty groups instead. */
-var Selector = function() {
-	this.attrs = [];	     // object & group attributes
-	this.rels = [];        // object relationships
-	this.unique = false;
-	this.type = '';        // can be '', 'object' or 'group'
+var Selector = function(unique) {
+	this.attrs = [];	      // object & group attributes
+	this.rels = [];         // object relationships
+	this.unique = !!unique;
+	this.type = '';         // can be '', 'object' or 'group'
 }
 
 /// Returns true if the selector matches anything
@@ -24,6 +24,7 @@ Selector.prototype.blank = function() {
 /// at which the attribute values should match (default: 'start').
 Selector.prototype.use_attr = function(attr, time) {
 	this.add_attr(Selector.AttrMatcher.fromAttribute(attr, time));
+	return this;
 };
 
 /// Adds the passed AttrMatcher. Will replace if an attr with the same key and time is in the list already.
@@ -39,11 +40,12 @@ Selector.prototype.add_attr = function(attr_matcher) {
 	  if (attr.key === attr_matcher.key && attr.time === attr_matcher.time
 	  	 && attr.type === attr.type) {
 	  	this.attrs[i] = attr_matcher;
-	  	return;
+	  	return this;
 	  }
 	}
 	// its new, add to list
 	this.attrs.push(attr_matcher);
+	return this;
 };
 
 /// Will extract the relation key, label, activation, constant and symmetry properties. Pass the time
@@ -51,6 +53,7 @@ Selector.prototype.add_attr = function(attr_matcher) {
 /// object.
 Selector.prototype.use_rel = function(other, rel, time) {
 	this.add_rel(Selector.RelMatcher.fromRelationship(other, rel, time));
+	return this;
 };
 
 /// Adds the passed RelMatcher. Will replace if a rel with the same key, target object
@@ -68,11 +71,12 @@ Selector.prototype.add_rel = function(rel_matcher) {
 	  if (rel.key === rel_matcher.key && rel.time == rel_matcher.time &&
 	  	  rel.other_sel.equals(rel_matcher.other_sel)) {
 	  	this.rels[i] = rel_matcher;
-	  	return;
+	  	return this;
 	  }
 	}
 	// its new, add to list
 	this.rels.push(rel_matcher);
+	return this;
 };
 
 /// Returns true if the passed other selector has the same relationships and attributes.
@@ -113,41 +117,53 @@ Selector.prototype.matches = function(on, others, test_fn) {
 /// attributes and only if the function returns true, the node is used. The relationships
 /// of the selector are not used in this case.
 Selector.prototype.select = function(group_node, scene_node, test_fn) {
-	var res = []
-	   ,nodes = group_node.map(function (obj) { return obj.object_node });
-	for (var i=0; i<nodes.length; i++) {
-		var node = nodes[i];
-		if (!this.matches(node, null, test_fn)) continue;
-		else if (this.mode == 'first') return [node];
-		else res.push(node);
+	var res = [], self = this;
+	if (this.type == 'group') {
+		if (this.matches(group_node)) return group_node;
+		else return new GroupNode(scene_node, []);
 	}
-	if (this.unique && res.length !== 1) res = [];
-	var gn = new GroupNode(scene_node, res.map(function (on) { return on.obj }));
+	// 'object' type or blank
+	if (this.blank()) return group_node;
+
+	var nodes = group_node.objs
+	  .map(function (obj) { return obj.object_node })
+	  .filter(function (node) { return self.matches(node, null, test_fn) })
+	  .map(function (on) { return on.obj });
+
+	var gn = new GroupNode(scene_node, nodes);
 	gn.selector = this;
-	return res;
+	return gn;
 };
 
 /// Returns a human readable description of the attributes used in this selector.
 Selector.prototype.describe = function() {
-	if (this.blank()) return (this.unique ? 'the object' : 'all objects');
+	if (this.blank()) return (this.unique ? '[the object]' : '(any object)');
 	var attrs = this.attrs.map(function (attr) { return attr.describe() }).join(" and ");
 	if (attrs != '') attrs = ' ' + attrs;
 	var rels = this.rels.map(function (rel) { return rel.describe() }).join(" and ");
-	if (this.unique) return 'the' + attrs + ' object' + (rels == '' ? '' : ' that is ' + rels);
-	return 'all' + attrs + ' objects' + (rels == '' ? '' : ' that are ' + rels);
+	if (this.type == 'group') {
+		return '(all objects are' + attrs + ')';
+	}	else {
+		if (this.unique) return '[the' + attrs + ' object' + (rels == '' ? '' : ' that is ' + rels) + ']';
+		return '(all' + attrs + ' objects' + (rels == '' ? '' : ' that are ' + rels) + ')';
+	}
 };
 
 Selector.prototype.describe2 = function(omit_mode) {
 	if (this.blank()) {
 		if (omit_mode) return '*';
-		return (this.unique ? 'there is exactly one object' : 'all objects');
+		return (this.unique ? 'there is exactly one object' : 'any object');
 	}
 	var attrs = this.attrs.map(function (attr) { return attr.describe() });
 	var rels = this.rels.map(function (rel) { return rel.describe() });
 	var res = attrs.concat(rels).join(" and ");
-	if (omit_mode) return res;
-	if (this.unique) return 'exactly one object is ' + res;
-	else return 'all objects are ' + res;
+	if (omit_mode) {
+		if (this.unique) return '[that is ' + res + ']';
+		else return '[that are ' + res + ']';
+	} else {
+		if (this.unique) return '[exactly one object is ' + res + ']';
+		else return '(all objects are ' + res + ')';
+	}
 };
 
 
@@ -156,7 +172,7 @@ Selector.AttrMatcher = function(key, label, active, time, type) {
 	this.key = key;
 	this.label = label;
 	this.active = typeof(active) === 'undefined' ? true : active;
-	if ((key in pbpSettings.obj_attrs) {
+	if (key in pbpSettings.obj_attrs) {
 		this.type = "object";
 		this.constant = pbpSettings.obj_attrs[key].prototype.constant;
 	} else {
@@ -223,15 +239,25 @@ Selector.RelMatcher.prototype.matches = function(node, others) {
 	if (this.other_sel.rels.length > 0) throw "the other-selector of"
 	// select all other nodes in the scene as 'others', if they were not passed
 	others = others || node.scene_node.objs.filter(function (on) { return on !== node });
-	var res = this.other_sel.select(others, node.scene_node, (function (other) {
+
+	var self = this;
+
+	var test_fn = function(other) {
 		if (other === node) return false;
-		var rel = node.getRel(this.key, {other: other, time: this.time});
+		var rel = node.getRel(self.key, {other: other, time: self.time});
 		if (!rel) return false;
 	  var active = rel.get_activity() >= pbpSettings.activation_threshold;
-		return (active == this.active && rel.get_label() == this.label);
-	}).bind(this));
-	return this.other_sel.mode == "all" ? res.length == others.length
-	                                    : res.length > 0;
+		return (active == self.active && rel.get_label() == self.label);
+	}
+
+	var match_fn = function(other) {
+		return self.other_sel.matches(other, null, test_fn);
+	}
+
+	var matching_others = others.filter(match_fn);
+
+	if (this.other_sel.unique && matching_others.length != 1) return false;
+	return matching_others.length > 0;
 }
 
 /// Will extract the relation key, label, activation, constant and symmetry properties. Pass the time
@@ -246,6 +272,6 @@ Selector.RelMatcher.fromRelationship = function(other, rel, time) {
 
 Selector.RelMatcher.prototype.describe = function() {
 	return (this.active ? '' : 'not ') + this.label + " " +
-				 "[" + this.other_sel.describe() + "]" +
+				 this.other_sel.describe() +
 				 (this.constant || this.time == "start" ? '' : ' at the ' + this.time);
 }
