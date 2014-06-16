@@ -43,65 +43,61 @@ function getSolutions(pbp) {
 
     sols.push(new Solution([s2,s3], 'right', 'unique'));
   }
-  // if (pbp == 'pbp13') { // tower vs. arc
-  //   var s = new Selector('group');
-  //   s.add_attr(new Selector.AttrMatcher('on_ground', 'on-ground', true, 'end'));
-  //   var s2 = new Selector('first');
-  //   s2.add_attr(new Selector.AttrMatcher('count', '1'))
-  //   sols.push(new Solution.XIsY(s, s2, 'left'));
-  // }
-  // if (pbp == 'pbp16') { // circle left vs. circle right
-  //   var s1 = new Selector('unique'), s2 = new Selector('unique'), s3 = new Selector('unique');
-  //   s1.add_attr(new Selector.AttrMatcher('shape', 'circle'));
-  //   s1.add_attr(new Selector.AttrMatcher('left_most', 'left-most'));
-  //   s2.add_attr(new Selector.AttrMatcher('shape', 'circle'));
-  //   s3.add_attr(new Selector.AttrMatcher('shape', 'square'));
-  //   s2.add_rel(new Selector.RelMatcher(s3, 'left_of', 'left-of'));
-  //   sols.push(new Solution.IsX(s1, 'left'));
-  //   sols.push(new Solution.IsX(s2, 'left'));
-  // }
-  // if (pbp == 'pbp18') { // touch
-  //   var s1 = new Selector('unique');
-  //   s1.add_attr(new Selector.AttrMatcher('touching', 'touching', true, 'end'));
-  //   sols.push(new Solution.XIsY(new Selector('group'), s1, 'left'));
-  // }
-  // if (pbp == 'pbp20') { // support
-  //   var s1 = new Selector('first');
-  //   s1.add_attr(new Selector.AttrMatcher('shape', 'square'));
-  //   s1.add_rel(new Selector.RelMatcher(new Selector('first'), 'supports', 'supporting'));
-  //   sols.push(new Solution.IsX(s1, 'left'));
+  if (pbp == 'pbp13') { // tower vs. arc
+    var s  = new Selector().add_attr(new Selector.AttrMatcher('on_ground', 'on-ground', true, 'end'));
+    var s2 = new Selector().add_attr(new Selector.AttrMatcher('count', '1'));
+    sols.push(new Solution([s, s2], 'left', 'exists'));
+  }
+  if (pbp == 'pbp16') { // circle left vs. circle right
+    var s1 = new Selector(true).add_attr(new Selector.AttrMatcher('shape', 'circle'))
+                               .add_attr(new Selector.AttrMatcher('left_most', 'left-most'));
+    var sq = new Selector(true).add_attr(new Selector.AttrMatcher('shape', 'square'));
+    var s2 = new Selector(true).add_attr(new Selector.AttrMatcher('shape', 'circle'));
+    var s2b = new Selector(true).add_rel(new Selector.RelMatcher(sq, 'left_of', 'left-of'));
+    sols.push(new Solution(s1, 'left', 'unique'));
+    sols.push(new Solution([s2, s2b], 'left', 'unique'));
+  }
+  if (pbp == 'pbp18') { // touch
+    var s1 = new Selector(true).add_attr(new Selector.AttrMatcher('touching', 'touching', true, 'end'));
+    sols.push(new Solution(s1, 'left', 'exists'));
+  }
+  if (pbp == 'pbp20') { // support
+    var s1 = new Selector()
+        .add_attr(new Selector.AttrMatcher('shape', 'square'))
+        .add_rel(new Selector.RelMatcher(new Selector(), 'supports', 'supporting'));
+    sols.push(new Solution(s1, 'left', 'exists'));
 
-  //   var s1a = new Selector('unique');
-  //   s1a.add_attr(new Selector.AttrMatcher('shape', 'square'));
-  //   var s1b = new Selector('unique');
-  //   s1b.add_rel(new Selector.RelMatcher(new Selector('first'), 'supports', 'supporting'));
-  //   sols.push(new Solution.XIsY(s1a, s1b, 'left'));
-  // }
-  // if (pbp == 'pbp22') { // objects hit each other vs. not
-  //   var s1 = new Selector('first'), s2 = new Selector('all');
-  //   s1.add_rel(new Selector.RelMatcher(new Selector('unique'), 'hits', 'hits'));
-  //   s2.add_rel(new Selector.RelMatcher(new Selector('first'), 'collides', 'collides-with'));
-  //   sols.push(new Solution.IsX(s1));
-  //   sols.push(new Solution.IsX(s2));
-  // }
-  // if (pbp == 'pbp26') { // circle moves left vs. circle moves right; many objects
-  //   var s = new Selector('unique');
-  //   s.add_attr(new Selector.AttrMatcher('shape', 'circle'));
-  //   s.add_attr(new Selector.AttrMatcher('left_pos', 'left', true, 'end'));
-  //   sols.push(new Solution.IsX(s, 'right'));
+    var s2 = new Selector(true);
+    s2.add_attr(new Selector.AttrMatcher('shape', 'square'));
+    var s2b = new Selector(true);
+    s2b.add_rel(new Selector.RelMatcher(new Selector(), 'supports', 'supporting'));
+    sols.push(new Solution([s2, s2b], 'left', 'unique'));
+  }
+  if (pbp == 'pbp22') { // objects hit each other vs. not
+    var s1 = new Selector().add_rel(new Selector.RelMatcher(new Selector(true), 'hits', 'hits'));
+    var s2 = new Selector().add_rel(new Selector.RelMatcher(new Selector(), 'collides', 'collides-with'));
+    sols.push(new Solution(s1, 'left', 'exists'));
+    sols.push(new Solution(s2, 'left', 'all'));
+  }
+  if (pbp == 'pbp26') { // circle moves left vs. circle moves right; many objects
+    var s = new Selector(true);
+    s.add_attr(new Selector.AttrMatcher('shape', 'circle'));
+    s.add_attr(new Selector.AttrMatcher('left_pos', 'left', true, 'end'));
+    sols.push(new Solution(s, 'right', 'unique'));
 
-  //   var s1 = new Selector('unique');
-  //   s1.add_attr(new Selector.AttrMatcher('shape', 'circle'));
-  //   var s2 = new Selector('unique');
-  //   s2.add_attr(new Selector.AttrMatcher('left_most', 'left-most', true, 'end'));
-  //   sols.push(new Solution.XIsY(s1, s2, 'right'));
-  // }
-  // if (pbp == 'pbp31') { // can move up
-  //   var s = new Selector('unique');
-  //   s.add_attr(new Selector.AttrMatcher('shape', 'circle'));
-  //   s.add_attr(new Selector.AttrMatcher('can_move_up', 'can-move-up'));
-  //   sols.push(new Solution.IsX(s, 'left'));
-  // }
+    // not working with the last row of scenes
+    var s1 = new Selector(true);
+    s1.add_attr(new Selector.AttrMatcher('shape', 'circle'));
+    var s2 = new Selector(true);
+    s2.add_attr(new Selector.AttrMatcher('left_most', 'left-most', true, 'end'));
+    sols.push(new Solution([s1, s2], 'right', 'unique'));
+  }
+  if (pbp == 'pbp31') { // can move up
+    var s = new Selector(true)
+        .add_attr(new Selector.AttrMatcher('shape', 'circle'))
+        .add_attr(new Selector.AttrMatcher('can_move_up', 'can-move-up'));
+    sols.push(new Solution(s, 'left', 'unique'));
+  }
   return sols;
 }
 
