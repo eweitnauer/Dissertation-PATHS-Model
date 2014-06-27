@@ -16,6 +16,8 @@ Random.weighted = function(probs, normalized) {
 /// Like Random.weighted(), but will return the element of the array
 /// instead of the index. Pass an accessor functions that returns the
 /// weight when passed the element.
+/// If you know that the sum of all weights is 1, you can pass normalized
+/// as true to make things more efficient.
 Random.pick_weighted = function(xs, accessor, normalized) {
 	return xs[Random.weighted(xs.map(accessor), normalized)];
 }

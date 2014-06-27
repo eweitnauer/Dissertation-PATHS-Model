@@ -1,4 +1,4 @@
-// Copyright 2013, Erik Weitnauer.
+// Copyright 2014, Erik Weitnauer.
 
 /// Holds an array of selectors.
 /// Can be in one of 3 different modes: 'unique', 'exists', 'all'

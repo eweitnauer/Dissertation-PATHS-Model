@@ -182,7 +182,7 @@ PI.v0_1_0 = (function() {
 		else if (this.target instanceof ObjectNode) on = this.target;
 		if (!on) return false;
 		var attr;
-		if (attr = on.get(this.attr_key, {from_cache: true})) {
+		if (attr = on.get(this.attr_key, {cache_only: true})) {
 			// was already perceived, decrease activity of attribute
 			//attr.decActivity();
 		} else {

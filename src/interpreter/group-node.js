@@ -61,7 +61,7 @@ GroupNode.prototype.getAttr = function(key, opts) {
     this.dispatchEvent('retrieved', {feature: res, target: this});
     return res;
   }
-  if (o.from_cache) return false;
+  if (o.cache_only) return false;
   // otherwise, goto the state and perceive it
   if (o.time) this.scene_node.oracle.gotoState(o.time);
   var res = new GroupNode.attrs[key](this);
@@ -74,6 +74,11 @@ GroupNode.prototype.getAttr = function(key, opts) {
   return res;
 }
 
+GroupNode.prototype.getFromCache = function(key, opts) {
+  opts = opts || {};
+  opts.cache_only = true;
+  return this.getAttr(key, opts);
+}
 
 GroupNode.prototype.get = GroupNode.prototype.getAttr;
 

@@ -83,11 +83,17 @@ ObjectNode.prototype.perceive = function(time) {
 /// as `time` field in the `opts` object. When getting a relationship feature, pass the
 /// other ObjectNode as `other` field in `opts`.
 /// To just get a perception from the cache and return false if its not there, put
-/// `from_cache: true` in the `opts`.
+/// `cache_only: true` in the `opts`.
 ObjectNode.prototype.get = function(key, opts) {
   if (key in ObjectNode.attrs) return this.getAttr(key, opts);
   else if (key in ObjectNode.rels) return this.getRel(key, opts);
   else throw "unknown feature '" + key + "'";
+}
+
+ObjectNode.prototype.getFromCache = function(key, opts) {
+  opts = opts || {};
+  opts.cache_only = true;
+  return this.getAttr(key, opts);
 }
 
 /// Returns the attribute named `key`. If given, the `time` in the `opts` object is used,
@@ -104,7 +110,7 @@ ObjectNode.prototype.getAttr = function(key, opts) {
     this.dispatchEvent('retrieved', {feature: res, target: this});
     return res;
   }
-  if (o.from_cache) return false;
+  if (o.cache_only) return false;
   // otherwise, goto the state and perceive it
   if (o.time) this.scene_node.oracle.gotoState(o.time);
   var res = new ObjectNode.attrs[key](this.obj);
@@ -135,7 +141,7 @@ ObjectNode.prototype.getRel = function(key, opts) {
       return res;
     }
   }
-  if (o.from_cache) return false;
+  if (o.cache_only) return false;
   // otherwise, goto the state and perceive it
   if (o.time) this.scene_node.oracle.gotoState(o.time);
   var res = new ObjectNode.rels[key](this.obj, o.other.obj);
