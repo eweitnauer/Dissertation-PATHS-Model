@@ -5,6 +5,8 @@ StabilityAttribute = function(obj) {
   this.perceive(obj);
 }
 StabilityAttribute.prototype.key = 'stability';
+StabilityAttribute.prototype.targetType = 'obj';
+StabilityAttribute.prototype.arity = 1;
 StabilityAttribute.prototype.constant = false;
 
 /// Returns an StabilityAttribute instance, which is the perception of the passed

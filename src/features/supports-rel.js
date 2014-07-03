@@ -9,6 +9,7 @@ SupportsRelationship = function(obj, other) {
   this.perceive(obj, other);
 }
 SupportsRelationship.prototype.key = "supports";
+SupportsRelationship.prototype.targetType = 'obj';
 SupportsRelationship.prototype.arity = 2;
 SupportsRelationship.prototype.symmetry = false;
 SupportsRelationship.prototype.constant = false;

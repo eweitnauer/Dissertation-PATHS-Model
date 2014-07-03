@@ -3,6 +3,8 @@ TopAttribute = function(obj) {
   this.perceive(obj);
 }
 TopAttribute.prototype.key = "top_pos";
+TopAttribute.prototype.targetType = 'obj';
+TopAttribute.prototype.arity = 1;
 TopAttribute.prototype.constant = false;
 
 

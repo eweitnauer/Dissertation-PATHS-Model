@@ -2,6 +2,8 @@ LeftAttribute = function(obj) {
   this.perceive(obj);
 }
 LeftAttribute.prototype.key = "left_pos";
+LeftAttribute.prototype.targetType = 'obj';
+LeftAttribute.prototype.arity = 1;
 LeftAttribute.prototype.size = 100; // scene size
 LeftAttribute.prototype.constant = false;
 

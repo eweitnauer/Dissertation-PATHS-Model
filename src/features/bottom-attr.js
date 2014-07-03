@@ -3,6 +3,8 @@ BottomAttribute = function(obj) {
   this.perceive(obj);
 }
 BottomAttribute.prototype.key = "bottom_pos";
+BottomAttribute.prototype.targetType = 'obj';
+BottomAttribute.prototype.arity = 1;
 BottomAttribute.prototype.constant = false;
 
 BottomAttribute.prototype.adaptDomain = function(ground) {

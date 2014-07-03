@@ -5,6 +5,8 @@ TouchAttribute = function(group) {
   this.perceive(group);
 }
 TouchAttribute.prototype.key = "touching";
+TouchAttribute.prototype.targetType = 'group';
+TouchAttribute.prototype.arity = 1;
 TouchAttribute.prototype.constant = false;
 
 TouchAttribute.prototype.perceive = function(group) {

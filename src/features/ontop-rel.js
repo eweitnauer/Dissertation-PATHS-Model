@@ -3,6 +3,7 @@ OnTopRelationship = function(obj, other) {
   this.perceive(obj, other);
 }
 OnTopRelationship.prototype.key = "on_top_of";
+OnTopRelationship.prototype.targetType = 'obj';
 OnTopRelationship.prototype.arity = 2;
 OnTopRelationship.prototype.symmetric = false;
 OnTopRelationship.prototype.constant = false;

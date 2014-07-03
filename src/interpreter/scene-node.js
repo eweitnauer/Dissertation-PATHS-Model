@@ -15,6 +15,10 @@ SceneNode = function(scene, oracle) {
   this.init();
 }
 
+SceneNode.prototype.getAllGroup = function() {
+  return GroupNode.sceneGroup(this);
+}
+
 SceneNode.prototype.init = function() {
   var movables = [], shapes = this.scene.shapes;
   for (var i=0; i<shapes.length; i++) {

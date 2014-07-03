@@ -2,6 +2,7 @@ HitsRelationship = function(obj, other) {
   this.perceive(obj, other);
 }
 HitsRelationship.prototype.key = "hits";
+HitsRelationship.prototype.targetType = 'obj';
 HitsRelationship.prototype.arity = 2;
 HitsRelationship.prototype.symmetric = false;
 HitsRelationship.prototype.constant = false;

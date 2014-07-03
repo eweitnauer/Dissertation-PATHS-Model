@@ -8,6 +8,8 @@ CloseAttribute = function(group) {
   this.perceive(group);
 }
 CloseAttribute.prototype.key = "close";
+CloseAttribute.prototype.targetType = 'group';
+CloseAttribute.prototype.arity = 1;
 CloseAttribute.prototype.constant = false;
 
 CloseAttribute.prototype.perceive = function(group) {

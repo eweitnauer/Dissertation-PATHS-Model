@@ -3,6 +3,8 @@ OnGroundAttribute = function(obj) {
   this.perceive(obj);
 }
 OnGroundAttribute.prototype.key = "on_ground";
+OnGroundAttribute.prototype.targetType = 'obj';
+OnGroundAttribute.prototype.arity = 1;
 OnGroundAttribute.prototype.constant = false;
 
 OnGroundAttribute.prototype.perceive = function(obj) {

@@ -2,6 +2,7 @@ FarRelationship = function(obj, other) {
   this.perceive(obj, other);
 }
 FarRelationship.prototype.key = "far";
+FarRelationship.prototype.targetType = 'obj';
 FarRelationship.prototype.arity = 2;
 FarRelationship.prototype.symmetric = true;
 FarRelationship.prototype.constant = false;

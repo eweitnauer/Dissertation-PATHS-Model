@@ -36,6 +36,7 @@ AttentionNet.prototype.addElement = function(type, element) {
 	if (arr.indexOf(element) != -1) return false;
 	arr.push(element);
 	this.attention_values.set(element, 1);
+	return true;
 }
 
 /// Can throw "unknown element" exception.
@@ -57,6 +58,7 @@ AttentionNet.prototype.addFeature = function(feature) {
 
 /// Returns true if successfully inserted.
 AttentionNet.prototype.addSelector = function(selector) {
+	if (this.selectors.some(function (sel) { return sel.equals(selector) })) return false;
 	return this.addElement('selector', selector);
 }
 
@@ -67,31 +69,44 @@ AttentionNet.prototype.addObject = function(object) {
 
 /// Chooses a random object from the passed scene based on their attention values.
 AttentionNet.prototype.getRandomObject = function(scene) {
+	var self = this;
+	if (scene.objs.length == 0) return null;
 	return Random.pick_weighted(scene.objs, function (onode) {
-		if (!this.attention_values.has(onode)) throw "unknown object";
-	  return this.attention_values.get(onode);
+		if (!self.attention_values.has(onode)) throw "unknown object";
+	  return self.attention_values.get(onode);
 	});
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
 AttentionNet.prototype.getRandomFeature = function() {
+	var self = this;
+	if (this.features.length == 0) return null;
 	return Random.pick_weighted(this.features, function (feature) {
-		return this.attention_values.get(feature);
+		return self.attention_values.get(feature);
 	});
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
-AttentionNet.prototype.getRandomSelector = function() {
-	return Random.pick_weighted(this.selectors, function (sel) {
-		return this.attention_values.get(sel);
+AttentionNet.prototype.getRandomSelector = function(options) {
+	options = options || {};
+	var sels = this.selectors.filter(function(sel) {
+		return ((!options.no_blank || !sel.blank())
+		  && (!options.type || sel.isOfType(options.type)));
+	});
+	if (sels.length == 0) return null;
+	var self = this;
+	return Random.pick_weighted(sels, function (sel) {
+		return self.attention_values.get(sel);
 	});
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
 AttentionNet.prototype.getRandomObjectOrSelector = function(scene) {
 	var elements = this.selectors.contact(scene.objs);
+	var self = this;
+	if (elements.length == 0) return null;
 	return Random.pick_weighted(elements, function (el) {
-		if (!this.attention_values.has(el)) throw "unknown object";
-		return this.attention_values.get(el);
+		if (!self.attention_values.has(el)) throw "unknown object";
+		return self.attention_values.get(el);
 	});
 }

@@ -3,6 +3,8 @@ LeftMostAttribute = function(obj) {
   this.perceive(obj);
 }
 LeftMostAttribute.prototype.key = "left_most";
+LeftMostAttribute.prototype.targetType = 'obj';
+LeftMostAttribute.prototype.arity = 1;
 LeftMostAttribute.prototype.constant = false;
 
 LeftMostAttribute.prototype.adaptDomain = function(objs) {

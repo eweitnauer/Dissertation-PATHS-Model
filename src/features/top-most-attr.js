@@ -3,6 +3,8 @@ TopMostAttribute = function(obj) {
   this.perceive(obj);
 }
 TopMostAttribute.prototype.key = "top_most";
+TopMostAttribute.prototype.targetType = 'obj';
+TopMostAttribute.prototype.arity = 1;
 TopMostAttribute.prototype.constant = false;
 
 TopMostAttribute.prototype.adaptDomain = function(objs) {

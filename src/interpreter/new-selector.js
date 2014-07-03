@@ -20,6 +20,11 @@ Selector.prototype.blank = function() {
 	return this.attrs.length == 0 && this.rels.length == 0;
 }
 
+/// The blank selector will match any type. Types can be 'object' or 'group'.
+Selector.prototype.isOfType = function(type) {
+	return (this.blank() || type == this.type);
+}
+
 /// Will extract the attribute's key, label, activation and constant property. Pass the time
 /// at which the attribute values should match (default: 'start').
 Selector.prototype.use_attr = function(attr, time) {
@@ -30,6 +35,7 @@ Selector.prototype.use_attr = function(attr, time) {
 /// Adds the passed AttrMatcher. Will replace if an attr with the same key and time is in the list already.
 Selector.prototype.add_attr = function(attr_matcher) {
 	// check for constraint: either group or object attributes
+	if (this.blank()) this.type = '';
 	if (this.type && this.type != attr_matcher.type) {
 		throw "can't combine group and objects attrs in a single selector.";
 	}
@@ -51,8 +57,8 @@ Selector.prototype.add_attr = function(attr_matcher) {
 /// Will extract the relation key, label, activation, constant and symmetry properties. Pass the time
 /// at which the attribute values should match (default: 'start'). Pass a selector that selects the other
 /// object.
-Selector.prototype.use_rel = function(other, rel, time) {
-	this.add_rel(Selector.RelMatcher.fromRelationship(other, rel, time));
+Selector.prototype.use_rel = function(other_sel, rel, time) {
+	this.add_rel(Selector.RelMatcher.fromRelationship(other_sel, rel, time));
 	return this;
 };
 
@@ -60,6 +66,7 @@ Selector.prototype.use_rel = function(other, rel, time) {
 /// and time is in the list already.
 Selector.prototype.add_rel = function(rel_matcher) {
 	// check for constraint: either group or object attributes
+	if (this.blank()) this.type = '';
 	if (this.type == 'group') {
 		throw "can't combine group and objects attrs in a single selector.";
 	}
@@ -83,6 +90,7 @@ Selector.prototype.add_rel = function(rel_matcher) {
 /// They might be in a different order.
 Selector.prototype.equals = function(other) {
 	if (!other) return false;
+	if (this === other) return true;
 	if (this.attrs.length !== other.attrs.length) return false;
 	if (this.rels.length !== other.rels.length) return false;
 	if (!this.attrs.every(function (this_attr) {
@@ -118,9 +126,14 @@ Selector.prototype.matches = function(on, others, test_fn) {
 /// of the selector are not used in this case.
 Selector.prototype.select = function(group_node, scene_node, test_fn) {
 	var res = [], self = this;
+	var selectors = group_node.selectors.concat([this]);
 	if (this.type == 'group') {
-		if (this.matches(group_node)) return group_node;
-		else return new GroupNode(scene_node, []);
+		if (this.matches(group_node)) {
+			var gn = group_node.clone();
+			gn.selectors = selectors;
+			return gn;
+		}
+		else return new GroupNode(scene_node, [], selectors);
 	}
 	// 'object' type or blank
 	if (this.blank()) return group_node;
@@ -130,10 +143,13 @@ Selector.prototype.select = function(group_node, scene_node, test_fn) {
 	  .filter(function (node) { return self.matches(node, null, test_fn) })
 	  .map(function (on) { return on.obj });
 
-	var gn = new GroupNode(scene_node, nodes);
-	gn.selector = this;
+	var gn = new GroupNode(scene_node, nodes, selectors);
 	return gn;
 };
+
+Selector.prototype.applyToScene = function(scene) {
+	return this.select(GroupNode.sceneGroup(scene), scene);
+}
 
 /// Returns a human readable description of the attributes used in this selector.
 Selector.prototype.describe = function() {

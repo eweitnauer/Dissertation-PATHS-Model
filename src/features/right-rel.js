@@ -3,6 +3,7 @@ RightRelationship = function(obj, other) {
   this.perceive(obj, other);
 }
 RightRelationship.prototype.key = "right_of";
+RightRelationship.prototype.targetType = 'obj';
 RightRelationship.prototype.arity = 2;
 RightRelationship.prototype.symmetry = false;
 RightRelationship.prototype.constant = false;

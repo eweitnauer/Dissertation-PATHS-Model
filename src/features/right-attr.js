@@ -2,6 +2,8 @@ RightAttribute = function(obj) {
   this.perceive(obj);
 }
 RightAttribute.prototype.key = "right_pos";
+RightAttribute.prototype.targetType = 'obj';
+RightAttribute.prototype.arity = 1;
 RightAttribute.prototype.size = 100; // scene size
 RightAttribute.prototype.constant = false;
 

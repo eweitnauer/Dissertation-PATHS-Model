@@ -29,6 +29,7 @@ PITester.prototype.step = function(auto_next) {
 		this.curr_step = 1;
 		this.clear_scenes();
 		this.ws = new this.pi.Workspace(this.scenes, this.log_level);
+		this.enable_scene_drawing(false);
 		console.log('run',this.curr_rep,'of',this.reps);
 	}
 
@@ -50,6 +51,7 @@ PITester.prototype.step = function(auto_next) {
 	  this.ws = null;
 	  // are we finished?
 	  if (this.curr_rep > this.reps) {
+	  	this.enable_scene_drawing(true);
 	  	return this.show_stats(this.res);
 	  }
 	}
@@ -81,6 +83,12 @@ PITester.prototype.clear_scenes = function() {
 			o.times.start = {};
 			o.times.end = {};
 		});
+	});
+}
+
+PITester.prototype.enable_scene_drawing = function(enable) {
+	this.scenes.forEach(function (s) {
+		s.oracle.pscene.emit_changes = enable;
 	});
 }
 

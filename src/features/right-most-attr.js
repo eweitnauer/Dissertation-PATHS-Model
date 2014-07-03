@@ -3,6 +3,8 @@ RightMostAttribute = function(obj) {
   this.perceive(obj);
 }
 RightMostAttribute.prototype.key = "right_most";
+RightMostAttribute.prototype.targetType = 'obj';
+RightMostAttribute.prototype.arity = 1;
 RightMostAttribute.prototype.constant = false;
 
 RightMostAttribute.prototype.adaptDomain = function(objs) {

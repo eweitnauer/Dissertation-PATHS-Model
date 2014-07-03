@@ -4,6 +4,8 @@ MovesAttribute = function(obj) {
   this.perceive(obj);
 }
 MovesAttribute.prototype.key = 'moves';
+MovesAttribute.prototype.targetType = 'obj';
+MovesAttribute.prototype.arity = 1;
 MovesAttribute.prototype.constant = true;
 
 // google: "plot from -0.5 to 5, 1/(1+exp(40*(0.1-x)))"

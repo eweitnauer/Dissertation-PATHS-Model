@@ -3,6 +3,8 @@ CountAttribute = function(group) {
   this.perceive(group);
 }
 CountAttribute.prototype.key = "count";
+CountAttribute.prototype.targetType = 'group';
+CountAttribute.prototype.arity = 1;
 CountAttribute.prototype.constant = true;
 
 CountAttribute.prototype.perceive = function(group) {

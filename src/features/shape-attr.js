@@ -2,6 +2,8 @@ ShapeAttribute = function(obj) {
   this.perceive(obj);
 }
 ShapeAttribute.prototype.key = 'shape';
+ShapeAttribute.prototype.targetType = 'obj';
+ShapeAttribute.prototype.arity = 1;
 ShapeAttribute.prototype.constant = true;
 
 /// Returns an ShapeAttribute instance, which is the perception of the passed

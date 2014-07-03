@@ -2,6 +2,7 @@ TouchRelationship = function(obj, other) {
   this.perceive(obj, other);
 }
 TouchRelationship.prototype.key = "touch";
+TouchRelationship.prototype.targetType = 'obj';
 TouchRelationship.prototype.arity = 2;
 TouchRelationship.prototype.symmetric = true;
 TouchRelationship.prototype.constant = false;

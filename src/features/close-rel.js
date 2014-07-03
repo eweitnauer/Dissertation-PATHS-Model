@@ -2,6 +2,7 @@ CloseRelationship = function(obj, other) {
   this.perceive(obj, other);
 }
 CloseRelationship.prototype.key = "close";
+CloseRelationship.prototype.targetType = 'obj';
 CloseRelationship.prototype.arity = 2;
 CloseRelationship.prototype.symmetric = true;
 CloseRelationship.prototype.constant = false;

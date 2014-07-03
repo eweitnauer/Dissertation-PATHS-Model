@@ -4,6 +4,7 @@ LeftRelationship = function(obj, other) {
 }
 LeftRelationship.prototype.key = "left_of";
 LeftRelationship.prototype.arity = 2;
+LeftRelationship.prototype.targetType = 'obj';
 LeftRelationship.prototype.symmetry = false;
 LeftRelationship.prototype.constant = false;
 

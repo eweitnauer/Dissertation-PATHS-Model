@@ -4,6 +4,8 @@ FarAttribute = function(group) {
   this.perceive(group);
 }
 FarAttribute.prototype.key = "far";
+FarAttribute.prototype.targetType = 'group';
+FarAttribute.prototype.arity = 1;
 FarAttribute.prototype.constant = false;
 
 FarAttribute.prototype.perceive = function(group) {

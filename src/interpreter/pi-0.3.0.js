@@ -29,7 +29,10 @@ PI.v0_3_0 = (function() {
 		this.log_symbol = {1: 'EE', 2: 'WW', 3: 'II', 4: 'DB'};
 		this.step = 1;
 
-		this.attentionNet = new attentionNet();
+		//this.activeScenes = [this.left_scenes[0], this.right_scenes[0]]; // FIXME: shift attetention between scenes
+		this.activeScenes = [this.left_scenes[0], this.left_scenes[1]]; // FIXME: shift attetention between scenes
+
+		this.attentionNet = new AttentionNet();
 		this.initAttentionNet();
 		this.coderack = new Coderack(this);
 
@@ -62,6 +65,10 @@ PI.v0_3_0 = (function() {
 		this.scenes.forEach(function (sn) {
 			sn.objs.forEach(function (on) { aNet.addObject(on) });
 		});
+
+		aNet.addSelector(new Selector());
+		aNet.addFeature(CountAttribute);
+		aNet.addFeature(ShapeAttribute);
 	}
 
 	Workspace.prototype.log = function(level, msg) {
@@ -75,9 +82,57 @@ PI.v0_3_0 = (function() {
 		return Random.pick(['start', 'end']);
 	}
 
+	// TODO: implement an attention shifting algorithm that shifts
+	// attention from old to new shifts slowly over time.
+	Workspace.prototype.getActiveScenes = function() {
+		return this.activeScenes;
+		//return Random.pickN(2, this.scenes);
+	}
+
+	Workspace.prototype.getRandomFeature = function() {
+		return this.attentionNet.getRandomFeature();
+	}
+
+	Workspace.prototype.getRandomSelector = function(options) {
+		return this.attentionNet.getRandomSelector(options);
+	}
+
+	/// Returns true if the selector was new and inserted.
+	Workspace.prototype.addSelector = function(sel) {
+		if (this.attentionNet.addSelector(sel)) {
+			this.log(4, 'added selector', sel);
+			return true;
+		}
+		return false;
+	}
+
+	Workspace.prototype.addSolution = function(sol) {
+		this.solutions.push(sol);
+		this.log(3, 'correct solution:', sol.describe());
+	}
+
+	Workspace.prototype.getGroupBySelector = function(sel, scene) {
+		for (var i=0; i<scene.groups.length; i++) {
+			var g = scene.groups[i];
+			if (g.selectors.length == 1 && g.selectors[0] == sel) return g;
+			if (g.selectors.length == 0 && sel.blank()) return g;
+		}
+		return null;
+	}
+
+	Workspace.prototype.getOrCreateGroupBySelector = function(sel, scene) {
+		if (!scene) throw "missing scene argument";
+		var group = this.getGroupBySelector(sel, scene);
+		if (group) return group;
+		// group not in scene yet, create
+		group = sel.applyToScene(scene);
+		if (!group.empty()) scene.groups.push(group);
+		return group;
+	};
+
 	// TODO: attention net should handle this later (maybe)
 	Workspace.prototype.getRandomScene = function() {
-		return Random.pick(this.scenes);
+		return Random.pick(this.activeScenes);
 	}
 
 	Workspace.prototype.getRandomObject = function(scene) {
@@ -119,7 +174,7 @@ PI.v0_3_0 = (function() {
 	Coderack.prototype.insert = function(codelet, urgency) {
 		codelet.urgency = urgency || 10;
 		this.push(codelet);
-		this.ws.log(4, 'inserted',codelet.describe(),'with urgency',urgency);
+		this.ws.log(4, 'inserted',codelet.describe(),'with urgency',codelet.urgency);
 		// forget the oldest elements if we have too many
 		if (this.length > this.max_length) {
 			this.splice(0, this.max_length-this.length);
@@ -188,285 +243,211 @@ PI.v0_3_0 = (function() {
 	/// probability.
 	var MainBehavior = function(coderack, attrs) {
 		this.cr = coderack;
+		this.ws = coderack.ws;
 		this.name = 'MainBehavior';
 		this.mindset = 0.25;
 		this.codelet_infos = [{klass: AttrCodelet, mindset: 0}
-					               ,{klass: NewSelectorCodelet, mindset: 0.5}
-					               ,{klass: RefineSelectorCodelet, mindset: 0.75}
-					               ,{klass: SolveCodelet, mindset: 1}];
+					               //,{klass: NewSelectorCodelet, mindset: 0.5} //TODO: this codelet need input data currently
+					               //,{klass: RefineSelectorCodelet, mindset: 0.75} //TODO: this codelet is not written so far
+					               ,{klass: SolutionCodelet, mindset: 1}];
 	}
 
-	PerceptionBehavior.prototype.describe = function() {
+	MainBehavior.prototype.describe = function() {
 		return 'mindset: ' + this.mindset;
 	}
 
-	PerceptionBehavior.prototype.run = function() {
-		var mindset_fit = function (cinfo) { return 1-Math.abs(cinfo.mindset-this.mindset) };
-		var codelet_info = Random.pick_weighted(this.codelets, mindset_fit);
-		this.cs.insert(new codelet_info.klass(this.cr));
+	MainBehavior.prototype.run = function() {
+		if (this.cr.length > 0) return;
+		var mindset = this.mindset;
+		var mindset_fit = function (cinfo) { return 1-Math.abs(cinfo.mindset-mindset) };
+		var codelet_info = Random.pick_weighted(this.codelet_infos, mindset_fit);
+		this.cr.insert(new codelet_info.klass(this.cr));
 	}
 
 
 	/**
-	 * Chooses an attribute and an object or selector (or the other way around)
-	 * and perceives the choosen attribute. It may spawn NewSelectorCodelets
-	 * (with the current attribute) and RefineSelectorCodelets (with the current
+	 * Chooses an object or a group of objects and then an attribute or
+	 * relationship which it perceives. It may spawn NewSelectorCodelets (with
+	 * the current attribute) and RefineSelectorCodelets (with the current
 	 * attribute and a different attribute the same object has).
 	 */
 	var AttrCodelet = function(coderack) {
 		this.coderack = coderack;
 		this.followup = [];
 		this.ws = this.coderack.ws;
+		this.time = this.ws.getRandomTime();
 	}
 
 	AttrCodelet.prototype.describe = function() {
 		return 'AttrCodelet';
 	}
 
-	AttrCodelet.prototype.run = function() {
-		var target, feature;
-		// TODO: we might want to select one of the above first according to their attention
-		// values and the other one second with a uniform probability distribution
-		feature = this.ws.getRandomFeature();
-		if (feature.prototype.arity == 2) { // it is a relation
-			var sel = this.ws.getRandomSelector();
-			target = this.ws.getGroupFromSelector(sel);
-		} else { // it is an object
-			target = this.ws.getRandomObject();
-		}
+	AttrCodelet.prototype.spawnNewSelCodelet = function (percept, time) {
+		this.coderack.insert(new NewSelectorCodelet(this.coderack, percept, time));
+	}
 
-		var percept;
-		if (percept = target.getFromCache(feature.prototype.key)) {
-			// was already perceived before, TODO: decrease activity of feature?
-		} else {
-			// we'll perceive it now, TODO: increase activity of feature?
-			percept = target.get(feature.prototype.key);
-		}
+	AttrCodelet.prototype.run = function() {
+		var target, percept;
+		var feature = this.ws.getRandomFeature();
+		var scene = this.ws.getRandomScene();
+		if (feature.prototype.targetType == 'group') {
+			sel = this.ws.getRandomSelector({type: 'object'});
+			target = this.ws.getOrCreateGroupBySelector(sel, scene);
+			if (target.empty()) return; // TODO: decrease selector attention
+		} else if (feature.prototype.targetType == 'obj') {
+			target = this.ws.getRandomObject(scene);
+		} else throw "unknown target type";
+
+		if (feature.prototype.arity == 1) { // attribute
+			percept = target.getFromCache(feature.prototype.key, {time: this.time});
+			if (percept) this.spawnNewSelCodelet(percept, this.time);
+			else percept = target.get(feature.prototype.key, {time: this.time});
+			this.ws.log(4, 'perceived', feature.prototype.key, 'on', target, percept);
+		} else if (feature.prototype.arity == 2) { // relationship
+			var other_sel = this.ws.getRandomSelector(); // TODO: so we instead want to pick a random object
+			                                             // and construct a selector from that object later
+			percept = target.get(feature.prototype.key, {other: other_sel, time: this.time});
+			if (percept) this.spawnNewSelCodelet(percept, this.time);
+			else percept = target.get(feature.prototype.key, {other: other_sel, time: this.time});
+			this.ws.log(4, 'perceived', feature.prototype.key, 'on', target, 'and', other_sel);
+		} else throw "only features with arity 1 or 2 are supported";
+
+		// TODO: use the following pattern to change attention based on whether the
+		// percept had beed perceived before or not
+		// if (percept = target.getFromCache(feature.prototype.key)) {
+		// 	// was already perceived before, TODO: decrease activity of feature?
+		// } else {
+		// 	// we'll perceive it now, TODO: increase activity of feature?
+		// 	percept = target.get(feature.prototype.key);
+		// }
 
 		// TODO: spawn NewSelector- or RefineSelectorCodelets
 	}
 
 	/**
-	 * Chooses an attribute and creates the respective selector. Then it applies
-	 * the selector to the currently active scenes. If all scenes match or only
-	 * the scenes of one side match, it adds the selector to the global list of
-	 * selectors.
+	 * Uses the passed attribute / relationship and side to create the
+	 * respective selector. Then it applies the selector to the currently active
+	 * scenes. If all scenes match or only the scenes of one side match, it adds
+	 * the selector to the global list of selectors.
 	 */
-	var NewSelectorCodelet = function(coderack) {
+	var NewSelectorCodelet = function(coderack, percept, time) {
+		this.coderack = coderack;
+		this.followup = [];
+		this.ws = this.coderack.ws;
+		this.percept = percept;
+		this.time = time;
+	}
+
+	NewSelectorCodelet.prototype.describe = function() {
+		return 'NewSelectorCodelet(' + this.percept.key + '=' + this.percept.val + ')';
+	}
+
+	/**
+	 * Create selector with the passed percept and apply it to the current
+	 * scenes. Then add it to the active selectors if it matches all scenes
+	 * or just all scenes from one side.
+	 */
+	NewSelectorCodelet.prototype.run = function() {
+		var self = this;
+
+		var sel = new Selector();
+		if (this.percept.arity == 2) sel.use_rel(this.percept, this.time);
+		else sel.use_attr(this.percept, this.time);
+
+		if (this.percept.group && this.percept.groups.selectors.length > 0) {
+			// TODO: the percept was perceived for a group which is based on a particular
+			// selector ==> we need to somehow combine both selectors
+		}
+
+		var scenes = this.ws.getActiveScenes();
+		var groups = [];
+		var matching_scenes = scenes.filter(function (scene) {
+			var res_group = self.ws.getOrCreateGroupBySelector(sel, scene);
+			return (!res_group.empty());
+		});
+
+		if (matching_scenes.length == 0) {
+			// TODO: disencourage / remove the selector from the workspace
+			return;
+		}
+
+		var all_from_one_side = matching_scenes.every(function (scene) {
+		  return scene.side == matching_scenes[0].side;
+		});
+		if (matching_scenes.length == scenes.length || all_from_one_side) {
+			sel.side = all_from_one_side ? scenes[0].side : 'both';
+			this.ws.addSelector(sel);
+			//this.coderack.insert(new SolutionCodelet(this.coderack, sel));
+		}
+	}
+
+	/**
+	 * Will try to find a solution based on this codelet's selector for
+	 * both sides and all solution modes.
+	 */
+	var SolutionCodelet = function(coderack) {
 		this.coderack = coderack;
 		this.followup = [];
 		this.ws = this.coderack.ws;
 	}
 
-
-
-
-	/// Uses an all selector to groups all objects in the target scene into one group.
-	/// May spawn a key object codelet.
-	var GroupAllCodelet = function(coderack, scene) {
-		this.coderack = coderack;
-		this.ws = coderack.ws;
-		this.scene = scene;
-		this.followup = [];
+	SolutionCodelet.prototype.describe = function() {
+		return 'SolutionCodelet';
 	}
-	GroupAllCodelet.prototype.describe = function() {
-		return 'GroupAllCodelet(' + (this.scene ? this.scene.id : '?') +')';
-	}
-	GroupAllCodelet.prototype.selector = new Selector('group');
-	GroupAllCodelet.prototype.run = function() {
-		var sn = this.scene || this.ws.getRandomScene();
-		var thiz = this;
-		var gn = null;
-		sn.groups.some(function (g) { if (thiz.selector.equals(g.selector)) return gn=g; });
-		if (!gn) {
-			// construct a new all objects group
-			gn = this.selector.select(sn.objs, sn)[0];
-			if (!gn) return false;
-			gn.on('retrieved', this.ws.retrieved_feature.bind(this.ws));
-			gn.on('perceived', this.ws.perceived_feature.bind(this.ws));
-			sn.groups.push(gn);
+
+	/**
+	 * Set the solution mode and applies the solution to both sides. If
+	 * successful, it calls the success_callback with the solution as argument.
+	 * Otherwise, it calls the fail_callback (if one was passed) with "too
+	 * specific" or "too general" as argument.
+	 */
+	SolutionCodelet.prototype.runWithSolution = function(sol, sol_mode, success_callback, fail_callback) {
+		sol.mode = sol_mode;
+
+		var lscenes = this.ws.left_scenes
+		   ,rscenes = this.ws.right_scenes;
+
+		var l_match_count = lscenes.filter(sol.check_scene.bind(sol)).length
+		   ,r_match_count = rscenes.filter(sol.check_scene.bind(sol)).length
+		   ,l_no_match = l_match_count == 0
+		   ,r_no_match = r_match_count == 0
+		   ,l_all_match = l_match_count == lscenes.length
+		   ,r_all_match = r_match_count == rscenes.length;
+
+		if (l_no_match && r_all_match) { // right solution?
+			return success_callback(sol.setMainSide('right'));
 		}
-		if (Math.random() < 0.5) {
-		  var keyc = new KeyObjCodelet(this.coderack, null, 'group');
-			this.coderack.insert(keyc, 100);
+		if (l_all_match && r_no_match) { // left solution?
+			return success_callback(sol.setMainSide('left'));
 		}
-		return true;
-	}
-
-	/// Target can be scene or group node or nothing.
-	/// When run, the codelet will perceive its attribute for its object node.
-	/// It may spawn a hypothesis constructor codelet using its attribute.
-	var GroupAttrCodelet = function(coderack, attr_key, target) {
-		this.attr_key = attr_key;
-		this.attr = pbpSettings.group_attrs[attr_key];
-		this.target = target;
-		this.coderack = coderack;
-		this.ws = coderack.ws;
-		this.followup = [];
-	}
-	GroupAttrCodelet.prototype.describe = function() {
-		return 'GroupAttrCodelet('+(this.attr_key||'?')+','+(this.target ? this.target.id : '?')+')';
-	}
-	GroupAttrCodelet.prototype.run = function() {
-		var gn;
-		if (!this.target) this.target = this.ws.getRandomScene();
-		if (this.target instanceof SceneNode) {
-			var sn = this.target;
-			if (sn.groups.length == 0) {
-				// there are no groups, spawn new GroupAllCodelet
-				var cdl = new GroupAllCodelet(this.coderack, sn);
-				cdl.followup.push(this);
-				this.coderack.insert(cdl, this.urgency);
-				return false;
-			} else gn = Random.pick(sn.groups);
+		if (!l_all_match && !r_all_match) { // matches too little -> reject
+			if (fail_callback) return fail_callback("too specific");
 		}
-		else if (this.target instanceof GroupNode) gn = this.target;
+		if (fail_callback) fail_callback("too general");
+	}
 
-		if (!gn) return false;
-
-		var attr, res;
-		if (attr = gn.get(this.attr_key, {cache_only: true})) {
-			// was already perceived, decrease activity of attribute
-			//attr.decActivity();
-			res = false;
-		} else {
-			// is perceived now, increase activity of attribute
-			attr = gn.get(this.attr_key);
-			//attr.incActivity();
-			res = true;
+	SolutionCodelet.prototype.run = function () {
+		var sel = this.ws.getRandomSelector({no_blank: true});
+		if (!sel) return;
+		var sol = new Solution(sel);
+		var found_sol = false;
+		var self = this;
+		var addSolFn = function(sol) {
+			self.ws.addSolution(sol);
+			found_sol = true;
 		}
-	  // with probability of 0.5 spawn a key object codelet with Hypothesis Codelet followup
-		if (Math.random() < 0.5) {
-		  var keyc = new KeyObjCodelet(this.coderack, null, 'group');
-			var hypc = new HypAttrCodelet(this.coderack, null, attr, null, gn.scene_node.side);
-			keyc.followup.push(hypc);
-			this.coderack.insert(hypc, 100);
-		}
-		return res;
-	}
 
-	/// Will rate the objects in a scene by how likely they seem to be a key object. Uses the
-	/// given (or random) scene and the given (or random) time.
-	var SearchKeyObjectCodelet = function(coderack, scene, time) {
-		this.coderack = coderack;
-		this.ws = coderack.ws;
-		this.followup = [];
-		this.scene = scene;
-		this.time = time;
-	}
-	SearchKeyObjectCodelet.prototype.describe = function() {
-		return 'SearchKeyObjectCodelet('+(this.scene ? this.scene.id : '?')+','+(this.time||'?')+')';
-	}
-	SearchKeyObjectCodelet.prototype.run = function() {
-		this.ws.log(2, 'running ' + this.describe());
-		if (!this.time) this.time = this.ws.getRandomTime();
-		if (!this.scene) this.scene = this.ws.getRandomScene();
-		// if there is just one object in this scene, don't do anything
-		if (this.scene.objs.length == 1) return false;
-
-		// look for an odd shape
-		var activations = get_uniqueness(group_by_shape(this.scene.objs));
-		this.scene.objs.forEach(function (on) {
-			on.setActivity(activations[on.obj.id])
+		var res = this.runWithSolution(sol, 'exists', addSolFn, function(reason) {
+			if (reason == 'too specific') {
+				// TODO: disencourage / remove selector from workspace
+		  } else if (reason == 'too general') {
+		  	self.runWithSolution(sol, 'all', addSolFn);
+		  	self.runWithSolution(sol, 'unique', addSolFn);
+		  	if (!found_sol) {
+		  		// TODO: mark selector as generalizer for merging with other selectors
+		  	}
+		  }
 		});
-		return true;
-
-		// look for the top-most object
-
-		// look for an spatially single object
-	}
-
-
-	/// Will create a selector based on the passed attr and time (default: random pick) and check
-	/// whether the selector just matches a single object per scene. If yes, it will use it as the
-	/// new key-selector in the workspace. Every HypAttrCodelet might now choose to use it in its
-	/// solution. The mode can be 'unique' (which is default) or 'group'. If attr is null, an empty
-	/// selector that matches everything is used.
-	var KeyObjCodelet = function(coderack, attr, mode, time) {
-		this.coderack = coderack;
-		this.ws = coderack.ws;
-		this.followup = [];
-		this.attr = attr;
-		this.time = time;
-		this.mode = mode;
-	}
-	KeyObjCodelet.prototype.describe = function() {
-		return 'KeyObjCodelet('+((this.attr&&this.attr.key)||'?')+','+(this.mode||'unique')+')';
-	}
-	KeyObjCodelet.prototype.run = function() {
-		this.ws.log(3, 'running ' + this.describe());
-		if (!this.time) this.time = this.ws.getRandomTime();
-		if (!this.mode) this.mode = 'unique';
-		if (this.mode != 'unique') this.mode = 'group';
-		var sel = new Selector(this.mode);
-		if (this.attr) sel.add_attr(Selector.AttrMatcher.fromAttribute(this.attr, this.time));
-		// return if it doesn't match every scene
-		if (!this.ws.scenes.every(function (sn) { return sel.select(sn.objs, sn).length == 1 })) return false;
-		// set it as key-obj-selector
-		return this.ws.setKeySelector(sel);
-	}
-
-
-	/// Codelet for creating and checking an hypothesis based on an attribute.
-	/// Pass the mode of the selector (all, first, but not unique or group), the Attribute class,
-	/// the time and the side (left, right). Mode, time and side are optional and
-	/// will be chosen randomly if not provided. Selector is optional and if passed will be used
-	/// as the first selector in a XIsY solution.
-	var HypAttrCodelet = function(coderack, mode, attr, time, side, selector) {
-		this.mode = mode;
-		this.attr = attr;
-		this.time = time;
-		this.side = side;
-		this.coderack = coderack;
-		this.ws = coderack.ws;
-		this.followup = [];
-		this.selector = selector;
-	}
-	HypAttrCodelet.prototype.describe = function () {
-		return 'HypAttrCodelet('+(this.attr.key ? this.attr.key+'='+this.attr.get_label() : '?')+','
-			                      +(this.mode||'?')+','
-			                      +(this.selector ? ','+this.selector.describe2() : '?')+','
-			                      +(this.side || '?') + ')';
-	}
-	HypAttrCodelet.prototype.run = function() {
-		if (!this.side) this.side = Random.pick(['left', 'right']);
-		if (!this.time) this.time = this.ws.getRandomTime();
-		if (!this.mode) this.mode = Random.pick(['all', 'first']);
-
-		// parameter selector based solution
-		if (this.selector) {
-			var sel = new Selector(this.mode);
-			sel.add_attr(Selector.AttrMatcher.fromAttribute(this.attr, this.time));
-			// base the solution on a selector
-			var sol = new Solution.XIsY(this.selector, sel, this.side);
-			this.ws.checkSolution(sol);
-			return true;
-		}
-
-		// key_selector based solution
-		var ks = this.ws.key_sel;
-		if (ks && this.mode != 'group') {
-			if ((ks.mode == 'group' && (this.attr.key in pbpSettings.group_attrs)) ||
-					(ks.mode != 'group' && (this.attr.key in pbpSettings.obj_attrs))) {
-				// base the solution on a key object
-				var sel = new Selector('unique');
-				sel.add_attr(Selector.AttrMatcher.fromAttribute(this.attr, this.time));
-				var sol = new Solution.XIsY(this.ws.key_sel, sel, this.side);
-				this.ws.checkSolution(sol);
-				return true;
-			}
-		}
-
-		// global solution
-		if (this.attr.key in pbpSettings.obj_attrs)	{
-			var sel = new Selector(this.mode);
-			sel.add_attr(Selector.AttrMatcher.fromAttribute(this.attr, this.time));
-			var sol = new Solution.IsX(sel, this.side);
-			this.ws.checkSolution(sol);
-			return true;
-		}
-
-		return false;
 	}
 
 	return {Workspace: Workspace

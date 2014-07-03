@@ -9,8 +9,13 @@ Solution = function(selectors, main_side, mode) {
 	this.sels = (Array.isArray(selectors) ? selectors.slice()
 	                                      : (selectors ? [selectors] : []));
 	this.mode = mode;
+	this.setMainSide(main_side);
+}
+
+Solution.prototype.setMainSide = function (main_side) {
 	this.main_side = main_side || 'left';
 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
+  return this;
 }
 
 Solution.prototype.check = function(scenes_l, scenes_r) {
@@ -31,7 +36,7 @@ Solution.prototype.check_scene = function(scene) {
 		prev_group = curr_group;
 	  curr_group = sel.select(curr_group, scene);
 	});
-	console.log(scene.id, ":", curr_group.objs.length);
+	//console.log(scene.id, ":", curr_group.objs.length);
 	if (this.mode == 'unique' && curr_group.objs.length == 1) return true;
 	if (this.mode == 'exists' && curr_group.objs.length > 0) return true;
 	if (this.mode == 'all' && curr_group.objs.length > 0 &&

@@ -3,6 +3,7 @@ BelowRelationship = function(obj, other) {
   this.perceive(obj, other);
 }
 BelowRelationship.prototype.key = "below";
+BelowRelationship.prototype.targetType = 'obj';
 BelowRelationship.prototype.arity = 2;
 BelowRelationship.prototype.symmetry = false;
 BelowRelationship.prototype.constant = false;

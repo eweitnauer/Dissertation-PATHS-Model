@@ -31,3 +31,24 @@ Random.int = function(upper) {
 Random.pick = function(vals) {
 	return vals[Random.int(vals.length)];
 }
+
+/// Picks N random elements from the passed array without
+/// repetition and returns them as an array.
+Random.pickN = function(n, vals) {
+	if (n == 0) return [];
+	if (n > vals.length) throw "N bigger than number of elements";
+	var perm = Random.permutation(vals.length).slice(0,n);
+	return perm.map(function (val, i) { return vals[perm[i]] });
+}
+
+/// Returns a random permuation of the numbers 0...N-1 in an array.
+Random.permutation = function(N) {
+  var a = [];
+  for (var n=0; n<N; n++) {
+    var i = Math.round(Math.random()*n);
+    var v = a[i];
+    a[i] = n;
+    if (i != n) a[n] = v;
+  }
+  return a;
+}

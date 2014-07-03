@@ -5,6 +5,8 @@ MovableUpAttribute = function(obj) {
   this.perceive(obj);
 }
 MovableUpAttribute.prototype.key = 'can_move_up';
+MovableUpAttribute.prototype.targetType = 'obj';
+MovableUpAttribute.prototype.arity = 1;
 MovableUpAttribute.prototype.constant = false;
 
 /// Returns an MovableUpAttribute instance, which is the perception of whether the passed
