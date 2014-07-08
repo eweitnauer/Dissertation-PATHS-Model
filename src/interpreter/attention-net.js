@@ -70,31 +70,39 @@ AttentionNet.prototype.addObject = function(object) {
 /// Chooses a random object from the passed scene based on their attention values.
 AttentionNet.prototype.getRandomObject = function(scene) {
 	var self = this;
-	if (scene.objs.length == 0) return null;
-	return Random.pick_weighted(scene.objs, function (onode) {
-		if (!self.attention_values.has(onode)) throw "unknown object";
-	  return self.attention_values.get(onode);
-	});
+	try {
+		return Random.pick_weighted(scene.objs, function (onode) {
+			if (!self.attention_values.has(onode)) throw "unknown object";
+		  return self.attention_values.get(onode);
+		});
+	} catch (e) {
+		return null;
+	}
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
 AttentionNet.prototype.getRandomFeature = function() {
 	var self = this;
-	if (this.features.length == 0) return null;
-	return Random.pick_weighted(this.features, function (feature) {
-		return self.attention_values.get(feature);
-	});
+	try {
+		return Random.pick_weighted(this.features, function (feature) {
+			return self.attention_values.get(feature);
+		});
+	} catch (e) {
+		if (!(e instanceof String)) throw e;
+		return null;
+	}
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
 AttentionNet.prototype.getRandomSelector = function(options) {
 	options = options || {};
+	var self = this;
 	var sels = this.selectors.filter(function(sel) {
-		return ((!options.no_blank || !sel.blank())
+		return (self.getAttentionValue(sel) > 0 &&
+			(!options.no_blank || !sel.blank())
 		  && (!options.type || sel.isOfType(options.type)));
 	});
 	if (sels.length == 0) return null;
-	var self = this;
 	return Random.pick_weighted(sels, function (sel) {
 		return self.attention_values.get(sel);
 	});
@@ -103,10 +111,13 @@ AttentionNet.prototype.getRandomSelector = function(options) {
 /// Chooses a random object from the passed scene based on their attention values.
 AttentionNet.prototype.getRandomObjectOrSelector = function(scene) {
 	var elements = this.selectors.contact(scene.objs);
-	var self = this;
-	if (elements.length == 0) return null;
-	return Random.pick_weighted(elements, function (el) {
-		if (!self.attention_values.has(el)) throw "unknown object";
-		return self.attention_values.get(el);
-	});
+	try {
+		return Random.pick_weighted(elements, function (el) {
+			if (!self.attention_values.has(el)) throw "unknown object";
+			return self.attention_values.get(el);
+		});
+	} catch (e) {
+		if (!(e instanceof String)) throw e;
+		return null;
+	}
 }

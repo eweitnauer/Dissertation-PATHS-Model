@@ -7,8 +7,8 @@ var Random = {};
 Random.weighted = function(probs, normalized) {
 	var r = Math.random();
 	if (!normalized) r *= probs.reduce(function(a,b){return a+b});
-	var sum=probs[0];
-	var idx = 0;
+	var sum = 0;
+	var idx = -1;
 	while (r>sum) { idx++; sum+=probs[idx] }
 	return idx;
 }
@@ -19,7 +19,10 @@ Random.weighted = function(probs, normalized) {
 /// If you know that the sum of all weights is 1, you can pass normalized
 /// as true to make things more efficient.
 Random.pick_weighted = function(xs, accessor, normalized) {
-	return xs[Random.weighted(xs.map(accessor), normalized)];
+	if (xs.length == 0) throw "empty list";
+	var idx = Random.weighted(xs.map(accessor), normalized);
+	if (idx == -1) throw "sum of probabilities must be bigger than 1";
+	return xs[idx];
 }
 
 /// Returns a random integer in 0...upper-1.
@@ -29,6 +32,7 @@ Random.int = function(upper) {
 
 /// Returns a random element from the passed array.
 Random.pick = function(vals) {
+	if (vals.length == 0) throw "empty list";
 	return vals[Random.int(vals.length)];
 }
 

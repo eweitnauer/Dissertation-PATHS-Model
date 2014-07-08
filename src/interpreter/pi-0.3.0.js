@@ -12,6 +12,11 @@ Version 0.3.0
 PI.v0_3_0 = (function() {
 	var version = '0.3.0';
 
+	var options = {
+		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
+	 ,features: [CountAttribute, ShapeAttribute]
+	};
+
 	/// The workspace is a container for all objects the interpreter works with
 	/// and has some utility functions for accessing them.
 	var Workspace = function(scenes, log_level) {
@@ -29,8 +34,10 @@ PI.v0_3_0 = (function() {
 		this.log_symbol = {1: 'EE', 2: 'WW', 3: 'II', 4: 'DB'};
 		this.step = 1;
 
-		//this.activeScenes = [this.left_scenes[0], this.right_scenes[0]]; // FIXME: shift attetention between scenes
-		this.activeScenes = [this.left_scenes[0], this.left_scenes[1]]; // FIXME: shift attetention between scenes
+		if (options.active_scenes == 'w/i')
+			this.activeScenes = [this.left_scenes[0], this.left_scenes[1]]; // FIXME: shift attetention between scenes
+		else
+			this.activeScenes = [this.left_scenes[0], this.right_scenes[0]]; // FIXME: shift attetention between scenes
 
 		this.attentionNet = new AttentionNet();
 		this.initAttentionNet();
@@ -67,8 +74,7 @@ PI.v0_3_0 = (function() {
 		});
 
 		aNet.addSelector(new Selector());
-		aNet.addFeature(CountAttribute);
-		aNet.addFeature(ShapeAttribute);
+		options.features.forEach(function (feature) { aNet.addFeature(feature) });
 	}
 
 	Workspace.prototype.log = function(level, msg) {
@@ -104,6 +110,14 @@ PI.v0_3_0 = (function() {
 			return true;
 		}
 		return false;
+	}
+
+	/// Sets the attention value of the passed selector to 0 so it is
+	/// never choosen again by the attention net but is still there so it
+	/// won't be added again.
+	/// TODO: reduce attention of connected nodes in the attention net
+	Workspace.prototype.blockSelector = function(sel) {
+		this.attentionNet.setAttentionValue(sel, 0);
 	}
 
 	Workspace.prototype.addSolution = function(sol) {
@@ -354,7 +368,7 @@ PI.v0_3_0 = (function() {
 		if (this.percept.arity == 2) sel.use_rel(this.percept, this.time);
 		else sel.use_attr(this.percept, this.time);
 
-		if (this.percept.group && this.percept.groups.selectors.length > 0) {
+		if (this.percept.group && this.percept.group.selectors.length > 0) {
 			// TODO: the percept was perceived for a group which is based on a particular
 			// selector ==> we need to somehow combine both selectors
 		}
@@ -399,7 +413,10 @@ PI.v0_3_0 = (function() {
 	 * Set the solution mode and applies the solution to both sides. If
 	 * successful, it calls the success_callback with the solution as argument.
 	 * Otherwise, it calls the fail_callback (if one was passed) with "too
-	 * specific" or "too general" as argument.
+	 * specific" or "too general" as first argument. In the "too general" case,
+	 * a second bool paramenter is passed that is true if the the selector
+	 * matches all objects in all scenes (and therefore can be replaced with the
+	 * blank selector).
 	 */
 	SolutionCodelet.prototype.runWithSolution = function(sol, sol_mode, success_callback, fail_callback) {
 		sol.mode = sol_mode;
@@ -407,12 +424,19 @@ PI.v0_3_0 = (function() {
 		var lscenes = this.ws.left_scenes
 		   ,rscenes = this.ws.right_scenes;
 
-		var l_match_count = lscenes.filter(sol.check_scene.bind(sol)).length
-		   ,r_match_count = rscenes.filter(sol.check_scene.bind(sol)).length
+		var l_matched_objs_count = lscenes.map(sol.check_scene.bind(sol))
+		   ,r_matched_objs_count = rscenes.map(sol.check_scene.bind(sol))
+		   ,l_match_count = l_matched_objs_count.filter(function (n) { return n }).length
+		   ,r_match_count = r_matched_objs_count.filter(function (n) { return n }).length
+		   ,l_total_obj_count = lscenes.reduce(function (count, scene) { return count + scene.objs.length }, 0)
+		   ,r_total_obj_count = rscenes.reduce(function (count, scene) { return count + scene.objs.length }, 0)
 		   ,l_no_match = l_match_count == 0
 		   ,r_no_match = r_match_count == 0
 		   ,l_all_match = l_match_count == lscenes.length
-		   ,r_all_match = r_match_count == rscenes.length;
+		   ,r_all_match = r_match_count == rscenes.length
+		   ,same_as_blank = l_all_match && r_all_match &&
+		                    l_matched_objs_count==l_total_obj_count &&
+		                    r_matched_objs_count==r_total_obj_count;
 
 		if (l_no_match && r_all_match) { // right solution?
 			return success_callback(sol.setMainSide('right'));
@@ -423,7 +447,7 @@ PI.v0_3_0 = (function() {
 		if (!l_all_match && !r_all_match) { // matches too little -> reject
 			if (fail_callback) return fail_callback("too specific");
 		}
-		if (fail_callback) fail_callback("too general");
+		if (fail_callback) fail_callback("too general", same_as_blank);
 	}
 
 	SolutionCodelet.prototype.run = function () {
@@ -437,14 +461,17 @@ PI.v0_3_0 = (function() {
 			found_sol = true;
 		}
 
-		var res = this.runWithSolution(sol, 'exists', addSolFn, function(reason) {
+		var res = this.runWithSolution(sol, 'exists', addSolFn, function(reason, same_as_blank) {
 			if (reason == 'too specific') {
-				// TODO: disencourage / remove selector from workspace
+				self.ws.blockSelector(sel);
 		  } else if (reason == 'too general') {
 		  	self.runWithSolution(sol, 'all', addSolFn);
 		  	self.runWithSolution(sol, 'unique', addSolFn);
 		  	if (!found_sol) {
-		  		// TODO: mark selector as generalizer for merging with other selectors
+		  		if (!same_as_blank) {
+		  			// TODO: mark selector as generalizer for merging with other selectors
+		  			// we only need to consider generalizers for chaining solutions
+		  		}
 		  	}
 		  }
 		});

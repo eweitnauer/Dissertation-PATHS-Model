@@ -28,7 +28,8 @@ Solution.prototype.check = function(scenes_l, scenes_r) {
 
 /// Applies all selectors consecutively to the scene and checks
 /// whether the resulting group of objects fits the mode of the
-/// solution. If so it returns ture, otherwise false.
+/// solution. If so it returns the number of objects in the resulting
+/// group node, otherwise it returns false.
 Solution.prototype.check_scene = function(scene) {
 	var curr_group = GroupNode.sceneGroup(scene);
 	var prev_group = curr_group;
@@ -36,11 +37,11 @@ Solution.prototype.check_scene = function(scene) {
 		prev_group = curr_group;
 	  curr_group = sel.select(curr_group, scene);
 	});
-	//console.log(scene.id, ":", curr_group.objs.length);
-	if (this.mode == 'unique' && curr_group.objs.length == 1) return true;
-	if (this.mode == 'exists' && curr_group.objs.length > 0) return true;
-	if (this.mode == 'all' && curr_group.objs.length > 0 &&
-	    prev_group.objs.length == curr_group.objs.length) return true;
+	var N = curr_group.objs.length;
+	if (this.mode == 'unique' && N == 1) return 1;
+	if (this.mode == 'exists' && N > 0) return N;
+	if (this.mode == 'all' && N > 0 &&
+	    prev_group.objs.length == N) return N;
 	return false;
 }
 
