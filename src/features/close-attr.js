@@ -14,7 +14,7 @@ CloseAttribute.prototype.constant = false;
 
 CloseAttribute.prototype.perceive = function(group) {
   this.group = group;
-  if (group.objs.length < 2) this.val = 0;
+  if (group.objs.length < 2) this.val = NaN;
   else {
     // var pobjs = group.objs.map(function (on) { return on.phys_obj });
     // var tgs = group.scene_node.oracle.getSpatialGroups(20 * group.objs[0].phys_scale, pobjs);
