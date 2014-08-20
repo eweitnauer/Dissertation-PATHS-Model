@@ -1,3 +1,4 @@
+/* jshint laxcomma: true, asi: true */
 var PI = PI || {};
 
 /*
@@ -14,7 +15,7 @@ PI.v0_3_0 = (function() {
 
 	var options = {
 		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
-	 ,features: [CountAttribute, ShapeAttribute]
+	 ,features: [CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute]
 	};
 
 	/// The workspace is a container for all objects the interpreter works with
@@ -79,8 +80,12 @@ PI.v0_3_0 = (function() {
 
 	Workspace.prototype.log = function(level, msg) {
 		if (this.log_level < level) return;
-		arguments[0] = this.log_symbol[level] + '[' + this.step + ']';
-		console.log.apply(console, arguments);
+		var lvl = level;
+		level = this.log_symbol[level] + '[' + this.step + ']';
+		if (lvl == 1) console.error.apply(console, arguments);
+		else if (lvl == 2) console.warn.apply(console, arguments);
+		else if (lvl == 3) console.info.apply(console, arguments);
+		else console.log.apply(console, arguments);
 	}
 
 	// TODO: attention net should handle this later (maybe)
@@ -117,6 +122,7 @@ PI.v0_3_0 = (function() {
 	/// won't be added again.
 	/// TODO: reduce attention of connected nodes in the attention net
 	Workspace.prototype.blockSelector = function(sel) {
+		this.log(3, 'blocking selector', sel);
 		this.attentionNet.setAttentionValue(sel, 0);
 	}
 
@@ -298,7 +304,7 @@ PI.v0_3_0 = (function() {
 
 	AttrCodelet.prototype.spawnNewSelCodelet = function (percept, time) {
 		this.coderack.insert(new NewSelectorCodelet(this.coderack, percept, time));
-	}
+	};
 
 	AttrCodelet.prototype.run = function() {
 		var target, percept;
@@ -430,13 +436,13 @@ PI.v0_3_0 = (function() {
 		   ,r_match_count = r_matched_objs_count.filter(function (n) { return n }).length
 		   ,l_total_obj_count = lscenes.reduce(function (count, scene) { return count + scene.objs.length }, 0)
 		   ,r_total_obj_count = rscenes.reduce(function (count, scene) { return count + scene.objs.length }, 0)
-		   ,l_no_match = l_match_count == 0
-		   ,r_no_match = r_match_count == 0
+		   ,l_no_match = l_match_count === 0
+		   ,r_no_match = r_match_count === 0
 		   ,l_all_match = l_match_count == lscenes.length
 		   ,r_all_match = r_match_count == rscenes.length
 		   ,same_as_blank = l_all_match && r_all_match &&
-		                    l_matched_objs_count==l_total_obj_count &&
-		                    r_matched_objs_count==r_total_obj_count;
+		                    l_matched_objs_count===l_total_obj_count &&
+		                    r_matched_objs_count===r_total_obj_count;
 
 		if (l_no_match && r_all_match) { // right solution?
 			return success_callback(sol.setMainSide('right'));
@@ -461,11 +467,12 @@ PI.v0_3_0 = (function() {
 			found_sol = true;
 		}
 
+		var is_group_sol = sol.sels[sol.sels.length-1].isOfType('group');
 		var res = this.runWithSolution(sol, 'exists', addSolFn, function(reason, same_as_blank) {
 			if (reason == 'too specific') {
 				self.ws.blockSelector(sel);
-		  } else if (reason == 'too general') {
-		  	self.runWithSolution(sol, 'all', addSolFn);
+		  } else if (reason == 'too general' && !is_group_sol) { // unique or all don't make sense for
+		  	self.runWithSolution(sol, 'all', addSolFn);					 // group based solutions
 		  	self.runWithSolution(sol, 'unique', addSolFn);
 		  	if (!found_sol) {
 		  		if (!same_as_blank) {
