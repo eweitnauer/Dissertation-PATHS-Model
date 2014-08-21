@@ -8,6 +8,10 @@
  * an empty group if it does not match.
  * The selector can be in unique mode, which means that result groups with more
  * than one element are returned as empty groups instead. */
+
+ // FIXME: unique is not doing what is described above. Instead, it is only
+ // used in the RelMatcher to decide whether to match all or exactly one of the
+ // things we relate to.
 var Selector = function(unique) {
 	this.attrs = [];	      // object & group attributes
 	this.rels = [];         // object relationships
@@ -18,6 +22,10 @@ var Selector = function(unique) {
 /// Returns true if the selector matches anything
 Selector.prototype.blank = function() {
 	return this.attrs.length == 0 && this.rels.length == 0;
+}
+
+Selector.prototype.hasRelationships = function() {
+	return this.rels.length > 0;
 }
 
 /// The blank selector will match any type. Types can be 'object' or 'group'.

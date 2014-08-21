@@ -94,15 +94,18 @@ AttentionNet.prototype.getRandomFeature = function() {
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
+/// Available options:
+/// no_blank (bool), type ('group' or 'object'), filter (function)
 AttentionNet.prototype.getRandomSelector = function(options) {
 	options = options || {};
 	var self = this;
 	var sels = this.selectors.filter(function(sel) {
-		return (self.getAttentionValue(sel) > 0 &&
-			(!options.no_blank || !sel.blank())
-		  && (!options.type || sel.isOfType(options.type)));
+		return (self.getAttentionValue(sel) > 0
+			&& (!options.no_blank || !sel.blank())
+		  && (!options.type || sel.isOfType(options.type))
+		  && (!options.filter || options.filter(sel)));
 	});
-	if (sels.length == 0) return null;
+	if (sels.length === 0) return null;
 	return Random.pick_weighted(sels, function (sel) {
 		return self.attention_values.get(sel);
 	});

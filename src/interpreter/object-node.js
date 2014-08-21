@@ -93,7 +93,7 @@ ObjectNode.prototype.get = function(key, opts) {
 ObjectNode.prototype.getFromCache = function(key, opts) {
   opts = opts || {};
   opts.cache_only = true;
-  return this.getAttr(key, opts);
+  return this.get(key, opts);
 }
 
 /// Returns the attribute named `key`. If given, the `time` in the `opts` object is used,
@@ -135,7 +135,7 @@ ObjectNode.prototype.getRel = function(key, opts) {
   // if the rel is cached, return it
   if ((o.time in this.times) && (key in this.times[o.time])) {
     var cache = this.times[o.time][key];
-    var res = cache.filter(function (rel) { return rel.other == o.other.obj })[0];
+    var res = cache.filter(function (rel) { return rel.other === o.other.obj })[0];
     if (res) {
       this.dispatchEvent('retrieved', {feature: res, target: this});
       return res;

@@ -2,20 +2,27 @@
 var PI = PI || {};
 
 /*
+Version 0.3.1
+- goal: combining of several selectors
+- relationships
+- new feature added: on-top-of
+
 Version 0.3.0
  - a fresh start that uses new types of codelets and the new solution
    and selector types
- - covers these features: -
-		//['shape','stability','count','close','left_pos','right_pos','left_most','right_most','touching','can_move_up']);
- - can solve these PBPs: -
+ - covers these features: count, shape, stability, close
+ - can solve these PBPs:  2 (38 steps)
+                        , 4 (32 steps)
+                        , 8 (49 steps)
+                        ,11 (33 steps)
 */
 
-PI.v0_3_0 = (function() {
-	var version = '0.3.0';
+PI.v0_3_1 = (function() {
+	var version = '0.3.1';
 
 	var options = {
 		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
-	 ,features: [CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute]
+	 ,features: [OnTopRelationship]//[CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute]
 	};
 
 	/// The workspace is a container for all objects the interpreter works with
@@ -306,8 +313,33 @@ PI.v0_3_0 = (function() {
 		this.coderack.insert(new NewSelectorCodelet(this.coderack, percept, time));
 	};
 
+	AttrCodelet.prototype.perceiveAttr = function(target, feature) {
+		var percept = target.getFromCache(feature.prototype.key, {time: this.time});
+		if (percept) this.spawnNewSelCodelet(percept, this.time);
+		else percept = target.get(feature.prototype.key, {time: this.time});
+		this.ws.log(4, 'perceived', feature.prototype.key, 'on', target, percept);
+	}
+
+	AttrCodelet.prototype.perceiveRel = function(scene, target_obj, feature) {
+		if (scene.objs.length < 2) return;
+		// var other_sel;
+		// do other_sel = this.ws.getRandomSelector(); while(other_sel.hasRelationships());
+		// var others = scene.objs.filter(function (obj) {
+		// 							 return obj !== target_obj && other_sel.matches(obj);
+		// });
+		// if (others.length === 0) return;
+		// // what should we do if we got more than one object here?
+		var other;
+		do other = this.ws.getRandomObject(scene); while(other === target_obj);
+		percept = target_obj.getFromCache(feature.prototype.key, {other: other, time: this.time});
+		if (percept) this.spawnNewSelCodelet(percept, this.time);
+		else percept = target_obj.get(feature.prototype.key, {other: other, time: this.time});
+		this.ws.log(4, 'perceived', feature.prototype.key
+		             , 'on', target_obj, 'and', other, ':', percept);
+	}
+
 	AttrCodelet.prototype.run = function() {
-		var target, percept;
+		var target;
 		var feature = this.ws.getRandomFeature();
 		var scene = this.ws.getRandomScene();
 		if (feature.prototype.targetType == 'group') {
@@ -318,19 +350,9 @@ PI.v0_3_0 = (function() {
 			target = this.ws.getRandomObject(scene);
 		} else throw "unknown target type";
 
-		if (feature.prototype.arity == 1) { // attribute
-			percept = target.getFromCache(feature.prototype.key, {time: this.time});
-			if (percept) this.spawnNewSelCodelet(percept, this.time);
-			else percept = target.get(feature.prototype.key, {time: this.time});
-			this.ws.log(4, 'perceived', feature.prototype.key, 'on', target, percept);
-		} else if (feature.prototype.arity == 2) { // relationship
-			var other_sel = this.ws.getRandomSelector(); // TODO?: pick a random object and construct
-			                                             // a selector from that object later
-			percept = target.get(feature.prototype.key, {other: other_sel, time: this.time});
-			if (percept) this.spawnNewSelCodelet(percept, this.time);
-			else percept = target.get(feature.prototype.key, {other: other_sel, time: this.time});
-			this.ws.log(4, 'perceived', feature.prototype.key, 'on', target, 'and', other_sel);
-		} else throw "only features with arity 1 or 2 are supported";
+		if (feature.prototype.arity == 1) this.perceiveAttr(target, feature);
+		else if (feature.prototype.arity == 2) this.perceiveRel(scene, target, feature);
+		else throw "only features with arity 1 or 2 are supported";
 	}
 
 	/**
@@ -351,6 +373,28 @@ PI.v0_3_0 = (function() {
 		return 'NewSelectorCodelet(' + this.percept.key + '=' + this.percept.val + ')';
 	}
 
+	NewSelectorCodelet.prototype.createAttrSel = function() {
+		return (new Selector()).use_attr(this.percept, this.time);
+	}
+
+	/**
+	 * We need to construct a selector that matches the target object of the
+	 * relationship. This is tough in general, so we'll just search through
+	 * all existing object selectors and pick one that matches the target object.
+	 * If none does, returns null.
+	 */
+	NewSelectorCodelet.prototype.createRelSel = function() {
+		var other = this.percept.other.object_node;
+		var other_sel = this.ws.getRandomSelector({type: 'object'
+			,filter: function(sel) {
+				return !sel.hasRelationships() && sel.matches(other);
+			}
+		});
+		if (!other_sel) return null;
+		return (new Selector()).use_rel(other_sel, this.percept, this.time);
+	}
+
+
 	/**
 	 * Create selector with the passed percept and apply it to the current
 	 * scenes. Then add it to the active selectors if it matches all scenes
@@ -359,9 +403,8 @@ PI.v0_3_0 = (function() {
 	NewSelectorCodelet.prototype.run = function() {
 		var self = this;
 
-		var sel = new Selector();
-		if (this.percept.arity == 2) sel.use_rel(this.percept, this.time);
-		else sel.use_attr(this.percept, this.time);
+		var sel = (this.percept.arity === 1) ? this.createAttrSel() : this.createRelSel();
+		if (!sel) return;
 
 		if (this.percept.group && this.percept.group.selectors.length > 0) {
 			// TODO: the percept was perceived for a group which is based on a particular
