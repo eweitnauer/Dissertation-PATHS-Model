@@ -38,11 +38,13 @@ Solution.prototype.check_scene = function(scene) {
 	  curr_group = sel.select(curr_group, scene);
 	});
 	var N = curr_group.objs.length;
-	if (this.mode == 'unique' && N == 1) return 1;
-	if (this.mode == 'exists' && N > 0) return N;
-	if (this.mode == 'all' && N > 0 &&
-	    prev_group.objs.length == N) return N;
-	return false;
+	var res = false;
+	if (this.mode == 'unique' && N == 1) res = 1;
+	else if (this.mode == 'exists' && N > 0) res = N;
+	else if (this.mode == 'all' && N > 0 &&
+	    prev_group.objs.length == N) res = N;
+	scene.fits_solution = !!res;
+	return res;
 }
 
 /// Returns a human readable description of the solution.

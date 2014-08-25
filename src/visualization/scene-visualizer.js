@@ -14,6 +14,7 @@ var SceneVisualizer = function(scene, scene_node, svg, scaling) {
 	this.metric_color_scale = d3.scale.pow().exponent(1.5).domain([0, 100]).range(['white', 'red']);
 	this.ordinal_color_scale = d3.scale.category10();
 	this.highlight_mode = 'values'; // 'values' or 'groups' or 'none'
+	this.drawing = true;
 }
 
 SceneVisualizer.prototype.colorize_values = function(value_getter) {
@@ -48,6 +49,7 @@ SceneVisualizer.prototype.selectShapes = function(shapes) {
 }
 
 SceneVisualizer.prototype.draw_scene = function() {
+	if (!this.drawing) return;
 	var thiz = this;
 	var add_shape = function(shape) {
 		var el = d3.select(this);

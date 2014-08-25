@@ -42,7 +42,7 @@ function loadScenes(name, files) {
     svis.draw_scene();
     analyzeScene(sn, svis);
 
-    problems[files[i]] = {sn: sn, svis: svis};
+    problems[files[i]] = {sn: sn, svis: svis, sim: sim};
   }
 
   update_solutions(getSolutions(name));
@@ -78,6 +78,20 @@ function prev() {
   pbp_idx -= 1;
   if (pbp_idx < 0) pbp_idx = pbps.length-1;
   loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
+}
+
+function disable_drawing() {
+  for (var p in problems) {
+    problems[p].sim.drawing = false;
+    problems[p].svis.drawing = false;
+  }
+}
+
+function enable_drawing() {
+  for (var p in problems) {
+    problems[p].sim.drawing = true;
+    problems[p].svis.drawing = true;
+  }
 }
 
 function setup_options() {
@@ -141,6 +155,8 @@ function setup_solve() {
 
     console.log("tester = new PITester('current', scenes, 100, 1000, 1, 'warn')");
     tester = new PITester('current', scenes, 100, 1000, 1, 'warn');
+    tester.start_callback = disable_drawing;
+    tester.finish_callback = enable_drawing;
 
     console.log("res = tester.run()");
     res = tester.run();
@@ -153,6 +169,8 @@ function setup_solve() {
 
     console.log("tester = new PITester('current', scenes, 1, 200, 1, 'debug')");
     tester = new PITester('current', scenes, 1, 200, 1, 'debug');
+    tester.start_callback = disable_drawing;
+    tester.finish_callback = enable_drawing;
 
     console.log("res = tester.run()");
     res = tester.run();
@@ -188,10 +206,27 @@ function update_solutions(sols) {
     });
 }
 
+/** Takes the current situation in all problems as the new initial situations,
+ * creating a new version of the original problem. */
+function curr_as_start() {
+  d3.values(problems).forEach(function (p) {
+    var s = p.sn;
+    s.groups = [];
+    s.objs.forEach(function (o) {
+      o.times.start = {};
+      o.times.end = {};
+    });
+    p.sim.pause();
+    p.sn.oracle.useCurrAsInitialState();
+  });
+
+}
+
 function init() {
   span = document.getElementById('curr_num');
   setup_options();
   setup_solve();
+  d3.select('#curr-as-start').on('click', curr_as_start);
   loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
 }
 

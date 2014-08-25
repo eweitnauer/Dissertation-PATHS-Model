@@ -31,14 +31,22 @@ PhysicsOracle.prototype.gotoState = function(state) {
   else {
     if (this.states[state].time == 'end') this.pscene.simulateUntilSleep(12);
     else this.pscene.seek(this.states[state].time);
-    this.states[state].pstate = this.savePhysicsState();
+    this.savePhysicsState(state);
   }
   this.curr_state = state;
 }
 
-/// Get the current state of the physics simulation to revert to it later.
-PhysicsOracle.prototype.savePhysicsState = function() {
-  return this.pscene.getState();
+PhysicsOracle.prototype.useCurrAsInitialState = function() {
+  this.pscene.world.curr_time = 0;
+  this.pscene.world.PushState();
+  this.curr_state = '0';
+  d3.values(this.states).forEach(function(state) { state.pstate = null });
+  this.pscene.reset();
+}
+
+/// Get the current state of the physics simulation and save in this.states.
+PhysicsOracle.prototype.savePhysicsState = function(state) {
+  this.states[state].pstate = this.pscene.getState();
 }
 
 /// Revert to a previously recorded state of the physics world.
@@ -197,7 +205,7 @@ PhysicsOracle.prototype.observeCollisions = function() {
     thiz.pscene.world.SetContactListener(old_cl);
     thiz.collisions = PhysicsOracle.mergeCollisions(thiz.collisions, 0);
     // save current state as end state, if we didn't cache it yet
-    if (!thiz.states.end.pstate) thiz.states.end.pstate = thiz.savePhysicsState();
+    if (!thiz.states.end.pstate) thiz.savePhysicsState('end');
   }, true);
 
   return this.collisions;

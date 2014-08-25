@@ -7,14 +7,19 @@ t.run();
 /// Used to test how well a problem is solved by the passed physics interpreter. You
 /// can pass 'current' as pi and the tester will pick the newest pi from the PI object,
 /// automatically.
-PITester = function(pi, scenes, reps, max_steps, max_sols, log_level, step_callback) {
+/// Set the before_step_callback, after_step_callback, start_callback, finish_callback can all
+/// be set to functions.
+PITester = function(pi, scenes, reps, max_steps, max_sols, log_level) {
 	this.pi = (pi=='current' ? this.get_current_pi() : pi);
 	this.scenes = scenes;
 	this.reps = reps || 1;
 	this.max_steps = max_steps || 1000;
 	this.max_sols = max_sols || 1;
 	this.log_level = log_level || 0;
-	this.step_callback = step_callback;
+	this.after_step_callback = null;
+	this.before_step_callback = null;
+	this.start_callback = null;
+	this.finish_callback = null;
 }
 
 PITester.prototype.run = function() {
@@ -27,15 +32,16 @@ PITester.prototype.run = function() {
 PITester.prototype.step = function(auto_next) {
 	if (!this.ws) { // setup new repetition
 		this.curr_step = 1;
+		if (this.start_callback) this.start_callback();
 		this.clear_scenes();
 		this.ws = new this.pi.Workspace(this.scenes, this.log_level);
-		this.enable_scene_drawing(false);
 		console.log('run',this.curr_rep,'of',this.reps);
 	}
 
 	// do a step
+	if (this.before_step_callback) this.before_step_callback(this.curr_step);
 	this.ws.coderack.step();
-	this.step_callback && this.step_callback();
+	if (this.after_step_callback) this.after_step_callback(this.curr_step);
 	this.curr_step++;
 
 	// are we done with the current repetition?
@@ -51,7 +57,7 @@ PITester.prototype.step = function(auto_next) {
 	  this.ws = null;
 	  // are we finished?
 	  if (this.curr_rep > this.reps) {
-	  	this.enable_scene_drawing(true);
+	  	if (this.finish_callback) this.finish_callback();
 	  	return this.show_stats(this.res);
 	  }
 	}
@@ -83,12 +89,6 @@ PITester.prototype.clear_scenes = function() {
 			o.times.start = {};
 			o.times.end = {};
 		});
-	});
-}
-
-PITester.prototype.enable_scene_drawing = function(enable) {
-	this.scenes.forEach(function (s) {
-		s.oracle.pscene.emit_changes = enable;
 	});
 }
 
