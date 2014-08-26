@@ -21,7 +21,7 @@ var Selector = function(unique) {
 
 /// Returns true if the selector matches anything
 Selector.prototype.blank = function() {
-	return this.attrs.length == 0 && this.rels.length == 0;
+	return this.attrs.length === 0 && this.rels.length === 0;
 }
 
 Selector.prototype.hasRelationships = function() {
@@ -31,6 +31,21 @@ Selector.prototype.hasRelationships = function() {
 /// The blank selector will match any type. Types can be 'object' or 'group'.
 Selector.prototype.isOfType = function(type) {
 	return (this.blank() || type == this.type);
+}
+
+/** Returns a new selector that has all attributes from this and the passed selector.
+ * In the case of a duplicate feature, the feature of the passed selector is used. */
+Selector.prototype.mergedWith = function(other_sel) {
+	var sel = new Selector();
+	var add_attr = function(attr) { sel.add_attr(attr) };
+	var add_rel = function(rel) { sel.add_rel(rel) };
+
+	this.attrs.forEach(add_attr);
+	other_sel.attrs.forEach(add_attr);
+	this.rels.forEach(add_rel);
+	other_sel.rels.forEach(add_rel);
+
+	return sel;
 }
 
 /// Will extract the attribute's key, label, activation and constant property. Pass the time
@@ -51,7 +66,8 @@ Selector.prototype.add_attr = function(attr_matcher) {
 	// if we have an attr of same type, replace
 	for (var i=0; i<this.attrs.length; i++) {
 		var attr = this.attrs[i];
-	  if (attr.key === attr_matcher.key && attr.time === attr_matcher.time
+	  if (attr.key === attr_matcher.key
+	     && attr.time === attr_matcher.time
 	  	 && attr.type === attr.type) {
 	  	this.attrs[i] = attr_matcher;
 	  	return this;

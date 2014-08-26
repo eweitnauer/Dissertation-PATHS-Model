@@ -2,6 +2,20 @@
 var PI = PI || {};
 
 /*
+Version 0.3.3
+- working on combination of selectors
+- new relationship: left-of, right-of
+- should solve PBP16 (circle left of square)
+
+Version 0.3.2
+- simply added feature hit-relationship
+- can solve these PBPs:   2 (35 steps)  - same
+                        , 4 (32 steps)  - same
+                        , 8 (50 steps)  - same
+                        ,11 (81 steps)  - more
+ 												,12 (121 steps) - more
+ 												,22 (82 steps)  - new
+
 Version 0.3.1
 - added relationships
 - new feature added: on-top-of
@@ -22,12 +36,12 @@ Version 0.3.0
                         ,11 (33 steps)
 */
 
-PI.v0_3_1 = (function() {
-	var version = '0.3.1';
+PI.v0_3_2 = (function() {
+	var version = '0.3.2';
 
 	var options = {
-		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
-	 ,features: [OnTopRelationship, CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute]
+		active_scenes: 'w/i' // can be 'w/i' or 'b/w'
+	 ,features: [LeftMostAttribute, RightMostAttribute, ShapeAttribute]//[HitsRelationship, OnTopRelationship, CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute]
 	};
 
 	/// The workspace is a container for all objects the interpreter works with
@@ -123,7 +137,7 @@ PI.v0_3_1 = (function() {
 	/// Returns true if the selector was new and inserted.
 	Workspace.prototype.addSelector = function(sel) {
 		if (this.attentionNet.addSelector(sel)) {
-			this.log(4, 'added selector', sel);
+			this.log(3, 'added selector', sel.describe());
 			return true;
 		}
 		return false;
@@ -286,7 +300,7 @@ PI.v0_3_1 = (function() {
 		this.mindset = 0.25;
 		this.codelet_infos = [{klass: AttrCodelet, mindset: 0}
 					               //,{klass: NewSelectorCodelet, mindset: 0.5} //TODO: this codelet need input data currently
-					               //,{klass: RefineSelectorCodelet, mindset: 0.75} //TODO: this codelet is not written so far
+					               ,{klass: CombineSelectorCodelet, mindset: 1}
 					               ,{klass: SolutionCodelet, mindset: 1}];
 	}
 
@@ -368,21 +382,23 @@ PI.v0_3_1 = (function() {
 	 * scenes. If all scenes match or only the scenes of one side match, it adds
 	 * the selector to the global list of selectors.
 	 */
-	var NewSelectorCodelet = function(coderack, percept, time) {
+	var NewSelectorCodelet = function(coderack, percept_or_sel, time) {
 		this.coderack = coderack;
 		this.followup = [];
 		this.ws = this.coderack.ws;
-		this.percept = percept;
+		if (percept_or_sel instanceof Selector) this.selector = percept_or_sel;
+		else this.percept = percept_or_sel;
 		this.time = time;
 	}
 
 	NewSelectorCodelet.prototype.describe = function() {
-		return 'NewSelectorCodelet(' + this.percept.key + '=' + this.percept.val + ')';
+		if (this.selector) return 'NewSelectorCodelet(' + this.selector.describe() + ')';
+		else return 'NewSelectorCodelet(' + this.percept.key + '=' + this.percept.val + ')';
 	}
 
 	NewSelectorCodelet.prototype.createAttrSel = function() {
 		var time = this.percept.constant ? 'start' : this.time;
-		return (new Selector()).use_attr(this.percept, this.time);
+		return (new Selector()).use_attr(this.percept, time);
 	}
 
 	/**
@@ -402,7 +418,6 @@ PI.v0_3_1 = (function() {
 		return (new Selector()).use_rel(other_sel, this.percept, this.time);
 	}
 
-
 	/**
 	 * Create selector with the passed percept and apply it to the current
 	 * scenes. Then add it to the active selectors if it matches all scenes
@@ -411,13 +426,15 @@ PI.v0_3_1 = (function() {
 	NewSelectorCodelet.prototype.run = function() {
 		var self = this;
 
-		var sel = (this.percept.arity === 1) ? this.createAttrSel() : this.createRelSel();
+		var sel = this.selector;
+		if (!this.selector && this.percept.arity === 1) sel = this.createAttrSel();
+		if (!this.selector && this.percept.arity === 2) sel = this.createRelSel();
 		if (!sel) return;
 
-		if (this.percept.group && this.percept.group.selectors.length > 0) {
-			// TODO: the percept was perceived for a group which is based on a particular
-			// selector ==> we need to somehow combine both selectors
-		}
+		// if (this.percept.group && this.percept.group.selectors.length > 0) {
+		// 	// TODO: the percept was perceived for a group which is based on a particular
+		// 	// selector ==> we need to somehow combine both selectors
+		// }
 
 		var scenes = this.ws.getActiveScenes();
 		var groups = [];
@@ -426,10 +443,7 @@ PI.v0_3_1 = (function() {
 			return (!res_group.empty());
 		});
 
-		if (matching_scenes.length == 0) {
-			// TODO: disencourage / remove the selector from the workspace
-			return;
-		}
+		if (matching_scenes.length == 0) return; //TODO: disencourage this type of selector
 
 		var all_from_one_side = matching_scenes.every(function (scene) {
 		  return scene.side == matching_scenes[0].side;
@@ -437,9 +451,35 @@ PI.v0_3_1 = (function() {
 		if (matching_scenes.length == scenes.length || all_from_one_side) {
 			sel.side = all_from_one_side ? scenes[0].side : 'both';
 			this.ws.addSelector(sel);
-			//this.coderack.insert(new SolutionCodelet(this.coderack, sel));
 		}
 	}
+
+	/** Will pick two generalizing type selectors and combine them. */
+	var CombineSelectorCodelet = function(coderack) {
+		this.coderack = coderack;
+		this.followup = [];
+		this.ws = this.coderack.ws;
+	}
+
+	CombineSelectorCodelet.prototype.describe = function() {
+		return 'CombineSelectorCodelet';
+	}
+
+	CombineSelectorCodelet.prototype.run = function() {
+		var sel1 = this.ws.getRandomSelector({no_blank: true});
+		var sel2 = this.ws.getRandomSelector({no_blank: true, filter: function(sel) {
+			return sel !== sel1;
+		}});
+		if (!sel1 || !sel2) return;
+		//if (sel1.containsSelector(sel2) || sel2.containsSelector(sel1)) return; //TODO? use this?
+		var sel12 = sel1.mergedWith(sel2);
+		if (sel12.equals(sel1) || sel12.equals(sel2)) return;
+
+		this.ws.log(3, 'combining', sel1.describe(), 'and', sel2.describe());
+
+		this.coderack.insert(new NewSelectorCodelet(this.coderack, sel12));
+	}
+
 
 	/**
 	 * Will try to find a solution based on this codelet's selector for
@@ -519,12 +559,7 @@ PI.v0_3_1 = (function() {
 		  	self.runWithSolution(sol, 'all', addSolFn);					 // group based solutions
 		  	self.runWithSolution(sol, 'unique', addSolFn);
 		  	if (!found_sol) {
-		  		if (!same_as_blank) {
-		  			// TODO: mark selector as generalizer for merging with other selectors
-		  			// we only need to consider generalizers for chaining solutions
-		  		} else {
-		  			self.ws.blockSelector(sel);
-		  		}
+		  		if (same_as_blank) self.ws.blockSelector(sel);
 		  	}
 		  }
 		});

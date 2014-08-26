@@ -2,6 +2,15 @@
 var PI = PI || {};
 
 /*
+Version 0.3.2
+- simply added feature hit-relationship
+- can solve these PBPs:   2 (35 steps)  - same
+                        , 4 (32 steps)  - same
+                        , 8 (50 steps)  - same
+                        ,11 (81 steps)  - more
+ 												,12 (121 steps) - more
+ 												,22 (82 steps)  - new
+
 Version 0.3.1
 - added relationships
 - new feature added: on-top-of
@@ -22,12 +31,12 @@ Version 0.3.0
                         ,11 (33 steps)
 */
 
-PI.v0_3_1 = (function() {
-	var version = '0.3.1';
+PI.v0_3_2 = (function() {
+	var version = '0.3.2';
 
 	var options = {
 		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
-	 ,features: [OnTopRelationship, CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute]
+	 ,features: [HitsRelationship, OnTopRelationship, CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute]
 	};
 
 	/// The workspace is a container for all objects the interpreter works with
