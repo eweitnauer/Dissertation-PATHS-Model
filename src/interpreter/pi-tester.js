@@ -75,7 +75,14 @@ PITester.prototype.show_stats = function(res) {
 		 	var name = arguments[i];
 			var ext = d3.extent(res, function(d) {return d[name]});
 			var avg = d3.mean(res, function(d) {return d[name]});
-			console.log(name + ': avg=' + avg + ' min=' + ext[0] + ' max=' + ext[1]);
+			var avg_square = 0;
+			for (var j=0; j<res.length; j++) {
+				avg_square += res[j][name] * res[j][name];
+			}
+			avg_square /= res.length;
+			var std_dev = Math.sqrt(avg_square - avg*avg);
+			console.log(name + ': ' + avg.toFixed(0) + ' +-' + std_dev.toFixed(1)
+			          + ' min=' + ext[0] + ' max=' + ext[1]);
 		}
 	}
 	stats('steps', 'perception_count', 'retrieval_count');

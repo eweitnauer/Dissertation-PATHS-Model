@@ -40,7 +40,7 @@ PI.v0_3_2 = (function() {
 	var version = '0.3.2';
 
 	var options = {
-		active_scenes: 'w/i' // can be 'w/i' or 'b/w'
+		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
 	 ,features: [LeftMostAttribute, RightMostAttribute, ShapeAttribute]//[HitsRelationship, OnTopRelationship, CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute]
 	};
 
