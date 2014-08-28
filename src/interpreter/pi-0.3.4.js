@@ -2,6 +2,15 @@
 var PI = PI || {};
 
 /*
+
+Version 0.3.4
+- integrating problem 13 (unique on ground at end)
+- switched to groups having a single selector
+- selector can now be of type mixed
+- fixed bug in Workspace.getGroupBySelector
+- we will disallow unique solution to check whether merging object & group
+  features works ==> it works: PBP13 - 222 steps (+-133)
+
 Version 0.3.3
 - working on combination of selectors
 - new relationship: left-of, right-of
@@ -36,12 +45,12 @@ Version 0.3.0
                         ,11 (33 steps)
 */
 
-PI.v0_3_3 = (function() {
-	var version = '0.3.3';
+PI.v0_3_4 = (function() {
+	var version = '0.3.4';
 
 	var options = {
 		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
-	 ,features: [LeftMostAttribute, RightMostAttribute, ShapeAttribute]//[HitsRelationship, OnTopRelationship, CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute]
+	 ,features: [OnGroundAttribute, CountAttribute]//[LeftMostAttribute, RightMostAttribute, ShapeAttribute]//[HitsRelationship, OnTopRelationship, CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute]
 	};
 
 	/// The workspace is a container for all objects the interpreter works with
@@ -166,8 +175,7 @@ PI.v0_3_3 = (function() {
 	Workspace.prototype.getGroupBySelector = function(sel, scene) {
 		for (var i=0; i<scene.groups.length; i++) {
 			var g = scene.groups[i];
-			if (g.selectors.length === 1 && g.selectors[0] === sel) return g;
-			if (g.selectors.length === 0 && sel.blank()) return g;
+			if (g.selector.equals(sel)) return g;
 		}
 		return null;
 	}
@@ -411,7 +419,7 @@ PI.v0_3_3 = (function() {
 		var other = this.percept.other.object_node;
 		var other_sel = this.ws.getRandomSelector({type: 'object'
 			,filter: function(sel) {
-				return !sel.hasRelationships() && sel.matches(other);
+				return !sel.hasRelationships() && sel.matchesObject(other);
 			}
 		});
 		if (!other_sel) return null;
@@ -427,14 +435,15 @@ PI.v0_3_3 = (function() {
 		var self = this;
 
 		var sel = this.selector;
-		if (!this.selector && this.percept.arity === 1) sel = this.createAttrSel();
-		if (!this.selector && this.percept.arity === 2) sel = this.createRelSel();
+		if (!sel) {
+			if (this.percept.arity === 1) sel = this.createAttrSel();
+			else if (this.percept.arity === 2) sel = this.createRelSel();
+			if (this.percept.group && !this.percept.group.selector.blank()) {
+		   	this.ws.log(4, 'perceived group feature based on selector result');
+				sel = sel.mergedWith(this.percept.group.selector);
+			}
+		}
 		if (!sel) return;
-
-		// if (this.percept.group && this.percept.group.selectors.length > 0) {
-		// 	// TODO: the percept was perceived for a group which is based on a particular
-		// 	// selector ==> we need to somehow combine both selectors
-		// }
 
 		var scenes = this.ws.getActiveScenes();
 		var groups = [];
@@ -466,12 +475,13 @@ PI.v0_3_3 = (function() {
 	}
 
 	CombineSelectorCodelet.prototype.run = function() {
-		var sel1 = this.ws.getRandomSelector({no_blank: true});
-		var sel2 = this.ws.getRandomSelector({no_blank: true, filter: function(sel) {
-			return sel !== sel1;
-		}});
+		var sel1 = this.ws.getRandomSelector({no_blank: true, filter:
+		  function(sel) {	return sel.type !== 'mixed' }
+		});
+		var sel2 = this.ws.getRandomSelector({no_blank: true, filter:
+		  function(sel) { return ((sel !== sel1) && (sel.type === sel1.type))	}
+		});
 		if (!sel1 || !sel2) return;
-		//if (sel1.containsSelector(sel2) || sel2.containsSelector(sel1)) return; //TODO? use this?
 		var sel12 = sel1.mergedWith(sel2);
 		if (sel12.equals(sel1) || sel12.equals(sel2)) return;
 
@@ -551,13 +561,14 @@ PI.v0_3_3 = (function() {
 			found_sol = true;
 		}
 
-		var is_group_sol = sol.sels[sol.sels.length-1].isOfType('group');
+		var is_group_sol = (sol.sels[sol.sels.length-1].getType() === 'group'
+			               || sol.sels[sol.sels.length-1].getType() === 'mixed');
 		var res = this.runWithSolution(sol, 'exists', addSolFn, function(reason, same_as_blank) {
 			if (reason == 'too specific') {
 				self.ws.blockSelector(sel);
 		  } else if (reason == 'too general' && !is_group_sol) { // unique or all don't make sense for
-		  	self.runWithSolution(sol, 'all', addSolFn);					 // group based solutions
-		  	self.runWithSolution(sol, 'unique', addSolFn);
+		  	//self.runWithSolution(sol, 'all', addSolFn);					 // group based solutions
+		  	//self.runWithSolution(sol, 'unique', addSolFn);
 		  	if (!found_sol) {
 		  		if (same_as_blank) self.ws.blockSelector(sel);
 		  	}

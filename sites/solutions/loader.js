@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 6;
+var pbp_idx = 5;
 var curr_sols = [];
 
 function loadScenes(name, files) {

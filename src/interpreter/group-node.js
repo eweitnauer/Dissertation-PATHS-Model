@@ -3,25 +3,25 @@
 /// A GroupNode represents a group of objects in one scene. Pass the SceneNode the
 /// group belongs to. Optionally, pass an selector array that was used to create the
 /// group node.
-GroupNode = function(scene_node, objs, selectors) {
+GroupNode = function(scene_node, objs, selector) {
   this.scene_node = scene_node;
   this.objs = objs || [];   // shapes
   this.times = {};
-  this.selectors = selectors || [];
+  this.selector = selector || new Selector();
 }
 
 /// The ObjectNode will send 'perceived' and 'retrieved' events {feature, target}.
 asEventListener.call(GroupNode.prototype);
 
 GroupNode.prototype.empty = function() {
-  return this.objs.length == 0;
+  return this.objs.length === 0;
 }
 
-/// Returns a clone with the same scene node, a copy of the objs array and a
-/// copy of the selector array. CAUTION: The times field that holds all cached
-/// percepts is the same reference as in the original group node!
+/// Returns a clone with the same scene node, a copy of the objs array.
+/// CAUTION: The times field that holds all cached percepts is the same
+/// reference as in the original group node!
 GroupNode.prototype.clone = function() {
-  var gn = new GroupNode(this.scene_node, this.objs.slice(), this.selectors.slice());
+  var gn = new GroupNode(this.scene_node, this.objs.slice(), this.selector);
   gn.times = this.times;
   return gn;
 }

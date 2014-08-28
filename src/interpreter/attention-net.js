@@ -102,7 +102,7 @@ AttentionNet.prototype.getRandomSelector = function(options) {
 	var sels = this.selectors.filter(function(sel) {
 		return (self.getAttentionValue(sel) > 0
 			&& (!options.no_blank || !sel.blank())
-		  && (!options.type || sel.isOfType(options.type))
+		  && (!options.type || sel.getType() === options.type)
 		  && (!options.filter || options.filter(sel)));
 	});
 	if (sels.length === 0) return null;

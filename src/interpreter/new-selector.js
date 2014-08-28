@@ -13,24 +13,29 @@
  // used in the RelMatcher to decide whether to match all or exactly one of the
  // things we relate to.
 var Selector = function(unique) {
-	this.attrs = [];	      // object & group attributes
+	this.obj_attrs = [];	  // object attributes
+	this.grp_attrs = [];	  // group attributes
 	this.rels = [];         // object relationships
 	this.unique = !!unique;
-	this.type = '';         // can be '', 'object' or 'group'
 }
 
-/// Returns true if the selector matches anything
+/// Can be 'object', 'group' or 'mixed'. A blank selector is of 'object' type.
+Selector.prototype.getType = function() {
+	if (this.blank()) return 'object';
+	if (this.grp_attrs.length === 0) return 'object';
+	if (this.obj_attrs.length === 0 && this.rels.length === 0) return 'group';
+	return 'mixed';
+}
+
+/// Returns true if the selector has no matchers and will therefore match anything.
 Selector.prototype.blank = function() {
-	return this.attrs.length === 0 && this.rels.length === 0;
+	return (this.obj_attrs.length === 0
+	     && this.grp_attrs.length === 0
+	     && this.rels.length === 0)
 }
 
 Selector.prototype.hasRelationships = function() {
 	return this.rels.length > 0;
-}
-
-/// The blank selector will match any type. Types can be 'object' or 'group'.
-Selector.prototype.isOfType = function(type) {
-	return (this.blank() || type == this.type);
 }
 
 /** Returns a new selector that has all attributes from this and the passed selector.
@@ -40,8 +45,10 @@ Selector.prototype.mergedWith = function(other_sel) {
 	var add_attr = function(attr) { sel.add_attr(attr) };
 	var add_rel = function(rel) { sel.add_rel(rel) };
 
-	this.attrs.forEach(add_attr);
-	other_sel.attrs.forEach(add_attr);
+	this.obj_attrs.forEach(add_attr);
+	other_sel.obj_attrs.forEach(add_attr);
+	this.grp_attrs.forEach(add_attr);
+	other_sel.grp_attrs.forEach(add_attr);
 	this.rels.forEach(add_rel);
 	other_sel.rels.forEach(add_rel);
 
@@ -55,26 +62,22 @@ Selector.prototype.use_attr = function(attr, time) {
 	return this;
 };
 
-/// Adds the passed AttrMatcher. Will replace if an attr with the same key and time is in the list already.
+/// Adds the passed AttrMatcher. Will replace if an attr with the same key and
+/// time is in the list already.
 Selector.prototype.add_attr = function(attr_matcher) {
-	// check for constraint: either group or object attributes
-	if (this.blank()) this.type = '';
-	if (this.type && this.type != attr_matcher.type) {
-		throw "can't combine group and objects attrs in a single selector.";
-	}
-	this.type = attr_matcher.type;
+	var attrs = (attr_matcher.type === 'group') ? this.grp_attrs : this.obj_attrs;
 	// if we have an attr of same type, replace
-	for (var i=0; i<this.attrs.length; i++) {
-		var attr = this.attrs[i];
+	for (var i=0; i<attrs.length; i++) {
+		var attr = attrs[i];
 	  if (attr.key === attr_matcher.key
 	     && attr.time === attr_matcher.time
 	  	 && attr.type === attr.type) {
-	  	this.attrs[i] = attr_matcher;
+	  	attrs[i] = attr_matcher;
 	  	return this;
 	  }
 	}
 	// its new, add to list
-	this.attrs.push(attr_matcher);
+	attrs.push(attr_matcher);
 	return this;
 };
 
@@ -89,13 +92,6 @@ Selector.prototype.use_rel = function(other_sel, rel, time) {
 /// Adds the passed RelMatcher. Will replace if a rel with the same key, target object
 /// and time is in the list already.
 Selector.prototype.add_rel = function(rel_matcher) {
-	// check for constraint: either group or object attributes
-	if (this.blank()) this.type = '';
-	if (this.type == 'group') {
-		throw "can't combine group and objects attrs in a single selector.";
-	}
-	this.type = 'object';
-
 	// if we have an attr of same type, replace
 	for (var i=0; i<this.rels.length; i++) {
 		var rel = this.rels[i];
@@ -115,59 +111,64 @@ Selector.prototype.add_rel = function(rel_matcher) {
 Selector.prototype.equals = function(other) {
 	if (!other) return false;
 	if (this === other) return true;
-	if (this.attrs.length !== other.attrs.length) return false;
+	if (this.obj_attrs.length !== other.obj_attrs.length) return false;
+	if (this.grp_attrs.length !== other.grp_attrs.length) return false;
 	if (this.rels.length !== other.rels.length) return false;
-	if (!this.attrs.every(function (this_attr) {
-		return other.attrs.some(function (other_attr) {
-		  return this_attr.equals(other_attr)
-		})
-	})) return false;
-	if (!this.rels.every(function (this_rel) {
-		return other.rels.some(function (other_rel) {
-		  return this_rel.equals(other_rel)
-		})
-	})) return false;
+	var self = this;
+	var differs = function(field) {
+		return (!self[field].every(function (ours) {
+			return other[field].some(function (theirs) {
+		  	return ours.equals(theirs)
+			})
+		}))
+	}
+	if (differs('grp_attrs') || differs('obj_attrs') || differs('rels')) return false;
 	return true;
 }
 
-/// Returns true if the passed object node matches the selectors attributes and relations.
-/// Optionally, an array of nodes that will be condisered as relationship partners can be
-/// passed as second parameter. If it isn't, all objects in the scene except `on` are used.
-/// If the selector has no attributes or relationships, every object matches.
-/// If a test_fn is passed, it is called for each node that matches the selector
-/// attributes and only if the function returns true, the node is used. The relationships
+/// Returns true if the passed object node matches the selector's object
+/// attributes and relations. Optionally, an array of nodes that will be
+/// condisered as relationship partners can be passed as second parameter. If
+/// it isn't, all objects in the scene except `object` are used. If a test_fn
+/// is passed, it is called for each node that matches the selector attributes
+/// and only if the function returns true, the node is used. The relationships
 /// of the selector are not used in this case.
-Selector.prototype.matches = function(on, others, test_fn) {
-	return this.attrs.every(function (attr) { return attr.matches(on) }) &&
-				 (test_fn ? test_fn(on)
-				 	        : this.rels.every(function (rel) { return rel.matches(on, others) }));
+Selector.prototype.matchesObject = function(object, others, test_fn) {
+	return this.obj_attrs.every(function (attr) { return attr.matches(object) }) &&
+				 (test_fn ? test_fn(object)
+				 	        : this.rels.every(function (rel) { return rel.matches(object, others) }));
 };
 
-/// Returns an array with the matching object or group nodes, depending on the mode.
-/// - all ... selects all matching nodes
-/// If a test_fn is passed, it is called for each node that matches the selector
-/// attributes and only if the function returns true, the node is used. The relationships
-/// of the selector are not used in this case.
+/// Returns true if the passed group node matches the selector's group attributes.
+Selector.prototype.matchesGroup = function(group) {
+	return this.grp_attrs.every(function (attr) { return attr.matches(group) });
+};
+
+/// Returns a group node. If a test_fn is passed, it is called for each object
+/// node that matches the selector attributes and only if the function returns
+/// true, the node is used. The relationships of the selector are not used in
+/// this case.
 Selector.prototype.select = function(group_node, scene_node, test_fn) {
-	var res = [], self = this;
-	var selectors = group_node.selectors.concat([this]);
-	if (this.type == 'group') {
-		if (this.matches(group_node)) {
-			var gn = group_node.clone();
-			gn.selectors = selectors;
-			return gn;
-		}
-		else return new GroupNode(scene_node, [], selectors);
-	}
-	// 'object' type or blank
 	if (this.blank()) return group_node;
 
-	var nodes = group_node.objs
-	  .map(function (obj) { return obj.object_node })
-	  .filter(function (node) { return self.matches(node, null, test_fn) })
-	  .map(function (on) { return on.obj });
+	var selector = this.mergedWith(group_node.selector);
+	var gn = group_node.clone();
+	var type = this.getType();
+	var self = this;
+	gn.selector = selector;
+	// first apply object-level features
+	if (type === 'mixed' || type === 'object') {
+		var nodes = gn.objs
+	  	.map(function (obj) { return obj.object_node })
+	  	.filter(function (node) { return self.matchesObject(node, null, test_fn) })
+	  	.map(function (on) { return on.obj });
 
-	var gn = new GroupNode(scene_node, nodes, selectors);
+		gn = new GroupNode(scene_node, nodes, selector);
+	}
+	// then apply group-level features
+	if (type === 'mixed' || type === 'group') {
+		if (!this.matchesGroup(gn)) gn = new GroupNode(scene_node, [], selector);
+	}
 	return gn;
 };
 
@@ -178,31 +179,30 @@ Selector.prototype.applyToScene = function(scene) {
 /// Returns a human readable description of the attributes used in this selector.
 Selector.prototype.describe = function() {
 	if (this.blank()) return (this.unique ? '[the object]' : '(any object)');
-	var attrs = this.attrs.map(function (attr) { return attr.describe() }).join(" and ");
-	if (attrs != '') attrs = ' ' + attrs;
-	var rels = this.rels.map(function (rel) { return rel.describe() }).join(" and ");
-	if (this.type == 'group') {
-		return '(all objects are' + attrs + ')';
-	}	else {
-		if (this.unique) return '[the' + attrs + ' object' + (rels == '' ? '' : ' that is ' + rels) + ']';
-		return '(all' + attrs + ' objects' + (rels == '' ? '' : ' that are ' + rels) + ')';
-	}
+	var attrs = this.obj_attrs.map(function (attr) { return attr.describe() }).join(" and ");
+	var grp_attrs = this.grp_attrs.map(function (attr) { return attr.describe() });
+	var rels = this.rels.map(function (rel) { return rel.describe() });
+	rels = rels.concat(grp_attrs).join(" and ");
+
+	if (this.unique) return '[the ' + attrs + ' object' + (rels === '' ? '' : ' that is ' + rels) + ']';
+	return '(' + attrs + ' objects' + (rels === '' ? '' : ' that are ' + rels) + ')';
 };
 
 Selector.prototype.describe2 = function(omit_mode) {
 	if (this.blank()) {
-		if (omit_mode) return '*';
-		return (this.unique ? 'there is exactly one object' : 'any object');
+	 	if (omit_mode) return '*';
+	 	return (this.unique ? 'there is exactly one object' : 'any object');
 	}
-	var attrs = this.attrs.map(function (attr) { return attr.describe() });
+	var attrs = this.obj_attrs.map(function (attr) { return attr.describe() });
+	var grp_attrs = this.grp_attrs.map(function (attr) { return attr.describe() }).join(" and ");
 	var rels = this.rels.map(function (rel) { return rel.describe() });
-	var res = attrs.concat(rels).join(" and ");
+	var res = attrs.concat(rels).concat(grp_attrs).join(" and ");
 	if (omit_mode) {
-		if (this.unique) return '[that is ' + res + ']';
-		else return '[that are ' + res + ']';
+	 	if (this.unique) return '[that is ' + res + ']';
+	 	else return '[that are ' + res + ']';
 	} else {
-		if (this.unique) return '[exactly one object is ' + res + ']';
-		else return '(all objects are ' + res + ')';
+	 	if (this.unique) return '[exactly one object is ' + res + ']';
+	 	else return '(objects that are ' + res + ')';
 	}
 };
 
@@ -291,7 +291,7 @@ Selector.RelMatcher.prototype.matches = function(node, others) {
 	}
 
 	var match_fn = function(other) {
-		return self.other_sel.matches(other, null, test_fn);
+		return self.other_sel.matchesObject(other, null, test_fn);
 	}
 
 	var matching_others = others.filter(match_fn);
