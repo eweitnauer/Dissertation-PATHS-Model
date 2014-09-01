@@ -3,6 +3,21 @@ var PI = PI || {};
 
 /*
 
+Version 0.3.5
+- solving single problems in principle
+- just PBP  2:  13 +-  7 steps [CountAttr]
+       PBP  4:  14 +-  8 steps [ShapeAttr]
+       PBP  8:  25 +- 19 steps [StabilityAttr]
+       PBP 11:  15 +- 10 steps [CloseAttr]
+       PBP 12:  62 +- 48 steps [OnTopRel, SmallAttr]
+       PBP 13:  56 +- 39 steps [CountAttr, OnGroundAttr]
+			 PBP 16:  65 +- 33 steps [RightRel, LeftRel, ShapeAttr]
+       PBP 18:  26 +- 15 steps [TouchAttr, TouchRel]
+       PBP 20: 320 +-276 steps [SupportsRel, ShapeAttr]
+       PBP 22:  18 +- 10 steps [HitsRel, CollidesRel]
+       PBP 26: 167 +-126 steps [ShapeAttr, LeftAttr]
+       PBP 31: 130 +- 79 steps [MovableUpAttr, ShapeAttr]
+
 Version 0.3.4
 - integrating problem 13 (unique on ground at end)
 - switched to groups having a single selector
@@ -52,12 +67,12 @@ Version 0.3.0
                         ,11 (33 steps)
 */
 
-PI.v0_3_4 = (function() {
-	var version = '0.3.4';
+PI.v0_3_5 = (function() {
+	var version = '0.3.5';
 
 	var options = {
 		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
-	 ,features: [OnGroundAttribute, LeftMostAttribute, RightMostAttribute, HitsRelationship, OnTopRelationship, CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute]
+	 ,features:  [ShapeAttribute, LeftAttribute]
 	};
 
 	/// The workspace is a container for all objects the interpreter works with
