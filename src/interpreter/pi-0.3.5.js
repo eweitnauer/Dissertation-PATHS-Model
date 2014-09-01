@@ -72,7 +72,7 @@ PI.v0_3_5 = (function() {
 
 	var options = {
 		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
-	 ,features:  [ShapeAttribute, LeftAttribute]
+	 ,features:  [CircleAttribute, SquareAttribute, RectangleAttribute, TriangleAttribute]
 	};
 
 	/// The workspace is a container for all objects the interpreter works with
