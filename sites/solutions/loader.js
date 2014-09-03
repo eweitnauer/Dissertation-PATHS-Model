@@ -32,17 +32,18 @@ function loadScenes(name, files) {
     // create PhysicsScene, Simulator and SceneNode with PhysicsOracle
     var el_canvas = document.getElementById('c'+files[i]);
     var ps = new PhysicsScene(world);
-    var sim = new Simulator(ps, el_canvas, scene.pixels_per_unit*vis_scaling, true);
+    //var sim = new Simulator(ps, el_canvas, scene.pixels_per_unit*vis_scaling, true);
     var sn = new SceneNode(scene, new PhysicsOracle(ps));
 
     // create SceneVisualizer
     var el_svg = document.getElementById('s'+files[i]);
-    var svis = new SceneVisualizer(scene, sn, el_svg, vis_scaling);
-    ps.onWorldChange.addListener(function(svis) { return function() {svis.draw_scene()} }(svis))
-    svis.draw_scene();
-    analyzeScene(sn, svis);
+    //var svis = new SceneVisualizer(scene, sn, el_svg, vis_scaling);
+    //ps.onWorldChange.addListener(function(svis) { return function() {svis.draw_scene()} }(svis))
+    //svis.draw_scene();
+    analyzeScene(sn);
+    var svis = new SceneInteractor(ps, sn, el_svg);
 
-    problems[files[i]] = {sn: sn, svis: svis, sim: sim};
+    problems[files[i]] = {sn: sn, svis: svis};//, sim: sim};
   }
 
   update_solutions(getSolutions(name));

@@ -1,10 +1,12 @@
 var
   b2BodyDef = Box2D.Dynamics.b2BodyDef
  ,b2Body = Box2D.Dynamics.b2Body
- ,b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
  ,b2Vec2 = Box2D.Common.Math.b2Vec2
  ,b2Shape = Box2D.Collision.Shapes.b2Shape
- ,b2FixtureDef = Box2D.Dynamics.b2FixtureDef;
+ ,b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
+ ,b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
+ ,b2FixtureDef = Box2D.Dynamics.b2FixtureDef
+ ,b2AABB = Box2D.Collision.b2AABB;
 
 Box2DAdapter = function() {
   var self = this;

@@ -1,48 +1,44 @@
-/// Copyright by Erik Weitnauer, 2013.
+/// Copyright by Erik Weitnauer, 2014.
 
-var b2DebugDraw = Box2D.Dynamics.b2DebugDraw
-  , b2MouseJointDef = Box2D.Dynamics.Joints.b2MouseJointDef;
+/** Visualizes a scene as svg and augments it with information of a SceneNode.
+ * It allows highlighting objects by tapping them and interacting with objects
+ * by dragging them. It shows the current simulation time in the upper right
+ * and shows controls for resetting, playing and pausing the simulation on
+ * mouseover */
+var SceneInteractor = function(physics_scene, scene_node, svg) {
+	this.pscene = physics_scene;
+	this.sn = scene_node;
+	this.scene = scene_node.scene;
+	this.svg = d3.select(svg);
+	this.svgg = this.svg.append('g');
+	this.width = 145;
+	this.scaling = 1;
+	this.selected = [];
+	this.value_getter = null;
+	this.group_getter = null;
+	this.metric_color_scale = d3.scale.pow().exponent(1.5).domain([0, 100]).range(['white', 'red']);
+	this.ordinal_color_scale = d3.scale.category10();
+	this.highlight_mode = 'values'; // 'values' or 'groups' or 'none'
 
-/** Visualization of a PhysicsScene on a canvas with mouse interaction.
-In the constructor, you can pass a scaling, whether the time
-should be shown and whether the simulator should pause automatically when
-during playing, all bodies in the scene become inactive.
-
-Call play(), pause() and reset() to control the simulator. The drawing attribute
-can be set to false to disable the drawing. If drawing is enabled, the simulator
-will automatically redraw the scene if anything in it changed (e.g., it was stepped
-from someone other than the Simulator).
-
-Mouse interaction is also possible when paused, the scene will be stepped during the
-interaction. If the pause was due to autopause, the simulator will switch back into
-play mode when the user starts interacting.
-
-Manually set show_pos to true in order to display the current mouse position.
-*/
-Simulator = function(physics_scene, canvas, scaling, show_time, auto_pause) {
-  this.canvas = canvas;
-  this.ctx = canvas.getContext('2d');
-  this.pscene = physics_scene;
-  this.step_interval = 1000/30;        // frequency of stepping the scene when playing in ms
+	this.step_interval = 1000/30;        // frequency of stepping the scene when playing in ms
   this.interaction_interval = 1000/30; // frequency of updating the mouse interaction in ms
-  this.show_time = show_time || true;  // displays current time
+  this.show_time = true;               // displays current time
   this.show_pos = false;               // displays mouse pos. in world coordinates
-  this.draw_scale = scaling || 1;
   this.playing = false;
   this.drawing = true;
-  this.auto_pause = (auto_pause === undefined) ? true : auto_pause;
+  this.auto_pause = true;
   this.init();
   this.draw();
 }
 
 /// Reset all intervals.
-Simulator.prototype.release = function() {
+SceneInteractor.prototype.release = function() {
   if (this.step_timer) clearInterval(this.step_timer);
   if (this.interaction_timer) clearInterval(this.interaction_timer);
   this.pscene.onWorldChange.removeListener(this.draw);
 }
 
-Simulator.prototype.pause = function() {
+SceneInteractor.prototype.pause = function() {
   this.was_autopaused = false;
   if (!this.playing) return;
   clearInterval(this.step_timer);
@@ -50,7 +46,7 @@ Simulator.prototype.pause = function() {
   this.playing = false;
 }
 
-Simulator.prototype.play = function() {
+SceneInteractor.prototype.play = function() {
   if (this.playing) return;
   var self = this;
   self.was_autopaused = false;
@@ -64,44 +60,44 @@ Simulator.prototype.play = function() {
   this.playing = true;
 }
 
-Simulator.prototype.toggle = function() {
+SceneInteractor.prototype.toggle = function() {
   if (this.playing) this.pause();
   else this.play();
 }
 
-Simulator.prototype.reset = function() {
+SceneInteractor.prototype.reset = function() {
   this.pscene.reset();
 }
 
-Simulator.prototype.init = function() {
+SceneInteractor.prototype.init = function() {
   var self = this;
-
-  // setup debug draw
-  this.dbgDraw = new b2DebugDraw();
-  this.dbgDraw.SetSprite(this.canvas.getContext("2d"));
-  this.dbgDraw.SetDrawScale(this.draw_scale);
-  this.dbgDraw.SetXFormScale(0.1);
-  this.dbgDraw.SetFillAlpha(0.5);
-  this.dbgDraw.SetLineThickness(1.0);
-  this.dbgDraw.SetFlags(b2DebugDraw.e_shapeBit | b2DebugDraw.e_jointBit);// | b2DebugDraw.e_centerOfMassBit);
-  this.pscene.world.SetDebugDraw(this.dbgDraw);
   this.pscene.onWorldChange.addListener(function() { self.draw.apply(self) });
 
-  // setup mouse interaction
+  // create text element for time
+  this.text_el = this.svg.append('text')
+                     .style('text-anchor', 'end')
+                     .style('dominant-baseline', 'hanging')
+                     .style('font-family', 'Lato')
+                     .style('font-size', 10)
+                     .style('fill', '#85A1C8')
+                     .attr({x: this.width-5, y: 5});
+
+	// setup mouse interaction
   this.mouseDown = false;
   this.mousePoint = new b2Vec2(0,0);
-  this.canvas.addEventListener("mousemove", function() {
+  this.svg.style('pointer-events', 'all');
+  this.svg.on("mousemove", function() {
     self.handleMouseMove.apply(self, arguments);
   }, true);
-  this.canvas.addEventListener("mousedown", function() {
+  this.svg.on("mousedown", function() {
     self.mouseDown = true;
   }, true);
-  this.canvas.addEventListener("mouseup", function() {
+  this.svg.on("mouseup", function() {
     // if we didn't move a body, it was a normal click and we toggle the playing state
     if (!self.mouseJoint) self.toggle.apply(self);
     self.handleMouseUp.apply(self, arguments);
   }, true);
-  this.canvas.addEventListener("dblclick", function() {
+  this.svg.on("dblclick", function() {
     self.pause();
     self.reset();
   }, true);
@@ -112,22 +108,22 @@ Simulator.prototype.init = function() {
   }, this.interaction_interval);
 
   // get position of canvas on screen and update on scrolling to get the mouse position relative to the canvas.
-  this.canvas_position = this.getElementPosition(this.canvas);
-  window.addEventListener("scroll", function() { self.canvas_position = self.getElementPosition(self.canvas) });
+  this.svgg_position = this.getElementPosition(this.svgg.node());
+  window.addEventListener("scroll", function() { self.svgg_position = self.getElementPosition(self.svgg.node()) });
 };
 
-Simulator.prototype.getElementPosition = function(el) {
+SceneInteractor.prototype.getElementPosition = function(el) {
   var x = el.offsetLeft - document.documentElement.scrollLeft,
       y = el.offsetTop - document.documentElement.scrollTop;
-  while (el = el.offsetParent) {
+  while (el.offsetParent) {
+  	el = el.offsetParent;
     x += el.offsetLeft - el.scrollLeft;
     y += el.offsetTop - el.scrollTop;
   }
   return {x: x, y: y};
 }
 
-
-Simulator.prototype.handleMouseUp = function(evt) {
+SceneInteractor.prototype.handleMouseUp = function(evt) {
   this.mouseDown = false;
   if (this.mouseJoint) {
     this.pscene.world.DestroyJoint(this.mouseJoint);
@@ -135,9 +131,9 @@ Simulator.prototype.handleMouseUp = function(evt) {
 	}
 }
 
-Simulator.prototype.handleMouseMove = function(evt) {
-  this.mousePoint.x = (evt.clientX - this.canvas_position.x) / this.draw_scale;
-  this.mousePoint.y = (evt.clientY - this.canvas_position.y) / this.draw_scale;
+SceneInteractor.prototype.handleMouseMove = function(evt) {
+  this.mousePoint.x = (evt.clientX - this.svgg_position.x) / this.draw_scale;
+  this.mousePoint.y = (evt.clientY - this.svgg_position.y) / this.draw_scale;
   if (this.mouseDown && !this.playing) {
     if (this.was_autopaused) this.play();
     else this.pscene.step();
@@ -147,7 +143,7 @@ Simulator.prototype.handleMouseMove = function(evt) {
 }
 
 /** Checks which object is at the passed position, a b2Vec2. Returns the selected body. */
-Simulator.prototype.getBodyAtMouse = function() {
+SceneInteractor.prototype.getBodyAtMouse = function() {
   var aabb = new b2AABB();
   var p = this.mousePoint;
 	aabb.lowerBound.Set(p.x - 0.001, p.y - 0.001);
@@ -170,7 +166,7 @@ Simulator.prototype.getBodyAtMouse = function() {
 
 /// Updates mouse joint target and creates it if neccessary.
 /// If mouse button is not down, it will destroy the joint.
-Simulator.prototype.updateInteraction = function() {
+SceneInteractor.prototype.updateInteraction = function() {
   if (this.mouseDown && !this.mouseJoint) {
     var body = this.getBodyAtMouse();
     if (body) {
@@ -194,15 +190,22 @@ Simulator.prototype.updateInteraction = function() {
   }
 }
 
-Simulator.prototype.draw = function() {
+SceneInteractor.prototype.draw = function() {
   if (!this.drawing) return;
-  this.pscene.world.DrawDebugData();
 
   if (this.show_time || this.show_pos) {
     var text = '';
     if (this.show_pos && this.mousePoint) text += ' x='+this.mousePoint.x.toFixed(2) + " y=" + this.mousePoint.y.toFixed(2);
     if (this.show_time) text += ' t=' + this.pscene.getTime().toFixed(2);
-    this.ctx.fillStyle = "black";
-    this.ctx.fillText(text, 5, 10);
+    this.text_el.text(text);
   }
 }
+
+SceneInteractor.prototype.scaling = function(val) {
+	if (arguments.length === 0) return this.val;
+	this.scaling = val;
+	this.svgg.attr('transform', 'scale(' + this.scaling + ')');
+	return this;
+}
+
+
