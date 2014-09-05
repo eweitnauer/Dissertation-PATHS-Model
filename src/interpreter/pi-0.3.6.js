@@ -145,6 +145,15 @@ PI.v0_3_5 = (function() {
 		options.features.forEach(function (feature) { aNet.addFeature(feature) });
 	}
 
+	Workspace.prototype.getSelectorInfoArray = function() {
+		var self = this;
+		return this.attentionNet.selectors.map(function(sel) {
+			return { val: self.attentionNet.getAttentionValue(sel)
+				     , sel: sel.describe()
+				     , src: sel }
+		});
+	}
+
 	Workspace.prototype.log = function(level, msg) {
 		if (this.log_level < level) return;
 		var lvl = level;
@@ -581,9 +590,7 @@ PI.v0_3_5 = (function() {
 
 	SolutionCodelet.prototype.run = function () {
 		var self = this;
-		sels = this.ws.attentionNet.selectors.map(function(sel) {
-			return {val: self.ws.attentionNet.getAttentionValue(sel), sel: sel.describe(), src: sel};
-		});
+		sels = this.ws.getSelectorInfoArray();
 		this.ws.log(3, 'picking a selector from sels=', sels);
 		var sel = this.ws.getRandomSelector({no_blank: true, filter: function(sel) {
 			return !sel.too_general && !sel.too_specific;

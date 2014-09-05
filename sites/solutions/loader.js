@@ -1,10 +1,13 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
 var pbp_idx = 12;
 var curr_sols = [];
+var tester = null;
 
 function loadScenes(name, files) {
   var path = "../../libs/pbp-svgs/svgs/" + name;
-  document.getElementById('curr_num').innerText = name;
+
+  var heading = name.indexOf('pbp') === 0 ? 'PBP '+name.substring(3) : name;
+  document.getElementById('pbp-num').innerText = heading;
 
   d3.selectAll("svg").remove();
   d3.selectAll("canvas").remove();
@@ -42,6 +45,7 @@ function loadScenes(name, files) {
     //svis.draw_scene();
     analyzeScene(sn);
     var svis = new SceneInteractor(ps, sn, el_svg);
+    svis.scaling(vis_scaling);
 
     problems[files[i]] = {sn: sn, svis: svis};//, sim: sim};
   }
@@ -50,23 +54,31 @@ function loadScenes(name, files) {
 }
 
 function create_html_elements(files) {
+  var a = 100*vis_scaling, mar = 0;
+  d3.select('#vis')
+    .style({width: 4*a + (2*10+8)*vis_scaling + 2*mar + 'px'});
   d3.select("#svgs")
+    .style('height', 5*a+2+mar + 'px')
     .selectAll("svg")
     .data(files)
     .enter()
     .append("svg")
     .attr("id", function(d) { return "s"+d })
-    .style("width", 100*vis_scaling)
-    .style("height", 100*vis_scaling);
+    .style({width: a, height: a})
+    .style('left', function(d, i) {
+      var col = i%4;
+      return mar + ((col < 2) ? col*a : col*a + (2*10+8)*vis_scaling);
+    })
+    .style('top', function(d, i) {
+      var row = Math.floor(i/4);
+      return row*a;
+    });
 
-d3.select("#canvases")
-  .selectAll("canvas")
-  .data(files)
-  .enter()
-  .append("canvas")
-  .attr("id", function(d) { return "c"+d })
-  .attr("width", 100*vis_scaling)
-  .attr("height", 100*vis_scaling);
+  d3.select("#svgs")
+    .append('div')
+    .style({ position: 'absolute', background: '#aaa', border: '1px solid black'
+           , width: 8*vis_scaling+'px', left: mar + 2*a+10*vis_scaling+'px', top: 0
+           , height: 5*a+'px' });
 }
 
 function next() {
@@ -142,12 +154,57 @@ function setup_options() {
         .text(function (d) { return d.name });
 }
 
+function after_step_callback() {
+  d3.select('#solver-step').text(tester.curr_step);
+  updateSelectorTable();
+}
+
+function finish_callback() {
+  d3.select('#solver-run-btn').text('run');
+  tester.auto_next = false;
+}
+
+function updateSelectorTable() {
+  tester.updateSelectorTable(d3.select("#selector-table").node(), selectorClicked);
+}
+
+function selectorClicked(sel) {
+  // apply the selector to all scenes
+  for (var p in problems) {
+    problems[p].svis.applySelector(sel);
+  }
+}
+
 function setup_solve() {
   d3.select('#show-hide-2')
   .on('click', function () {
     var n = d3.select('#solution');
     n.style('display', n.style('display') == 'none' ? 'block' : 'none')
   });
+
+  d3.select('#solver-reset-btn').on('click', function() {
+    scenes = []; for (p in problems) scenes.push(problems[p].sn);
+    tester = new PITester('current', scenes, 1, 5000, 1, 'info');
+    d3.select('#solver-version').text(tester.pi.version);
+    d3.select('#solver-step').text('1');
+    tester.after_step_callback = after_step_callback;
+    tester.finish_callback = finish_callback;
+  });
+
+  d3.select('#solver-step-btn').on('click', function() {
+    tester.step();
+  });
+
+  d3.select('#solver-run-btn').on('click', function() {
+    if (tester.auto_next) {
+      tester.pause();
+      d3.select(this).text('run');
+    } else {
+      tester.run();
+      d3.select(this).text('pause');
+    }
+  });
+
 
   d3.select('#solve')
   .on('click', function () {

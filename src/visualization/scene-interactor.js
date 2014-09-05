@@ -12,7 +12,7 @@ var SceneInteractor = function(physics_scene, scene_node, svg) {
 	this.svg = d3.select(svg);
 	this.svgg = this.svg.append('g');
 	this.width = 145;
-	this.scaling = 1;
+	this.vis_scaling = 1;
 	this.selected = [];
 	this.value_getter = null;
 	this.group_getter = null;
@@ -26,7 +26,7 @@ var SceneInteractor = function(physics_scene, scene_node, svg) {
   this.show_pos = false;               // displays mouse pos. in world coordinates
   this.playing = false;
   this.drawing = true;
-  this.auto_pause = true;
+  this.auto_pause = false;
   this.init();
   this.draw();
 }
@@ -43,7 +43,8 @@ SceneInteractor.prototype.pause = function() {
   if (!this.playing) return;
   clearInterval(this.step_timer);
   this.step_time = null;
-  this.playing = false;
+	this.playing = false;
+	this.updatePlayButton();
 }
 
 SceneInteractor.prototype.play = function() {
@@ -52,17 +53,20 @@ SceneInteractor.prototype.play = function() {
   self.was_autopaused = false;
   this.step_timer = setInterval(function() {
     self.pscene.step();
-    if (self.auto_pause && self.pscene.countAwake() == 0) {
+    if (self.auto_pause && self.pscene.countAwake() === 0) {
       self.pause();
       self.was_autopaused = true;
     }
   }, this.step_interval);
   this.playing = true;
+  this.updatePlayButton();
 }
 
 SceneInteractor.prototype.toggle = function() {
+	console.log('toggling');
   if (this.playing) this.pause();
   else this.play();
+  console.log(this.playing);
 }
 
 SceneInteractor.prototype.reset = function() {
@@ -72,6 +76,8 @@ SceneInteractor.prototype.reset = function() {
 SceneInteractor.prototype.init = function() {
   var self = this;
   this.pscene.onWorldChange.addListener(function() { self.draw.apply(self) });
+
+  this.addControls();
 
   // create text element for time
   this.text_el = this.svg.append('text')
@@ -86,21 +92,23 @@ SceneInteractor.prototype.init = function() {
   this.mouseDown = false;
   this.mousePoint = new b2Vec2(0,0);
   this.svg.style('pointer-events', 'all');
-  this.svg.on("mousemove", function() {
-    self.handleMouseMove.apply(self, arguments);
-  }, true);
-  this.svg.on("mousedown", function() {
-    self.mouseDown = true;
-  }, true);
-  this.svg.on("mouseup", function() {
-    // if we didn't move a body, it was a normal click and we toggle the playing state
-    if (!self.mouseJoint) self.toggle.apply(self);
-    self.handleMouseUp.apply(self, arguments);
-  }, true);
-  this.svg.on("dblclick", function() {
-    self.pause();
-    self.reset();
-  }, true);
+  this.svg.on("mouseover", this.showControls.bind(this));
+  this.svg.on("mouseout", this.hideControls.bind(this));
+  // this.svg.on("mousemove", function() {
+  //   self.handleMouseMove.apply(self, arguments);
+  // }, true);
+  // this.svg.on("mousedown", function() {
+  //   self.mouseDown = true;
+  // }, true);
+  // this.svg.on("mouseup", function() {
+  //   // if we didn't move a body, it was a normal click and we toggle the playing state
+  //   //if (!self.mouseJoint) self.toggle.apply(self);
+  //   self.handleMouseUp.apply(self, arguments);
+  // }, true);
+  // this.svg.on("dblclick", function() {
+  //   self.pause();
+  //   self.reset();
+  // }, true);
 
   // setup timers
   this.interaction_timer = setInterval(function() {
@@ -111,6 +119,45 @@ SceneInteractor.prototype.init = function() {
   this.svgg_position = this.getElementPosition(this.svgg.node());
   window.addEventListener("scroll", function() { self.svgg_position = self.getElementPosition(self.svgg.node()) });
 };
+
+SceneInteractor.prototype.addControls = function() {
+	var thiz = this;
+	this.play_btn = this.svg.append('g').attr('transform', 'translate(15,15)')
+	  .attr('visibility', 'hidden')
+	  .on('click', this.toggle.bind(this));
+	this.play_btn.append('circle')
+	    .attr({fill: '#85A1C8', r: 10});
+	this.play_btn.append('path')
+	    .attr({d: 'M-3,-4 L5,0 L-3,4 Z', fill: 'white'});
+	this.play_btn.append('rect')
+	    .attr({x: -4, y: -4, width: 3, height: 8, fill: 'white', visibility: 'hidden'});
+	this.play_btn.append('rect')
+	    .attr({x: 1, y: -4, width: 3, height: 8, fill: 'white', visibility: 'hidden'});
+	this.reset_btn = this.svg.append('g').attr('transform', 'translate(40,15)')
+	  .on('click', function() { thiz.pause(); thiz.reset() })
+	  .attr('visibility', 'hidden');
+	this.reset_btn.append('circle')
+	    .attr({fill: '#85A1C8', r: 10});
+	this.reset_btn.append('rect')
+		  .attr({ x: -3.5, y: -3.5, width: 7, height: 7, fill: 'white'});
+}
+
+SceneInteractor.prototype.showControls = function() {
+	this.play_btn.attr('visibility', 'visible');
+	this.reset_btn.attr('visibility', 'visible');
+}
+
+SceneInteractor.prototype.hideControls = function() {
+	this.play_btn.attr('visibility', 'hidden');
+	this.reset_btn.attr('visibility', 'hidden');
+}
+
+SceneInteractor.prototype.updatePlayButton = function() {
+	this.play_btn.select('path')
+	    .attr('visibility', this.playing ? 'hidden' : 'visible');
+	this.play_btn.selectAll('rect')
+	    .attr('visibility', this.playing ? 'visible' : 'hidden');
+}
 
 SceneInteractor.prototype.getElementPosition = function(el) {
   var x = el.offsetLeft - document.documentElement.scrollLeft,
@@ -190,9 +237,95 @@ SceneInteractor.prototype.updateInteraction = function() {
   }
 }
 
+SceneInteractor.prototype.addShape = function(container, shape) {
+	var el = d3.select(container);
+	var self = this;
+	var se;
+	if (shape instanceof Circle) {
+		se = el.append('svg:circle')
+		       .attr('cx', 0)
+		       .attr('cy', 0)
+		       .attr('r', shape.r);
+	} else if (shape instanceof Polygon) {
+		se = shape.closed ? el.append('svg:polygon') : el.append('svg:polyline');
+		se.attr('points', shape.pts.map(function (pt) { return pt.x+','+pt.y }).join(' '));
+	}
+	se.classed('shape', true)
+	  .classed('static', function (d) { return !d.movable })
+	  .classed('dynamic', function (d) { return d.movable })
+	  .attr('stroke-width', function (d) { return d.style['stroke-width'] })
+	  .on('click', function(d) {
+	  	d3.event.stopPropagation();
+	  	if (d3.event.shiftKey) self.toggleSelection(d);
+	  	else self.selectShapes([d]);
+	  	if (self.value_getter) console.log(self.value_getter(d));
+	  	console.log(d.object_node.describe());
+	  });
+}
+
+SceneInteractor.prototype.addText = function(container) {
+	container
+		.filter(function (d) { return d.movable })
+		.append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dominant-baseline', 'central')
+    .text(function (d) { return d.id });
+}
+
+SceneInteractor.prototype.updateScene = function() {
+	if (!this.drawing) return;
+	var thiz = this;
+
+	// select
+	//this.svg.attr('pointer-events', 'visible').on('click', function () { thiz.selectShapes([]) });
+	var no_border = function(shape) { return shape.id !== '|' };
+	var gs = this.svgg.attr('pointer-events', 'visiblePainted')
+		  .selectAll('.shape-container-pos')
+		 	.data( this.scene.shapes.filter(no_border)
+		 		   , function(shape) { return shape.id });
+
+	// enter
+	var g_pos = gs.enter()
+	  .append('g')
+		.classed('shape-container-pos', true);
+	g_pos
+		.append('g')
+		.classed('shape-container-rot', true)
+		.each(function(shape) { thiz.addShape(this, shape) });
+	g_pos.call(this.addText);
+
+	// update
+	gs.attr('transform', function (d) { return "translate(" + d.x + "," +  d.y + ")" });
+	gs.select('.shape-container-rot').attr('transform', function (d) { return "rotate(" + d.rot*180/Math.PI + ")" });
+	gs.select('.shape')
+	  .classed('unseen', function (d) { return d.obj_node === undefined });
+	if (this.highlight_mode == 'values' && this.value_getter) {
+		gs.select('.shape')
+		  .filter(function(d) {return d.movable})
+			.style('fill', function (d) { return thiz.metric_color_scale(thiz.value_getter(d)) })
+	} else if (this.highlight_mode == 'groups' && this.group_getter) {
+		gs.select('.shape')
+			.filter(function(d) {return d.movable})
+		  .style('fill', function (d) { return thiz.ordinal_color_scale(thiz.group_getter(d)) })
+	} else {
+		gs.select('.shape')
+			.filter(function(d) {return d.movable})
+		  .style('fill', '#aaa');
+	}
+
+	// remove
+	gs.exit().remove();
+
+	// color scene background according to 'fits_solution' attribute
+	// var color = 'none';
+	// if (this.sn.fits_solution === true) color = '#efe';
+	// else if (this.sn.fits_solution === false) color = '#fee';
+	// this.svg.style('background-color', color);
+}
+
 SceneInteractor.prototype.draw = function() {
   if (!this.drawing) return;
-
+  this.updateScene();
   if (this.show_time || this.show_pos) {
     var text = '';
     if (this.show_pos && this.mousePoint) text += ' x='+this.mousePoint.x.toFixed(2) + " y=" + this.mousePoint.y.toFixed(2);
@@ -203,9 +336,45 @@ SceneInteractor.prototype.draw = function() {
 
 SceneInteractor.prototype.scaling = function(val) {
 	if (arguments.length === 0) return this.val;
-	this.scaling = val;
-	this.svgg.attr('transform', 'scale(' + this.scaling + ')');
+	this.vis_scaling = val;
+	this.svgg.attr('transform', 'scale(' + this.vis_scaling + ')');
 	return this;
 }
 
+SceneInteractor.prototype.applySelector = function(sel) {
+	var gn = sel.applyToScene(this.sn);
+	this.selectShapes(gn.objs);
+	//var ons = gn.objs.map(function(obj) { return obj.object_node });
+}
+
+SceneInteractor.prototype.colorize_values = function(value_getter) {
+	this.highlight_mode = 'values';
+	if (value_getter) this.value_getter = value_getter;
+	this.draw_scene();
+}
+
+SceneInteractor.prototype.colorize_groups = function(group_getter) {
+	this.highlight_mode = 'groups';
+	this.group_getter = group_getter;
+	this.draw_scene();
+}
+
+SceneInteractor.prototype.toggleSelection = function(node) {
+	var new_sel;
+	if (this.selected.indexOf(node) != -1) {
+		new_sel = this.selected.filter(function (n) { return n!==node });
+	} else {
+		new_sel = this.selected.slice();
+		new_sel.push(node);
+	}
+	this.selectShapes(new_sel);
+}
+
+SceneInteractor.prototype.selectShapes = function(shapes) {
+	for (var i=0; i<this.selected.length; i++) this.selected[i].selected = false;
+	this.selected = shapes;
+	for (var i=0; i<this.selected.length; i++) this.selected[i].selected = true;
+	this.svgg.selectAll('.shape')
+	    .classed('selected', function (d) { return d.selected });
+}
 

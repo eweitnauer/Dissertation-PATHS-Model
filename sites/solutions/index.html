@@ -82,13 +82,32 @@
         <button id="show-hide-2">show solutions</button>
         <button id="solve">solve</button>
         <button id="solve-debug">solve (debug)</button>
-        <button type="button" id="btnPrev" onclick="prev()">Previous</button>
-        <span id="curr_num">?</span>
-        <button type="button" id="btnNext" onclick="next()">Next</button><br/>
       </div>
     </div>
-    <div id="canvases" style="float: left;"></div>
-    <div id="svgs" style="float: left;"></div>
+    <div id="vis" class="box">
+        <img id="btnPrev" onclick="prev()" src="left.png"/>
+        <h2 id="pbp-num">PBP</h2>
+        <img id="btnNext" onclick="next()" src="right.png"/>
+        <div id="svgs"></div>
+    </div>
+    <div id="solver" class="box info">
+        <h2>Solver</h2>
+        <span>version: <span id="solver-version">?</span></span>
+        <button id="solver-reset-btn">reset</button>
+        <button id="solver-run-btn">run</button>
+        <button id="solver-step-btn">step</button>
+        <span>step: <span id="solver-step">?</span></span>
+    </div>
+    <div id="features" class="box info">
+        <h2>Features</h2>
+    </div>
+    <div id="selectors" class="box info">
+        <h2>Selectors</h2>
+        <table id="selector-table"></table>
+    </div>
+    <div id="scene-info" class="box info">
+        <h2>Selected Scene</h2>
+    </div>
   </body>
 </html>
 
