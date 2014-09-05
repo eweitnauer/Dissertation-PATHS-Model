@@ -316,6 +316,7 @@ SceneInteractor.prototype.updateScene = function() {
 	// remove
 	gs.exit().remove();
 
+	this.svg.classed('active', this.sn.active);
 	// color scene background according to 'fits_solution' attribute
 	// var color = 'none';
 	// if (this.sn.fits_solution === true) color = '#efe';
@@ -350,13 +351,13 @@ SceneInteractor.prototype.applySelector = function(sel) {
 SceneInteractor.prototype.colorize_values = function(value_getter) {
 	this.highlight_mode = 'values';
 	if (value_getter) this.value_getter = value_getter;
-	this.draw_scene();
+	this.draw();
 }
 
 SceneInteractor.prototype.colorize_groups = function(group_getter) {
 	this.highlight_mode = 'groups';
 	this.group_getter = group_getter;
-	this.draw_scene();
+	this.draw();
 }
 
 SceneInteractor.prototype.toggleSelection = function(node) {
@@ -377,4 +378,3 @@ SceneInteractor.prototype.selectShapes = function(shapes) {
 	this.svgg.selectAll('.shape')
 	    .classed('selected', function (d) { return d.selected });
 }
-

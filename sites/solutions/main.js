@@ -126,7 +126,7 @@ function option_callback(d) {
     d.opts.forEach(function (o) { if (o.checked) opts[o.name] = true });
     if (d.name == 'none') {
       p.svis.highlight_mode = 'none';
-      p.svis.draw_scene();
+      p.svis.draw();
     } else if (d.name == 'groups') {
       var groups;
       if (opts.close) groups = group_by_distance(p.sn);

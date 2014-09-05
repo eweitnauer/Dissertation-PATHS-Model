@@ -90,23 +90,29 @@
         <img id="btnNext" onclick="next()" src="right.png"/>
         <div id="svgs"></div>
     </div>
-    <div id="solver" class="box info">
-        <h2>Solver</h2>
-        <span>version: <span id="solver-version">?</span></span>
-        <button id="solver-reset-btn">reset</button>
-        <button id="solver-run-btn">run</button>
-        <button id="solver-step-btn">step</button>
-        <span>step: <span id="solver-step">?</span></span>
-    </div>
-    <div id="features" class="box info">
-        <h2>Features</h2>
-    </div>
-    <div id="selectors" class="box info">
-        <h2>Selectors</h2>
-        <table id="selector-table"></table>
-    </div>
-    <div id="scene-info" class="box info">
-        <h2>Selected Scene</h2>
+    <div id="right-side">
+        <div id="solver" class="box info">
+            <h2>Solver</h2>
+            <span>version: <span id="solver-version">?</span></span>
+            <button id="solver-reset-btn">reset</button>
+            <button id="solver-run-btn">run</button>
+            <button id="solver-step-btn">step</button>
+            <span>step: <span id="solver-step">?</span></span>
+        </div>
+        <div id="features" class="box info">
+            <h2>Features</h2>
+        </div>
+        <div id="selectors" class="box info">
+            <h2>Selectors</h2>
+            <table id="selector-table"></table>
+        </div>
+        <div id="solutions" class="box info">
+            <h2>Solutions</h2>
+            <ol></ol>
+        </div>
+        <div id="scene-info" class="box info">
+            <h2>Selected Scene</h2>
+        </div>
     </div>
   </body>
 </html>

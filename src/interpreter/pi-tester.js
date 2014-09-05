@@ -139,3 +139,44 @@ PITester.prototype.updateSelectorTable = function(table_el, clickCallback) {
 	tds.exit().remove();
 	tds.text(function(d) { return d });
 }
+
+PITester.prototype.updateFeatureList = function(div_el) {
+	var features = this.ws ? this.ws.getFeatureInfoArray() : [];
+
+	var divs = d3.select(div_el)
+	  .selectAll('.feature')
+	  .data(features);
+
+	var enter = divs.enter()
+		.append('div')
+	    .classed('feature', true);
+	enter.append('div')
+		.classed('key', true)
+	  .text(function(d) { return d.key.split('_').join(' ') });
+	enter.append('div')
+	  .classed('val', true);
+
+	// divs.style('background-color', function(d) { return 'rgba(0,0,0,'+d.val/2+')' });
+	divs.style('opacity', function(d) { return 0.8*d.val+0.2 });
+	divs.select('.val').text(function(d) { return d.val.toFixed(2) });
+
+	divs.exit().remove();
+}
+
+PITester.prototype.getActiveScenes = function() {
+	return this.ws ? this.ws.activeScenes : [];
+}
+
+PITester.prototype.updateSolutionList = function(list_el) {
+	var solutions = this.ws ? this.ws.solutions : [];
+
+	var divs = d3.select(list_el)
+	  .selectAll('.solutions')
+	  .data(solutions);
+
+	divs.enter()
+	  .append('li')
+	  .text(function(d) { return d.describe() });
+
+	divs.exit().remove();
+}

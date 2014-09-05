@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 12;
+var pbp_idx = 6;
 var curr_sols = [];
 var tester = null;
 
@@ -94,17 +94,11 @@ function prev() {
 }
 
 function disable_drawing() {
-  for (var p in problems) {
-    problems[p].sim.drawing = false;
-    problems[p].svis.drawing = false;
-  }
+  for (var p in problems) problems[p].svis.drawing = false;
 }
 
 function enable_drawing() {
-  for (var p in problems) {
-    problems[p].sim.drawing = true;
-    problems[p].svis.drawing = true;
-  }
+  for (var p in problems) problems[p].svis.drawing = true;
 }
 
 function setup_options() {
@@ -155,13 +149,32 @@ function setup_options() {
 }
 
 function after_step_callback() {
-  d3.select('#solver-step').text(tester.curr_step);
+  d3.select('#solver-step').text(tester.curr_step-1);
   updateSelectorTable();
+  updateFeatureList();
+  updateActiveScenes();
+  updateSolutionList();
+  for (var p in problems) problems[p].svis.draw();
+}
+
+function updateActiveScenes() {
+  for (var p in problems) problems[p].sn.active = false;
+  tester.getActiveScenes().forEach(function(scene) {
+    scene.active = true;
+  });
 }
 
 function finish_callback() {
   d3.select('#solver-run-btn').text('run');
   tester.auto_next = false;
+}
+
+function updateFeatureList() {
+  tester.updateFeatureList(d3.select("#features").node());
+}
+
+function updateSolutionList() {
+  tester.updateSolutionList(d3.select("#solutions ol").node());
 }
 
 function updateSelectorTable() {
@@ -175,6 +188,26 @@ function selectorClicked(sel) {
   }
 }
 
+function resetClicked() {
+  var scenes = [];
+  for (p in problems) scenes.push(problems[p].sn);
+
+  tester = new PITester('current', scenes, 1, 5000, 1, 'info');
+  d3.select('#solver-version').text(tester.pi.version);
+  d3.select('#solver-step').text('0');
+  tester.after_step_callback = after_step_callback;
+  tester.finish_callback = finish_callback;
+
+  updateSelectorTable();
+  updateFeatureList();
+  updateActiveScenes();
+  updateSolutionList();
+  for (var p in problems) {
+    problems[p].svis.selectShapes([]);
+    problems[p].svis.draw();
+  }
+}
+
 function setup_solve() {
   d3.select('#show-hide-2')
   .on('click', function () {
@@ -182,14 +215,7 @@ function setup_solve() {
     n.style('display', n.style('display') == 'none' ? 'block' : 'none')
   });
 
-  d3.select('#solver-reset-btn').on('click', function() {
-    scenes = []; for (p in problems) scenes.push(problems[p].sn);
-    tester = new PITester('current', scenes, 1, 5000, 1, 'info');
-    d3.select('#solver-version').text(tester.pi.version);
-    d3.select('#solver-step').text('1');
-    tester.after_step_callback = after_step_callback;
-    tester.finish_callback = finish_callback;
-  });
+  d3.select('#solver-reset-btn').on('click', resetClicked);
 
   d3.select('#solver-step-btn').on('click', function() {
     tester.step();
@@ -200,7 +226,8 @@ function setup_solve() {
       tester.pause();
       d3.select(this).text('run');
     } else {
-      tester.run();
+      tester.auto_next = true;
+      tester.step();
       d3.select(this).text('pause');
     }
   });

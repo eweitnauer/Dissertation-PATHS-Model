@@ -82,7 +82,7 @@ PI.v0_3_5 = (function() {
 
 	var options = {
 		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
-	 ,features:  [MovableUpAttribute, ShapeAttribute]
+	 ,features:  [RightRelationship, LeftRelationship, ShapeAttribute, CountAttribute, OnGroundAttribute]
 	};
 
 	/// The workspace is a container for all objects the interpreter works with
@@ -151,6 +151,14 @@ PI.v0_3_5 = (function() {
 			return { val: self.attentionNet.getAttentionValue(sel)
 				     , sel: sel.describe()
 				     , src: sel }
+		});
+	}
+
+	Workspace.prototype.getFeatureInfoArray = function() {
+		var self = this;
+		return this.attentionNet.features.map(function(feature) {
+			return { key: feature.prototype.key
+						 , val: self.attentionNet.getAttentionValue(feature)};
 		});
 	}
 

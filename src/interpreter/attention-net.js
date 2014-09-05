@@ -27,15 +27,17 @@ AttentionNet = function() {
 	this.attention_values = new WeakMap();
 }
 
-/// Type can be 'feature', 'selector' and 'object'.
+/// Type can be 'feature', 'selector' and 'object'. Optionally pass an
+/// attention value (default: 1.0).
 /// Returns true if successfully inserted.
-AttentionNet.prototype.addElement = function(type, element) {
+AttentionNet.prototype.addElement = function(type, element, val) {
+	if (typeof(val) === 'undefined') val = 1.0;
 	var map = {feature: this.features, selector: this.selectors, object: this.objects};
 	var arr = map[type];
 	if (!arr) return false;
 	if (arr.indexOf(element) != -1) return false;
 	arr.push(element);
-	this.attention_values.set(element, 1);
+	this.attention_values.set(element, val);
 	return true;
 }
 
@@ -51,20 +53,23 @@ AttentionNet.prototype.setAttentionValue = function(el, val) {
 	return this.attention_values.set(el, val);
 }
 
-/// Returns true if successfully inserted.
-AttentionNet.prototype.addFeature = function(feature) {
-	return this.addElement('feature', feature);
+/// Returns true if successfully inserted. Optionally pass an attention value
+/// (default: 1.0).
+AttentionNet.prototype.addFeature = function(feature, val) {
+	return this.addElement('feature', feature, val);
 }
 
-/// Returns true if successfully inserted.
-AttentionNet.prototype.addSelector = function(selector) {
+/// Returns true if successfully inserted. Optionally pass an attention value
+/// (default: 1.0).
+AttentionNet.prototype.addSelector = function(selector, val) {
 	if (this.selectors.some(function (sel) { return sel.equals(selector) })) return false;
-	return this.addElement('selector', selector);
+	return this.addElement('selector', selector, val);
 }
 
-/// Returns true if successfully inserted.
-AttentionNet.prototype.addObject = function(object) {
-	return this.addElement('object', object);
+/// Returns true if successfully inserted. Optionally pass an attention value
+/// (default: 1.0).
+AttentionNet.prototype.addObject = function(object, val) {
+	return this.addElement('object', object, val);
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
