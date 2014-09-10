@@ -1,7 +1,8 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 6;
+var pbp_idx = 10;
 var curr_sols = [];
 var tester = null;
+var log_area = null;
 
 function loadScenes(name, files) {
   var path = "../../libs/pbp-svgs/svgs/" + name;
@@ -46,7 +47,7 @@ function loadScenes(name, files) {
     analyzeScene(sn);
     var svis = new SceneInteractor(ps, sn, el_svg);
     svis.scaling(vis_scaling);
-
+    option_callback({name: 'attention', opts: []});
     problems[files[i]] = {sn: sn, svis: svis};//, sim: sim};
   }
 
@@ -84,12 +85,14 @@ function create_html_elements(files) {
 function next() {
   pbp_idx += 1;
   if (pbp_idx >= pbps.length) pbp_idx = 0;
+  tester = null;
   loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
 }
 
 function prev() {
   pbp_idx -= 1;
   if (pbp_idx < 0) pbp_idx = pbps.length-1;
+  tester = null;
   loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
 }
 
@@ -188,12 +191,18 @@ function selectorClicked(sel) {
   }
 }
 
+function logText(text) {
+  log_area.append('div').text(text);
+  log_area.node().scrollTop = log_area.node().scrollHeight;
+}
+
 function resetClicked() {
   var scenes = [];
-  for (p in problems) scenes.push(problems[p].sn);
+  for (var p in problems) scenes.push(problems[p].sn);
 
   tester = new PITester('current', scenes, 1, 5000, 1, 'info');
-  d3.select('#solver-version').text(tester.pi.version);
+  tester.setLogCallback(logText);
+  d3.select('#solver h2').text('Solver ' + tester.pi.version);
   d3.select('#solver-step').text('0');
   tester.after_step_callback = after_step_callback;
   tester.finish_callback = finish_callback;
@@ -202,6 +211,8 @@ function resetClicked() {
   updateFeatureList();
   updateActiveScenes();
   updateSolutionList();
+  log_area = d3.select('#debug-text');
+  log_area.select('*').remove();
   for (var p in problems) {
     problems[p].svis.selectShapes([]);
     problems[p].svis.draw();
@@ -287,7 +298,6 @@ function update_solutions(sols) {
          svis.push(p.svis);
       });
       console.log(d.describe(), ':', d.check(ls, rs));
-      svis.forEach(function (svis) { svis.draw_scene() })
     });
 }
 

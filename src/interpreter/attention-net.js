@@ -24,7 +24,52 @@ AttentionNet = function() {
 	this.features = [];
 	this.selectors = [];
 	this.objects = [];
+	this.objects_by_scene = null; // internal cache
 	this.attention_values = new WeakMap();
+}
+
+/// Updates all attention values, so that for 'features', 'selectors'
+/// and 'objects' the attentions add up to 1.
+/// The `type` argument is optional, if not passed, all types are
+/// normalized.
+AttentionNet.prototype.normalize = function(type) {
+	if (!type) {
+		this.normalize('features');
+		this.normalize('selectors');
+		this.normalize('objects');
+		return;
+	}
+	if (type === 'objects') {
+		var objs = this.objectsByScene();
+		for (var scene in objs)	this.normalizeElements(objs[scene]);
+	} else {
+		this.normalizeElements(this[type]);
+	}
+}
+
+/// Scales the attention values of the passed elements so they sum up to 1.
+AttentionNet.prototype.normalizeElements = function(els) {
+	var sum = 0, i;
+	for (i=0; i<els.length; i++) sum += this.attention_values.get(els[i]);
+	if (sum === 0) return;
+	for (i=0; i<els.length; i++) {
+		this.attention_values.set(els[i], this.attention_values.get(els[i])/sum);
+	}
+}
+
+/// Returns all objects grouped by scenes. Will cache results of first call,
+/// so only call after all objects were added.
+AttentionNet.prototype.objectsByScene = function() {
+	if (!this.objects_by_scene) {
+		var objs = {}, obj;
+		for (var i=0; i<this.objects.length; i++) {
+		  obj = this.objects[i];
+		  if (!(obj.scene_node.id in objs)) objs[obj.scene_node.id] = [];
+		  objs[obj.scene_node.id].push(obj);
+		}
+		this.objects_by_scene = objs;
+	}
+	return this.objects_by_scene;
 }
 
 /// Type can be 'feature', 'selector' and 'object'. Optionally pass an

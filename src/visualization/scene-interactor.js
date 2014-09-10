@@ -16,7 +16,7 @@ var SceneInteractor = function(physics_scene, scene_node, svg) {
 	this.selected = [];
 	this.value_getter = null;
 	this.group_getter = null;
-	this.metric_color_scale = d3.scale.pow().exponent(1.5).domain([0, 100]).range(['white', 'red']);
+	this.metric_color_scale = d3.scale.pow().exponent(1.5).domain([0, 100]).range(['silver', 'orange']);
 	this.ordinal_color_scale = d3.scale.category10();
 	this.highlight_mode = 'values'; // 'values' or 'groups' or 'none'
 
@@ -259,7 +259,8 @@ SceneInteractor.prototype.addShape = function(container, shape) {
 	  	if (d3.event.shiftKey) self.toggleSelection(d);
 	  	else self.selectShapes([d]);
 	  	if (self.value_getter) console.log(self.value_getter(d));
-	  	console.log(d.object_node.describe());
+	  	console.log("obj=", d.object_node.describe());
+	  	obj = d;
 	  });
 }
 

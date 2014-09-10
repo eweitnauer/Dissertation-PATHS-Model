@@ -3,6 +3,9 @@ var PI = PI || {};
 
 /*
 
+Version 0.3.7
+- don't allow negated percepts (e.g., "not moves" or "not left-most")
+
 Version 0.3.6
 - logCallback
 - in SolutionCodelet mark selectors that are too general (sel.too_general = true)
@@ -78,8 +81,8 @@ Version 0.3.0
                         ,11 (33 steps)
 */
 
-PI.v0_3_6 = (function() {
-	var version = '0.3.6';
+PI.v0_3_7 = (function() {
+	var version = '0.3.7';
 
 	var options = {
 		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
@@ -106,7 +109,7 @@ PI.v0_3_6 = (function() {
 		if (options.active_scenes == 'w/i')
 			this.activeScenes = [this.left_scenes[0], this.left_scenes[1]]; // FIXME: shift attetention between scenes
 		else
-			this.activeScenes = [this.left_scenes[0], this.right_scenes[0]]; // FIXME: shift attetention between scenes
+			this.activeScenes = [this.left_scenes[2], this.right_scenes[2]]; // FIXME: shift attetention between scenes
 
 		this.attentionNet = new AttentionNet();
 		this.initAttentionNet();
@@ -409,7 +412,9 @@ PI.v0_3_6 = (function() {
 
 	AttrCodelet.prototype.perceiveAttr = function(target, feature) {
 		var percept = target.getFromCache(feature.prototype.key, {time: this.time});
-		if (percept) this.spawnNewSelCodelet(percept, this.time);
+		if (percept && percept.get_activity() > pbpSettings.activation_threshold) {
+			this.spawnNewSelCodelet(percept, this.time);
+		}
 		else percept = target.get(feature.prototype.key, {time: this.time});
 		this.ws.log(3, 'perceived', feature.prototype.key, 'on', this.ws.getDescription(target));
 		this.ws.log(4, 'on', target, percept);
@@ -423,7 +428,9 @@ PI.v0_3_6 = (function() {
 		var other;
 		do other = this.ws.getRandomObject(scene); while(other === target_obj);
 		percept = target_obj.getFromCache(feature.prototype.key, {other: other, time: this.time});
-		if (percept) this.spawnNewSelCodelet(percept, this.time);
+		if (percept && percept.get_activity() > pbpSettings.activation_threshold) {
+			this.spawnNewSelCodelet(percept, this.time);
+		}
 		else percept = target_obj.get(feature.prototype.key, {other: other, time: this.time});
 
 		this.ws.log(3, 'perceived', feature.prototype.key, 'on'

@@ -103,8 +103,8 @@ function getSolutions(pbp) {
 
 
 var options = [
-  {name: 'none', checked: true, opts: []}
- ,{name: 'attention', multiple: true, opts: [{name: 'moves', checked: true}
+  {name: 'attention', checked: true, opts: []}
+ ,{name: 'feature', multiple: true, opts: [{name: 'moves', checked: true}
                             ,{name: 'top-most'}
                             ,{name: 'single'}]}
  ,{name: 'uniqueness', multiple: true, opts: [{name: 'spatial', checked: true}
@@ -124,8 +124,11 @@ function option_callback(d) {
     var p = problems[i];
     var opts = {};
     d.opts.forEach(function (o) { if (o.checked) opts[o.name] = true });
-    if (d.name == 'none') {
-      p.svis.highlight_mode = 'none';
+    if (d.name == 'attention') {
+      p.svis.colorize_values(function(shape) {
+        if (!tester || !tester.ws) return 0;
+        return tester.ws.attentionNet.getAttentionValue(shape.object_node) * 100;
+      });
       p.svis.draw();
     } else if (d.name == 'groups') {
       var groups;
@@ -137,7 +140,7 @@ function option_callback(d) {
       else if (opts.stability) groups = group_by_attributes(p.sn.objs, ['stability']);
       groups = inverse_aa(groups);
       p.svis.colorize_groups(function(groups) { return function(shape) { return groups[shape.id] }}(groups));
-    } else if (d.name == 'attention') {
+    } else if (d.name == 'feature') {
       var vals = [];
       if (opts['top-most']) vals.push(get_top_attention(p.sn));
       if (opts.moves) vals.push(get_movement_attention(p.sn));

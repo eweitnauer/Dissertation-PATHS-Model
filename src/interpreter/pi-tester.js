@@ -48,6 +48,7 @@ PITester.prototype.step = function() {
 		if (this.start_callback) this.start_callback();
 		this.clear_scenes();
 		this.ws = new this.pi.Workspace(this.scenes, this.log_level);
+		if (this.logCallback) this.ws.logCallback = this.logCallback;
 		console.log('run',this.curr_rep,'of',this.reps);
 	}
 
@@ -76,6 +77,11 @@ PITester.prototype.step = function() {
 	}
 	// next step
 	if (this.auto_next) this.next_timer = setTimeout(this.step.bind(this, true), this.auto_next_delay);
+}
+
+PITester.prototype.setLogCallback = function(cb) {
+	this.logCallback = cb;
+	if (this.ws) this.ws.logCallback = this.logCallback;
 }
 
 PITester.prototype.show_stats = function(res) {
