@@ -196,23 +196,26 @@ function logText(text) {
   log_area.node().scrollTop = log_area.node().scrollHeight;
 }
 
-function resetClicked() {
+function createTester() {
   var scenes = [];
   for (var p in problems) scenes.push(problems[p].sn);
-
   tester = new PITester('current', scenes, 1, 5000, 1, 'info');
   tester.setLogCallback(logText);
   d3.select('#solver h2').text('Solver ' + tester.pi.version);
   d3.select('#solver-step').text('0');
   tester.after_step_callback = after_step_callback;
   tester.finish_callback = finish_callback;
+  resetClicked();
+}
 
+function resetClicked() {
+  tester.reset();
+  d3.select('#solver-step').text('0');
+  log_area.select('*').remove();
   updateSelectorTable();
   updateFeatureList();
   updateActiveScenes();
   updateSolutionList();
-  log_area = d3.select('#debug-text');
-  log_area.select('*').remove();
   for (var p in problems) {
     problems[p].svis.selectShapes([]);
     problems[p].svis.draw();
@@ -237,8 +240,7 @@ function setup_solve() {
       tester.pause();
       d3.select(this).text('run');
     } else {
-      tester.auto_next = true;
-      tester.step();
+      tester.run();
       d3.select(this).text('pause');
     }
   });
@@ -323,6 +325,8 @@ function init() {
   setup_solve();
   d3.select('#curr-as-start').on('click', curr_as_start);
   loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
+  log_area = d3.select('#debug-text');
+  createTester();
 }
 
 var default_files = ['1-1', '1-2', '1-3', '1-4'

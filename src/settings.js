@@ -14,6 +14,7 @@ var pbpSettings = (function() {
 	 BottomAttribute,
 	 TopAttribute,
 	 TopMostAttribute,
+	 SingleAttribute,
 	 OnGroundAttribute,
 	 CircleAttribute,
 	 SquareAttribute,

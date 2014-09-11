@@ -3,7 +3,11 @@ var PI = PI || {};
 
 /*
 Version 0.4.0
-- adding in attention mechanisms
+- adding in attention mechanism for selectors:
+	- initialize with attention value based on number of scenes matching
+- adding in attention mechanism for objects:
+	- spread attention from selectors to selected objects
+	- add attention to objects with certain attributes (like moves)
 
 
 PBP  2: [CountAttribute]
@@ -24,12 +28,21 @@ PI.v0_4_0 = (function() {
 	var version = '0.4.0';
 
 	var options = {
-		active_scenes: 'b/w-dis' // can be 'w/i-sim' or 'b/w-sim' or 'w/i-dis' or 'b/w-dis'
-	 ,features: [CircleAttribute, SquareAttribute, RectangleAttribute, TriangleAttribute, LeftAttribute, RightAttribute]//[RightRelationship, LeftRelationship, ShapeAttribute, CountAttribute, OnGroundAttribute]
+		active_scenes: 'b/w-sim' // can be 'w/i-sim' or 'b/w-sim' or 'w/i-dis' or 'b/w-dis'
+	 ,features: [SingleAttribute]//, MovesAttribute, TopMostAttribute]//CircleAttribute, SquareAttribute, RectangleAttribute, TriangleAttribute, LeftAttribute, RightAttribute]//[RightRelationship, LeftRelationship, ShapeAttribute, CountAttribute, OnGroundAttribute]
 	 ,attention: { sel: {
-	 										  no_single_update: false
-	 										, no_match_updates: false
+	 										  single: true
+	 										, match:  true
 	 	 									}
+	 	 					 , obj: {
+	 	 					 				  from_sel:   true
+	 	 					 				, attr_boost: { // only apply at time "start"
+	 	 					 								 	  		moves: 0.3
+	 	 					 								 	  	, top_most: 0.3
+	 	 					 								 	  	, left_most: 0.1
+	 	 					 								 	  	, right_most: 0.1
+	 	 					 					            }
+	 	 					 				}
 	 						 }
 	};
 
@@ -57,7 +70,7 @@ PI.v0_4_0 = (function() {
 		else if (options.active_scenes == 'b/w-dis')
 			this.activeScenes = [this.left_scenes[4], this.right_scenes[2]]; // FIXME: shift attetention between scenes
 		else if (options.active_scenes == 'b/w-sim')
-			this.activeScenes = [this.left_scenes[2], this.right_scenes[2]]; // FIXME: shift attetention between scenes
+			this.activeScenes = [this.left_scenes[0], this.right_scenes[0]]; // FIXME: shift attetention between scenes
 
 		this.attentionNet = new AttentionNet();
 		this.initAttentionNet();
@@ -66,6 +79,8 @@ PI.v0_4_0 = (function() {
 		this.coderack.behaviors.push(new MainBehavior(this.coderack));
 
 		this.logCallback = null;
+		this.attentionNet.normalize('objects');
+		this.attentionNet.normalize('features');
 	}
 
 	Workspace.prototype.perceived_feature = function() {
@@ -100,7 +115,21 @@ PI.v0_4_0 = (function() {
 	}
 
 	Workspace.prototype.changeAttention = function(thing, delta) {
-		this.attentionNet.addToAttentionValue(thing, delta, 0, 1);
+		var self = this;
+		if (thing instanceof Selector) {
+			this.attentionNet.addToAttentionValue(thing, delta, 0, 1);
+		} else if (thing instanceof GroupNode) {
+			var N = thing.objs.length;
+			thing.objs.forEach(function(obj) {
+			  self.attentionNet.addToAttentionValue(obj.object_node, delta);
+			});
+		} else if (thing instanceof ObjectNode) {
+			self.attentionNet.addToAttentionValue(thing, delta);
+		}
+	}
+
+	Workspace.prototype.getAttention = function(thing) {
+		return this.attentionNet.getAttentionValue(thing);
 	}
 
 	Workspace.prototype.getSelectorInfoArray = function() {
@@ -363,13 +392,22 @@ PI.v0_4_0 = (function() {
 		this.coderack.insert(new NewSelectorCodelet(this.coderack, percept, time));
 	};
 
+	AttrCodelet.prototype.isActive = function(percept) {
+		return percept.get_activity() > pbpSettings.activation_threshold;
+	}
+
 	AttrCodelet.prototype.perceiveAttr = function(target, feature) {
 		var percept = target.getFromCache(feature.prototype.key, {time: this.time});
-		if (!percept) percept = target.get(feature.prototype.key, {time: this.time});
-		if (percept && percept.get_activity() > pbpSettings.activation_threshold) {
+		if (!percept) {
+			percept = target.get(feature.prototype.key, {time: this.time});
+			var d_att = options.attention.obj.attr_boost[percept.key];
+			if (d_att && this.time === 'start') {
+				this.ws.changeAttention(target, d_att*percept.get_activity());
+			}
+		}
+		if (this.isActive(percept)) {
 			this.spawnNewSelCodelet(percept, this.time);
 		}
-		//else percept = target.get(feature.prototype.key, {time: this.time});
 		this.ws.log(3, 'perceived', feature.prototype.key, 'on', this.ws.getDescription(target));
 		this.ws.log(4, 'on', target, percept);
 	}
@@ -455,7 +493,7 @@ PI.v0_4_0 = (function() {
 
 	NewSelectorCodelet.prototype.getAttFromMatchResult = function
 	(same_side, match_count, is_obj_sel) {
-		if (options.attention.sel.no_match_updates) return 0;
+		if (!options.attention.sel.match) return 0;
 		if (same_side) {
 			if (match_count === 2) return (is_obj_sel ?  0.1 : 0.1);
 			if (match_count === 1) return (is_obj_sel ? -0.3 : 0);
@@ -490,8 +528,10 @@ PI.v0_4_0 = (function() {
 		var same_side = scenes[0].side === scenes[1].side;
 		var is_obj_sel = sel.getType() === 'object';
 		var all_single_objs = true;
+		var sel_grps = [];
 		var match_count = scenes.filter(function (scene) {
 			var res_group = self.ws.getOrCreateGroupBySelector(sel, scene);
+			sel_grps.push(res_group);
 			all_single_objs = all_single_objs && res_group.objs.length === 1;
 			return (!res_group.empty());
 		}).length;
@@ -499,9 +539,13 @@ PI.v0_4_0 = (function() {
 
 		if (this.ws.addSelector(sel, 0.2)) {
 			var d_att = this.getAttFromMatchResult(same_side, match_count, is_obj_sel);
-			if (!options.attention.sel.no_single_update
-			  && all_single_objs) d_att += 0.3;
+			if (options.attention.sel.single && all_single_objs) d_att += 0.3;
 			this.ws.changeAttention(sel, d_att);
+			if (options.attention.obj.from_sel) {
+				sel_grps.forEach(function(group) {
+					self.ws.changeAttention(group, self.ws.getAttention(sel));
+				});
+			}
 		}
 
 		// if (matching_scenes.length == 0) return;

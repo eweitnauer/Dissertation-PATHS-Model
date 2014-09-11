@@ -120,6 +120,22 @@ PhysicsOracle.prototype.getTouchGroups = function() {
   return this.groupLinkedNodes(bodies, touches);
 }
 
+/// Returns an object {body: b2Body, dist: float} or false, if there
+/// is no other body in the scene. Will only consider dynamic bodies.
+PhysicsOracle.prototype.getClosestBodyWithDist = function(body) {
+  var res = { body: null, dist: Infinity };
+  this.pscene.forEachDynamicBody(function(other) {
+    if (other === body) return;
+    var dist = body.distance(other);
+    if (dist < res.dist) {
+      res.body = other;
+      res.dist = dist;
+    }
+  });
+  if (res.body === null) return null;
+  return res;
+}
+
 /// Returns a list with all touched bodies, possibly including the ground or the frame.
 /// Each touched body is only in the list once, even if touched at several places.
 PhysicsOracle.prototype.getTouchedBodies = function(body) {

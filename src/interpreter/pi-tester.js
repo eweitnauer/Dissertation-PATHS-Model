@@ -13,8 +13,8 @@ PITester = function(pi, scenes, reps, max_steps, max_sols, log_level) {
 	this.pi = (pi=='current' ? this.get_current_pi() : pi);
 	this.scenes = scenes;
 	this.reps = reps || 1;
-	this.curr_rep = 1;
-	this.curr_step = 1;
+	this.curr_rep = 0;
+	this.curr_step = 0;
 	this.res = [];
 	this.ws = null;
 	this.max_steps = max_steps || 1000;
@@ -27,12 +27,28 @@ PITester = function(pi, scenes, reps, max_steps, max_sols, log_level) {
 	this.auto_next = false;
 	this.auto_next_delay = 0;
 	this.next_timer = null;
+	this.initNextRep();
+}
+
+PITester.prototype.reset = function() {
+	this.res = [];
+	this.curr_rep = 0;
+	this.curr_step = 0;
+	this.ws = null;
+	this.initNextRep();
+}
+
+PITester.prototype.initNextRep = function() {
+	this.curr_rep++;
+	this.curr_step = 0;
+	this.clear_scenes();
+	this.ws = new this.pi.Workspace(this.scenes, this.log_level);
+	if (this.logCallback) this.ws.logCallback = this.logCallback;
+	if (this.start_callback) this.start_callback();
+	console.log('run',this.curr_rep,'of',this.reps);
 }
 
 PITester.prototype.run = function() {
-	this.res = [];
-	this.curr_rep = 1;
-	this.ws = null;
 	this.auto_next = true;
 	this.step();
 }
@@ -42,15 +58,13 @@ PITester.prototype.pause = function() {
 	this.auto_next = false;
 }
 
+PITester.prototype.isRepFinished = function() {
+	return (this.curr_step === this.max_steps
+	       || this.ws.solutions.length >= this.max_sols);
+}
+
 PITester.prototype.step = function() {
-	if (!this.ws) { // setup new repetition
-		this.curr_step = 1;
-		if (this.start_callback) this.start_callback();
-		this.clear_scenes();
-		this.ws = new this.pi.Workspace(this.scenes, this.log_level);
-		if (this.logCallback) this.ws.logCallback = this.logCallback;
-		console.log('run',this.curr_rep,'of',this.reps);
-	}
+	if (!this.ws || this.isRepFinished()) this.initNextRep();
 
 	// do a step
 	if (this.before_step_callback) this.before_step_callback(this.curr_step);
@@ -59,7 +73,7 @@ PITester.prototype.step = function() {
 	if (this.after_step_callback) this.after_step_callback(this.curr_step);
 
 	// are we done with the current repetition?
-	if (this.curr_step > this.max_steps || this.ws.solutions.length >= this.max_sols) {
+	if (this.isRepFinished()) {
 		// save current result
 		var curr_res = {rep: this.curr_rep, steps: this.curr_step-1};
 	  curr_res.perception_count = this.ws.perception_count;
@@ -67,10 +81,8 @@ PITester.prototype.step = function() {
 	  curr_res.sols = this.ws.solutions;
 	  curr_res.solved = this.ws.solutions.length > 0;
 	  this.res.push(curr_res);
-	  this.curr_rep++;
-	  this.ws = null;
 	  // are we finished?
-	  if (this.curr_rep > this.reps) {
+	  if (this.curr_rep === this.reps) {
 	  	if (this.finish_callback) this.finish_callback();
 	  	return this.show_stats(this.res);
 	  }
