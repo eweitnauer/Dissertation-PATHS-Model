@@ -2,92 +2,35 @@
 var PI = PI || {};
 
 /*
+Version 0.4.0
+- adding in attention mechanisms
 
-Version 0.3.7
-- don't allow negated percepts (e.g., "not moves" or "not left-most")
-- better logging
 
-Version 0.3.6
-- logCallback
-- in SolutionCodelet mark selectors that are too general (sel.too_general = true)
-- don't use such selectors again in a SolutionCodelet
-- only use such selectors in the CombineSelectorCodelet
-- just PBP 12:  39 +- 23 steps [OnTopRelationship, SmallAttribute]
-       PBP 13:  49 +- 22 steps [CountAttr, OnGroundAttr]
-       PBP 20: 211 +-208 steps [SupportsRelationship, ShapeAttribute]
-       PBP 26: 108 +- 76 steps [ShapeAttribute, LeftAttribute]
-       PBP 31:  84 +- 39 steps [MovableUpAttribute, ShapeAttribute]
-
-Version 0.3.5
-- solving single problems in principle
-- just PBP  2:  13 +-  7 steps [CountAttribute]
-       PBP  4:  14 +-  8 steps [ShapeAttribute]
-       PBP  8:  25 +- 19 steps [StabilityAttribute]
-       PBP 11:  15 +- 10 steps [CloseAttribute]
-       PBP 12:  62 +- 48 steps [OnTopRelationship, SmallAttribute]
-       PBP 13:  56 +- 39 steps [CountAttribute, OnGroundAttribute]
-			 PBP 16:  65 +- 33 steps [RightRelationship, LeftRelationship, ShapeAttribute]
-       PBP 18:  26 +- 15 steps [TouchAttribute, TouchRelationship]
-       PBP 20: 320 +-276 steps [SupportsRelationship, ShapeAttribute]
-       PBP 22:  18 +- 10 steps [HitsRelationship, CollidesRelationship]
-       PBP 26: 167 +-126 steps [ShapeAttribute, LeftAttribute]
-       PBP 31: 130 +- 79 steps [MovableUpAttribute, ShapeAttribute]
-
-Version 0.3.4
-- integrating problem 13 (unique on ground at end)
-- switched to groups having a single selector
-- selector can now be of type mixed
-- fixed bug in Workspace.getGroupBySelector
-- we will disallow unique solution to check whether merging object & group
-  features works ==> it works: PBP13 - 222 steps (+-133)
-- will all other features added back in (7 Attributes and 2 Relationships):
-		PBPs:   2 (143 +-155 steps 100%)
-		      , 4 ( 81 +- 52 steps 100%)
-		      , 8 (154 +-140 steps 100%)
-		      ,11 (516 +-447 steps  57%)
-		      ,12 (397 +-303 steps  91%)
-		      ,22 (230 +-230 steps  99%)
-
-Version 0.3.3
-- working on combination of selectors
-- new relationship: left-of, right-of
-- solves PBP16 (circle, left-most): 90 steps (+-58)
-
-Version 0.3.2
-- simply added feature hit-relationship
-- can solve these PBPs:   2 (35 steps)  - same
-                        , 4 (32 steps)  - same
-                        , 8 (50 steps)  - same
-                        ,11 (81 steps)  - more
- 												,12 (121 steps) - more
- 												,22 (82 steps)  - new
-
-Version 0.3.1
-- added relationships
-- new feature added: on-top-of
-- will block relationship features when it tries to apply them to a scene with a single object
-- can solve these PBPs:   2 (36 steps) - same
-                        , 4 (32 steps) - same
-                        , 8 (53 steps) - same
-                        ,11 (60 steps) - more!
- 												,12 (104 steps) - new
-
-Version 0.3.0
- - a fresh start that uses new types of codelets and the new solution
-   and selector types
- - covers these features: count, shape, stability, close
- - can solve these PBPs:  2 (38 steps)
-                        , 4 (32 steps)
-                        , 8 (49 steps)
-                        ,11 (33 steps)
+PBP  2: [CountAttribute]
+PBP  4: [ShapeAttribute]
+PBP  8: [StabilityAttribute]
+PBP 11: [CloseAttribute]
+PBP 12: [OnTopRelationship, SmallAttribute]
+PBP 13: [CountAttribute, OnGroundAttribute]
+PBP 16: [RightRelationship, LeftRelationship, ShapeAttribute]
+PBP 18: [TouchAttribute, TouchRelationship]
+PBP 20: [SupportsRelationship, ShapeAttribute]
+PBP 22: [HitsRelationship, CollidesRelationship]
+PBP 26: [ShapeAttribute, LeftAttribute]
+PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_3_7 = (function() {
-	var version = '0.3.7';
+PI.v0_4_0 = (function() {
+	var version = '0.4.0';
 
 	var options = {
-		active_scenes: 'b/w' // can be 'w/i' or 'b/w'
-	 ,features: [ShapeAttribute, LeftAttribute]//[RightRelationship, LeftRelationship, ShapeAttribute, CountAttribute, OnGroundAttribute]
+		active_scenes: 'b/w-dis' // can be 'w/i-sim' or 'b/w-sim' or 'w/i-dis' or 'b/w-dis'
+	 ,features: [CircleAttribute, SquareAttribute, RectangleAttribute, TriangleAttribute, LeftAttribute, RightAttribute]//[RightRelationship, LeftRelationship, ShapeAttribute, CountAttribute, OnGroundAttribute]
+	 ,attention: { sel: {
+	 										  no_single_update: false
+	 										, no_match_updates: false
+	 	 									}
+	 						 }
 	};
 
 	/// The workspace is a container for all objects the interpreter works with
@@ -107,9 +50,13 @@ PI.v0_3_7 = (function() {
 		this.log_symbol = {1: 'EE', 2: 'WW', 3: 'II', 4: 'DB'};
 		this.step = 1;
 
-		if (options.active_scenes == 'w/i')
-			this.activeScenes = [this.left_scenes[0], this.left_scenes[1]]; // FIXME: shift attetention between scenes
-		else
+		if (options.active_scenes == 'w/i-sim')
+			this.activeScenes = [this.left_scenes[2], this.left_scenes[3]]; // FIXME: shift attetention between scenes
+		else if (options.active_scenes == 'w/i-dis')
+			this.activeScenes = [this.left_scenes[2], this.left_scenes[4]]; // FIXME: shift attetention between scenes
+		else if (options.active_scenes == 'b/w-dis')
+			this.activeScenes = [this.left_scenes[4], this.right_scenes[2]]; // FIXME: shift attetention between scenes
+		else if (options.active_scenes == 'b/w-sim')
 			this.activeScenes = [this.left_scenes[2], this.right_scenes[2]]; // FIXME: shift attetention between scenes
 
 		this.attentionNet = new AttentionNet();
@@ -152,6 +99,10 @@ PI.v0_3_7 = (function() {
 		options.features.forEach(function (feature) { aNet.addFeature(feature) });
 	}
 
+	Workspace.prototype.changeAttention = function(thing, delta) {
+		this.attentionNet.addToAttentionValue(thing, delta, 0, 1);
+	}
+
 	Workspace.prototype.getSelectorInfoArray = function() {
 		var self = this;
 		return this.attentionNet.selectors.map(function(sel) {
@@ -191,7 +142,7 @@ PI.v0_3_7 = (function() {
 
 	// TODO: implement an attention shifting algorithm that shifts
 	// attention from old to new scenes slowly over time.
-	Workspace.prototype.getActiveScenes = function() {
+	Workspace.prototype.getActiveScenePair = function() {
 		return this.activeScenes;
 		//return Random.pickN(2, this.scenes);
 	}
@@ -205,8 +156,9 @@ PI.v0_3_7 = (function() {
 	}
 
 	/// Returns true if the selector was new and inserted.
-	Workspace.prototype.addSelector = function(sel) {
-		if (this.attentionNet.addSelector(sel)) {
+	Workspace.prototype.addSelector = function(sel, val) {
+		if (arguments.length === 1) val = 1.0;
+		if (this.attentionNet.addSelector(sel, val)) {
 			this.log(3, 'added selector', sel.describe());
 			return true;
 		}
@@ -413,10 +365,11 @@ PI.v0_3_7 = (function() {
 
 	AttrCodelet.prototype.perceiveAttr = function(target, feature) {
 		var percept = target.getFromCache(feature.prototype.key, {time: this.time});
+		if (!percept) percept = target.get(feature.prototype.key, {time: this.time});
 		if (percept && percept.get_activity() > pbpSettings.activation_threshold) {
 			this.spawnNewSelCodelet(percept, this.time);
 		}
-		else percept = target.get(feature.prototype.key, {time: this.time});
+		//else percept = target.get(feature.prototype.key, {time: this.time});
 		this.ws.log(3, 'perceived', feature.prototype.key, 'on', this.ws.getDescription(target));
 		this.ws.log(4, 'on', target, percept);
 	}
@@ -429,10 +382,11 @@ PI.v0_3_7 = (function() {
 		var other;
 		do other = this.ws.getRandomObject(scene); while(other === target_obj);
 		percept = target_obj.getFromCache(feature.prototype.key, {other: other, time: this.time});
+		if (!percept) percept = target_obj.get(feature.prototype.key, {other: other, time: this.time});
 		if (percept && percept.get_activity() > pbpSettings.activation_threshold) {
 			this.spawnNewSelCodelet(percept, this.time);
 		}
-		else percept = target_obj.get(feature.prototype.key, {other: other, time: this.time});
+		//else percept = target_obj.get(feature.prototype.key, {other: other, time: this.time});
 
 		this.ws.log(3, 'perceived', feature.prototype.key, 'on'
 			         , this.ws.getDescription(target_obj), 'and'
@@ -499,6 +453,20 @@ PI.v0_3_7 = (function() {
 		return (new Selector()).use_rel(other_sel, this.percept, this.time);
 	}
 
+	NewSelectorCodelet.prototype.getAttFromMatchResult = function
+	(same_side, match_count, is_obj_sel) {
+		if (options.attention.sel.no_match_updates) return 0;
+		if (same_side) {
+			if (match_count === 2) return (is_obj_sel ?  0.1 : 0.1);
+			if (match_count === 1) return (is_obj_sel ? -0.3 : 0);
+			if (match_count === 0) return (is_obj_sel ?    0 : 0);
+		} else {
+			if (match_count === 2) return (is_obj_sel ? -0.1 : 0);
+			if (match_count === 1) return (is_obj_sel ?  0.2 : 0.2);
+			if (match_count === 0) return (is_obj_sel ? -0.3 : 0);
+		}
+	}
+
 	/**
 	 * Create selector with the passed percept and apply it to the current
 	 * scenes. Then add it to the active selectors if it matches all scenes
@@ -518,23 +486,36 @@ PI.v0_3_7 = (function() {
 		}
 		if (!sel) return;
 
-		var scenes = this.ws.getActiveScenes();
-		var groups = [];
-		var matching_scenes = scenes.filter(function (scene) {
+		var scenes = this.ws.getActiveScenePair();
+		var same_side = scenes[0].side === scenes[1].side;
+		var is_obj_sel = sel.getType() === 'object';
+		var all_single_objs = true;
+		var match_count = scenes.filter(function (scene) {
 			var res_group = self.ws.getOrCreateGroupBySelector(sel, scene);
+			all_single_objs = all_single_objs && res_group.objs.length === 1;
 			return (!res_group.empty());
-		});
+		}).length;
 
-		if (matching_scenes.length == 0) return; //TODO: disencourage this type of selector
 
-		var all_from_one_side = matching_scenes.every(function (scene) {
-		  return scene.side == matching_scenes[0].side;
-		});
-		if (matching_scenes.length == scenes.length || all_from_one_side) {
-			sel.side = all_from_one_side ? scenes[0].side : 'both';
-			this.ws.addSelector(sel);
+		if (this.ws.addSelector(sel, 0.2)) {
+			var d_att = this.getAttFromMatchResult(same_side, match_count, is_obj_sel);
+			if (!options.attention.sel.no_single_update
+			  && all_single_objs) d_att += 0.3;
+			this.ws.changeAttention(sel, d_att);
 		}
+
+		// if (matching_scenes.length == 0) return;
+
+		// var all_from_one_side = matching_scenes.every(function (scene) {
+		//   return scene.side == matching_scenes[0].side;
+		// });
+		// if (matching_scenes.length == scenes.length || all_from_one_side) {
+		// 	sel.side = all_from_one_side ? scenes[0].side : 'both';
+		// 	this.ws.addSelector(sel);
+		// }
 	}
+
+
 
 	/** Will pick two generalizing type selectors and combine them. */
 	var CombineSelectorCodelet = function(coderack) {

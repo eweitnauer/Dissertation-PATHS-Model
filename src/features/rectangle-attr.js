@@ -30,7 +30,7 @@ RectangleAttribute.rectness = function(shape) {
       // in square, all edges should have the same length
       var edges = shape.get_edge_lengths(true); // sorted by length
       if (edges[0]/edges[3] < 0.7) return 1;
-      else return 0.7;
+      else return 0.4;
     }
   }
   return 0;

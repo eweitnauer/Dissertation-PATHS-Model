@@ -98,6 +98,14 @@ AttentionNet.prototype.setAttentionValue = function(el, val) {
 	return this.attention_values.set(el, val);
 }
 
+/// Can throw "unknown element" exception.
+AttentionNet.prototype.addToAttentionValue = function(el, delta, min, max) {
+	if (!this.attention_values.has(el)) throw "unknown element";
+	var val = this.attention_values.get(el)+delta;
+	if (arguments.length === 4) val = Math.min(Math.max(min, val), max);
+	return this.attention_values.set(el, val);
+}
+
 /// Returns true if successfully inserted. Optionally pass an attention value
 /// (default: 1.0).
 AttentionNet.prototype.addFeature = function(feature, val) {

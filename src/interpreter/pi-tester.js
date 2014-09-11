@@ -170,7 +170,7 @@ PITester.prototype.updateFeatureList = function(div_el) {
 }
 
 PITester.prototype.getActiveScenes = function() {
-	return this.ws ? this.ws.activeScenes : [];
+	return this.ws ? this.ws.getActiveScenePair() : [];
 }
 
 PITester.prototype.updateSolutionList = function(list_el) {
