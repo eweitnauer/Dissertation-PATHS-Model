@@ -72,7 +72,7 @@ GroupNode.prototype.getAttr = function(key, opts) {
   // if the attr is cached, just return it
   if ((o.time in this.times) && (key in this.times[o.time])) {
     var res = this.times[o.time][key];
-    this.dispatchEvent('retrieved', {feature: res, target: this});
+    this.dispatchEvent('retrieved', {percept: res, target: this, time: o.time});
     return res;
   }
   if (o.cache_only) return false;
@@ -84,7 +84,7 @@ GroupNode.prototype.getAttr = function(key, opts) {
     if (!this.times[o.time]) this.times[o.time] = {};
     this.times[o.time][key] = res;
   }
-  this.dispatchEvent('perceived', {feature: res, target: this});
+  this.dispatchEvent('perceived', {percept: res, target: this, time: o.time});
   return res;
 }
 

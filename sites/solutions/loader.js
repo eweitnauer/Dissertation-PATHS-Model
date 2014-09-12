@@ -184,10 +184,12 @@ function updateSelectorTable() {
   tester.updateSelectorTable(d3.select("#selector-table").node(), selectorClicked);
 }
 
-function selectorClicked(sel) {
+function selectorClicked(selector) {
+  console.log('sel=', selector.describe());
+  sel = selector;
   // apply the selector to all scenes
   for (var p in problems) {
-    problems[p].svis.applySelector(sel);
+    problems[p].svis.applySelector(selector);
   }
 }
 

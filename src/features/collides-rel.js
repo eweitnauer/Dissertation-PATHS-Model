@@ -5,7 +5,7 @@ CollidesRelationship.prototype.key = "collides";
 CollidesRelationship.prototype.targetType = 'obj';
 CollidesRelationship.prototype.arity = 2;
 CollidesRelationship.prototype.symmetric = true;
-CollidesRelationship.prototype.constant = false;
+CollidesRelationship.prototype.constant = true;
 
 CollidesRelationship.prototype.perceive = function(obj, other) {
   this.obj = obj;

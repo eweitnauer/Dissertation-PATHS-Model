@@ -14,7 +14,8 @@ ObjectNode.attrs = pbpSettings.obj_attrs;
 /// list of all possible object relations
 ObjectNode.rels = pbpSettings.obj_rels;
 
-/// The ObjectNode will send 'perceived' and 'retrieved' events {feature, target}.
+/// The ObjectNode will send 'perceived' and 'retrieved' events
+/// {percept, target, othert, time}.
 asEventListener.call(ObjectNode.prototype);
 
 /// Returns true if there is the passed relation type with the passed activity
@@ -53,32 +54,6 @@ ObjectNode.prototype.perceive = function(time) {
   this.times[time] = res;
 }
 
-// /// Returns the attribute or relation for the passed time. If no time or null is passed as time,
-// /// the current state of the oracle is used. If the oracle is in no named state, the perceived
-// /// attribute or relation is not cached, otherwise if its not in the cache yet it is perceived
-// /// and cached.
-// ObjectNode.prototype.get = function(key, time, other) {
-//   // if time was not passed, use the current state of the oracle
-//   if (!time) time = this.scene_node.oracle.curr_state;
-//   // if the feature is cached, just return it
-//   if ((time in this.times) && (key in this.times[time])) {
-//     var cache = this.times[time][key];
-//     if (key in ObjectNode.attrs) return cache;
-//     else return cache.filter(function (rel) { return rel.other == other.obj })[0];
-//   }
-//   // otherwise, goto the state and perceive it
-//   if (time) this.scene_node.oracle.gotoState(time);
-//   // cache it, if the state is a known one
-//   var res;
-//   if (key in ObjectNode.attrs) res = new ObjectNode.attrs[key](this.obj);
-//   else if (key in ObjectNode.rels) res = new ObjectNode.rels[key](this.obj, other.obj);
-//   if (time) {
-//     if (!this.times[time]) this.times[time] = {};
-//     this.times[time][key] = res;
-//   }
-//   return res;
-// }
-
 /// Dynamically retrieves and caches an attribute or feature. Optionally pass the time
 /// as `time` field in the `opts` object. When getting a relationship feature, pass the
 /// other ObjectNode as `other` field in `opts`.
@@ -107,7 +82,7 @@ ObjectNode.prototype.getAttr = function(key, opts) {
   // if the attr is cached, just return it
   if ((o.time in this.times) && (key in this.times[o.time])) {
     var res = this.times[o.time][key];
-    this.dispatchEvent('retrieved', {feature: res, target: this});
+    this.dispatchEvent('retrieved', {percept: res, target: this, time: o.time});
     return res;
   }
   if (o.cache_only) return false;
@@ -119,7 +94,7 @@ ObjectNode.prototype.getAttr = function(key, opts) {
     if (!this.times[o.time]) this.times[o.time] = {};
     this.times[o.time][key] = res;
   }
-  this.dispatchEvent('perceived', {feature: res, target: this});
+  this.dispatchEvent('perceived', {percept: res, target: this, time: o.time});
   return res;
 }
 
@@ -137,7 +112,7 @@ ObjectNode.prototype.getRel = function(key, opts) {
     var cache = this.times[o.time][key];
     var res = cache.filter(function (rel) { return rel.other === o.other.obj })[0];
     if (res) {
-      this.dispatchEvent('retrieved', {feature: res, target: this});
+      this.dispatchEvent('retrieved', {percept: res, target: this, time: o.time});
       return res;
     }
   }
@@ -151,7 +126,8 @@ ObjectNode.prototype.getRel = function(key, opts) {
     if (!this.times[o.time][key]) this.times[o.time][key] = [];
     this.times[o.time][key].push(res);
   }
-  this.dispatchEvent('perceived', {feature: res, target: this});
+  this.dispatchEvent('perceived', {percept: res, target: this, time: o.time
+                                  ,other: o.other});
   return res;
 }
 
