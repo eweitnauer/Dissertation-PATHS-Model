@@ -102,7 +102,8 @@ AttentionNet.prototype.setAttentionValue = function(el, val) {
 AttentionNet.prototype.addToAttentionValue = function(el, delta, min, max) {
 	if (!this.attention_values.has(el)) throw "unknown element";
 	var val = this.attention_values.get(el)+delta;
-	if (arguments.length === 4) val = Math.min(Math.max(min, val), max);
+	if (typeof(min) === 'number' && typeof(max) === 'number')
+	  val = Math.min(Math.max(min, val), max);
 	return this.attention_values.set(el, val);
 }
 

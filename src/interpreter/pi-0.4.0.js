@@ -30,10 +30,11 @@ PI.v0_4_0 = (function() {
 
   var options = {
     active_scenes: 'b/w-sim' // can be 'w/i-sim' or 'b/w-sim' or 'w/i-dis' or 'b/w-dis'
-   ,features: [SingleAttribute, MovesAttribute, TopMostAttribute, CircleAttribute]//, SquareAttribute, RectangleAttribute, TriangleAttribute, LeftAttribute, RightAttribute]//[RightRelationship, LeftRelationship, ShapeAttribute, CountAttribute, OnGroundAttribute]
+   ,features: [SingleAttribute, MovesAttribute, TopMostAttribute, CircleAttribute, LeftAttribute]//, SquareAttribute, RectangleAttribute, TriangleAttribute, LeftAttribute, RightAttribute]//[RightRelationship, LeftRelationship, ShapeAttribute, CountAttribute, OnGroundAttribute]
    ,attention:
     { sel: {
-        single: 0.3   // raise attention to selectors that match only a single objects per scene
+        initial: 0.2 // new selectors start with this attention value
+      , single: 0.3  // raise attention to selectors that match only a single objects per scene
       , match:  // raise attention according to which scenes where matched in a scene pair
         {
           same_side:
@@ -51,10 +52,10 @@ PI.v0_4_0 = (function() {
         }
       }
     , feature: {
-      from_sel: true
+      from_sel: 0.5 // scale that is applied when spreading attention from new selectors to features
     }
     , obj: {
-        from_sel:   true
+        from_sel: 1.0 // scale that is applied when spreading attention from new selectors to objects
       , attr_boost: { // only apply at time "start"
           moves: 0.3
         , top_most: 0.1 // often will get boosted via sel.single, too
@@ -162,17 +163,20 @@ PI.v0_4_0 = (function() {
     options.features.forEach(function (feature) { aNet.addFeature(feature) });
   }
 
-  Workspace.prototype.changeAttention = function(thing, delta) {
+  Workspace.prototype.changeAttention = function(thing, delta, min, max) {
     var self = this;
     if (thing instanceof Selector) {
-      this.attentionNet.addToAttentionValue(thing, delta, 0, 1);
+      this.attentionNet.addToAttentionValue(thing, delta, min || 0, max || 1);
+      this.spreadAttentionFromSelectorToFeatures(thing, delta);
     } else if (thing instanceof GroupNode) {
       var N = thing.objs.length;
       thing.objs.forEach(function(obj) {
-        self.attentionNet.addToAttentionValue(obj.object_node, delta);
+        self.attentionNet.addToAttentionValue(obj.object_node, delta, min, max);
       });
     } else if (thing instanceof ObjectNode) {
-      self.attentionNet.addToAttentionValue(thing, delta);
+      self.attentionNet.addToAttentionValue(thing, delta, min, max);
+    } else { // should be a feature
+      self.attentionNet.addToAttentionValue(thing, delta, min, max);
     }
   }
 
@@ -237,9 +241,21 @@ PI.v0_4_0 = (function() {
     if (arguments.length === 1) val = 1.0;
     if (this.attentionNet.addSelector(sel, val)) {
       this.log(3, 'added selector', sel.describe());
+      this.spreadAttentionFromSelectorToFeatures(sel, val);
       return true;
     }
     return false;
+  }
+
+  Workspace.prototype.spreadAttentionFromSelectorToFeatures = function(sel, val) {
+    var self = this;
+    if (options.attention.feature.from_sel) {
+      sel.forEachFeature(function(feature) {
+        var old_val = self.attentionNet.getAttentionValue(feature);
+        if (old_val === 0) return;
+        self.changeAttention(feature, val * options.attention.feature.from_sel, 0.01, 1);
+      });
+    }
   }
 
   /// Sets the attention value of the passed selector to 0 so it is
@@ -248,7 +264,9 @@ PI.v0_4_0 = (function() {
   /// TODO: reduce attention of connected nodes in the attention net
   Workspace.prototype.blockSelector = function(sel) {
     this.log(3, 'blocking selector', sel);
+    var old_val = this.attentionNet.getAttentionValue(sel);
     this.attentionNet.setAttentionValue(sel, 0);
+    this.spreadAttentionFromSelectorToFeatures(sel, -old_val);
   }
 
   Workspace.prototype.blockFeature = function(feature) {
@@ -568,20 +586,19 @@ PI.v0_4_0 = (function() {
     }).length;
 
 
-    if (this.ws.addSelector(sel, 0.2)) {
+    if (this.ws.addSelector(sel, options.attention.sel.initial)) {
       var d_att = this.getAttFromMatchResult(same_side, match_count, is_obj_sel);
       if (options.attention.sel.single && all_single_objs)
         d_att += options.attention.sel.single;
       this.ws.changeAttention(sel, d_att);
+      var sel_att = self.ws.getAttention(sel)
       if (options.attention.obj.from_sel) {
         sel_grps.forEach(function(group) {
-          self.ws.changeAttention(group, self.ws.getAttention(sel));
+          self.ws.changeAttention(group, sel_att * options.attention.obj.from_sel);
         });
       }
     }
   }
-
-
 
   /** Will pick two generalizing type selectors and combine them. */
   var CombineSelectorCodelet = function(coderack) {

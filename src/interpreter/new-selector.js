@@ -38,6 +38,18 @@ Selector.prototype.hasRelationships = function() {
 	return this.rels.length > 0;
 }
 
+/// Calls the passed function once for each feature that is part of the
+/// selector.
+Selector.prototype.forEachFeature = function(fn) {
+	var i;
+	for (i=0; i<this.obj_attrs.length; i++)
+		fn(pbpSettings.obj_attrs[this.obj_attrs[i].key]);
+	for (i=0; i<this.grp_attrs.length; i++)
+		fn(pbpSettings.group_attrs[this.grp_attrs[i].key]);
+	for (i=0; i<this.rels.length; i++)
+		fn(pbpSettings.obj_rels[this.rels[i].key]);
+}
+
 /** Returns a new selector that has all attributes from this and the passed selector.
  * In the case of a duplicate feature, the feature of the passed selector is used. */
 Selector.prototype.mergedWith = function(other_sel) {
