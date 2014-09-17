@@ -8,6 +8,7 @@ Version 0.4.0
 - adding in attention mechanism for objects:
   - spread attention from selectors to selected objects
   - add attention to objects with certain attributes (like moves)
+  - add attention to objects in certain relationships (like hits)
 
 
 PBP  2: [CountAttribute]
@@ -29,12 +30,29 @@ PI.v0_4_0 = (function() {
 
   var options = {
     active_scenes: 'b/w-sim' // can be 'w/i-sim' or 'b/w-sim' or 'w/i-dis' or 'b/w-dis'
-   ,features: [CollidesRelationship]//SingleAttribute, MovesAttribute, TopMostAttribute, CircleAttribute, SquareAttribute, RectangleAttribute, TriangleAttribute, LeftAttribute, RightAttribute]//[RightRelationship, LeftRelationship, ShapeAttribute, CountAttribute, OnGroundAttribute]
+   ,features: [SingleAttribute, MovesAttribute, TopMostAttribute, CircleAttribute]//, SquareAttribute, RectangleAttribute, TriangleAttribute, LeftAttribute, RightAttribute]//[RightRelationship, LeftRelationship, ShapeAttribute, CountAttribute, OnGroundAttribute]
    ,attention:
     { sel: {
-        single: true
-      , match:  true
+        single: 0.3   // raise attention to selectors that match only a single objects per scene
+      , match:  // raise attention according to which scenes where matched in a scene pair
+        {
+          same_side:
+          {
+            matched_0: { obj_sel:  0  , grp_sel: 0 }
+          , matched_1: { obj_sel: -0.3, grp_sel: 0 }
+          , matched_2: { obj_sel:  0.1, grp_sel: 0.1 }
+          }
+        , both_sides:
+          {
+            matched_0: { obj_sel: -0.3, grp_sel: 0 }
+          , matched_1: { obj_sel:  0.2, grp_sel: 0.2 }
+          , matched_2: { obj_sel: -0.1, grp_sel: 0 }
+          }
+        }
       }
+    , feature: {
+      from_sel: true
+    }
     , obj: {
         from_sel:   true
       , attr_boost: { // only apply at time "start"
@@ -509,16 +527,13 @@ PI.v0_4_0 = (function() {
 
   NewSelectorCodelet.prototype.getAttFromMatchResult = function
   (same_side, match_count, is_obj_sel) {
-    if (!options.attention.sel.match) return 0;
-    if (same_side) {
-      if (match_count === 2) return (is_obj_sel ?  0.1 : 0.1);
-      if (match_count === 1) return (is_obj_sel ? -0.3 : 0);
-      if (match_count === 0) return (is_obj_sel ?    0 : 0);
-    } else {
-      if (match_count === 2) return (is_obj_sel ? -0.1 : 0);
-      if (match_count === 1) return (is_obj_sel ?  0.2 : 0.2);
-      if (match_count === 0) return (is_obj_sel ? -0.3 : 0);
-    }
+    var vals = options.attention.sel.match;
+    if (!vals) return 0;
+    vals = same_side ? vals.same_side : vals.both_sides;
+    if (match_count === 0) vals = vals.matched_0;
+    else if (match_count === 1) vals = vals.matched_1;
+    else vals = vals.matched_2;
+    return is_obj_sel ? vals.obj_sel : vals.grp_sel;
   }
 
   /**
@@ -555,7 +570,8 @@ PI.v0_4_0 = (function() {
 
     if (this.ws.addSelector(sel, 0.2)) {
       var d_att = this.getAttFromMatchResult(same_side, match_count, is_obj_sel);
-      if (options.attention.sel.single && all_single_objs) d_att += 0.3;
+      if (options.attention.sel.single && all_single_objs)
+        d_att += options.attention.sel.single;
       this.ws.changeAttention(sel, d_att);
       if (options.attention.obj.from_sel) {
         sel_grps.forEach(function(group) {
