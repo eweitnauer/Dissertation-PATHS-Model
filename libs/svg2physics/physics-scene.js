@@ -52,7 +52,15 @@ PhysicsScene.prototype.clearForces = function() {
 /// dt is optional, returns dt.
 PhysicsScene.prototype.step = function(dt) {
 	dt = dt || this.dt;
-	this.world.Step(dt, 10, 10);
+	try { // in Box2D.js line 5218, we sometimes have proxyA being undefined
+		this.world.Step(dt, 10, 10);
+	} catch(err) {
+		console.log('caught error', err, 'during Box2D simulation step');
+		console.log('trying again from initial state...');
+		var curr_time = this.world.curr_time;
+		this.reset();
+		this.simulate(curr_time+dt);
+	}
   this.world.curr_time += dt;
   if (this.emit_changes) this.onWorldChange.emit(this.world.curr_time);
   return dt;

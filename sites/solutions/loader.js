@@ -85,15 +85,19 @@ function create_html_elements(files) {
 function next() {
   pbp_idx += 1;
   if (pbp_idx >= pbps.length) pbp_idx = 0;
+  tester.pause();
   tester = null;
   loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
+  createTester();
 }
 
 function prev() {
   pbp_idx -= 1;
   if (pbp_idx < 0) pbp_idx = pbps.length-1;
+  tester.pause();
   tester = null;
   loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
+  createTester();
 }
 
 function disable_drawing() {
@@ -207,13 +211,14 @@ function createTester() {
   d3.select('#solver-step').text('0');
   tester.after_step_callback = after_step_callback;
   tester.finish_callback = finish_callback;
+  d3.select('#solutions ol').selectAll('li').remove();
   resetClicked();
 }
 
 function resetClicked() {
   tester.reset();
   d3.select('#solver-step').text('0');
-  log_area.select('*').remove();
+  log_area.selectAll('*').remove();
   updateSelectorTable();
   updateFeatureList();
   updateActiveScenes();

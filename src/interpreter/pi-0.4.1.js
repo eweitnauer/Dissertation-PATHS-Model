@@ -2,6 +2,18 @@
 var PI = PI || {};
 
 /*
+
+Version 0.4.1
+- shifting attention between scenes in a fixed scheme
+- fixed a-priori probabilities for looking at start and end time
+- instead of scaling to normalize attention values, we simply clamp them now
+- don't set attention values directly, but only increase / decrease them in steps
+- cooldown for all attention values
+
+TODO:
+- we don't use solution codelets anymore. Instead, we keep track of which
+left and right scenes each selector fit and if they all fit, its a solution!
+
 Version 0.4.0
 - adding in attention mechanism for selectors:
   - initialize with attention value based on number of scenes matching
@@ -26,20 +38,22 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_4_0 = (function() {
-  var version = '0.4.0';
+PI.v0_4_1 = (function() {
+  var version = '0.4.1';
 
   var options = {
-    active_scenes: 'b/w-sim' // can be 'w/i-sim' or 'b/w-sim' or 'w/i-dis' or 'b/w-dis'
-   ,features: [ CountAttribute, ShapeAttribute, StabilityAttribute, CloseAttribute
+    features: [ CountAttribute, CircleAttribute, SquareAttribute, StabilityAttribute, CloseAttribute
               , OnTopRelationship, SmallAttribute, SingleAttribute, MovesAttribute,
               , OnGroundAttribute, RightRelationship, LeftRelationship
               , TouchAttribute, TouchRelationship, SupportsRelationship
               , HitsRelationship, CollidesRelationship, LeftAttribute, RightAttribute
               , TopMostAttribute, MovableUpAttribute]//, SquareAttribute, RectangleAttribute, TriangleAttribute, LeftAttribute, RightAttribute]//[RightRelationship, LeftRelationship, ShapeAttribute, CountAttribute, OnGroundAttribute]
-   ,attention:
-    { sel: {
-        initial: 0.2 // new selectors start with this attention value
+  , pres_mode: 'interleaved-sim-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
+  , pres_time: 100 // every x steps, switch to the next scene pair
+  , attention:
+    { time: { start: 0.67, end: 0.33 }
+    , sel: {
+        initial: 0.1 // new selectors start with this attention value
       , single: 0.3  // raise attention to selectors that match only a single objects per scene
       , match:  // raise attention according to which scenes where matched in a scene pair
         {
@@ -58,10 +72,12 @@ PI.v0_4_0 = (function() {
         }
       }
     , feature: {
-      from_sel: 0.5 // scale that is applied when spreading attention from new selectors to features
+        initial: 0.1
+      , from_sel: 0.5 // scale that is applied when spreading attention from new selectors to features
     }
     , obj: {
-        from_sel: 1.0 // scale that is applied when spreading attention from new selectors to objects
+        initial: 0.1
+      , from_sel: 1.0 // scale that is applied when spreading attention from new selectors to objects
       , attr_boost: { // only apply at time "start"
           moves: 0.3
         , top_most: 0.1 // often will get boosted via sel.single, too
@@ -93,14 +109,10 @@ PI.v0_4_0 = (function() {
     this.log_symbol = {1: 'EE', 2: 'WW', 3: 'II', 4: 'DB'};
     this.step = 1;
 
-    if (options.active_scenes == 'w/i-sim')
-      this.activeScenes = [this.left_scenes[2], this.left_scenes[3]]; // FIXME: shift attetention between scenes
-    else if (options.active_scenes == 'w/i-dis')
-      this.activeScenes = [this.left_scenes[2], this.left_scenes[4]]; // FIXME: shift attetention between scenes
-    else if (options.active_scenes == 'b/w-dis')
-      this.activeScenes = [this.left_scenes[4], this.right_scenes[2]]; // FIXME: shift attetention between scenes
-    else if (options.active_scenes == 'b/w-sim')
-      this.activeScenes = [this.left_scenes[0], this.right_scenes[0]]; // FIXME: shift attetention between scenes
+    this.scene_pair_sequence = this.generateSceneSequence();
+    this.scene_pair_index = 0;
+    this.scene_pair_steps = 0;
+    this.active_scene_pair = this.scene_pair_sequence[0];
 
     this.attentionNet = new AttentionNet();
     this.initAttentionNet();
@@ -109,13 +121,31 @@ PI.v0_4_0 = (function() {
     this.coderack.behaviors.push(new MainBehavior(this.coderack));
 
     this.logCallback = null;
-    this.attentionNet.normalize('objects');
-    this.attentionNet.normalize('features');
+  }
+
+  Workspace.prototype.generateSceneSequence = function() {
+    var seqs8 = { 'interleaved-sim-sim': ['A1B1', 'A2B2', 'A3B3', 'A4B4', 'A5B5', 'A6B6', 'A7B7', 'A8B8']  // wip: 8 bwp: 4 | wic: 8 bwc: 4
+                , 'interleaved-sim-dis': ['A1B1', 'A3B3', 'A5B5', 'A7B7', 'A2B2', 'A4B4', 'A6B6', 'A8B8']  // wip: 8 bwp: 0 | wic: 0 bwc: 8
+                , 'interleaved-dis-sim': ['A1B3', 'A2B4', 'A3B5', 'A4B6', 'A5B7', 'A6B8', 'A7B1', 'A8B2']  // wip: 0 bwp: 4 | wic: 4 bwc: 0
+                , 'interleaved-dis-dis': ['A1B3', 'A5B7', 'A4B2', 'A8B6', 'A3B1', 'A7B5', 'A2B4', 'A6B8']  // wip: 0 bwp: 0 | wic: 0 bwc: 0
+                , 'blocked-sim-sim': ['A1A2', 'B1B2', 'A3A4', 'B3B4', 'A5A6', 'B5B6', 'A7A8', 'B7B8']      // wip: 8 bwp: 4 | wic: 8 bwc: 4
+                , 'blocked-sim-dis': ['A1A2', 'B3B4', 'A5A6', 'B7B8', 'A3A4', 'B1B2', 'A7A8', 'B5B6']      // wip: 8 bwp: 0 | wic: 8 bwc: 0
+                , 'blocked-dis-sim': ['A1A3', 'B1B3', 'A2A4', 'B2B4', 'A5A7', 'B5B7', 'A6A8', 'B6B8']      // wip: 0 bwp: 6 | wic: 0 bwc: 6
+                , 'blocked-dis-dis': ['A1A5', 'B3B7', 'A6A2', 'B8B4', 'A7A3', 'B5B1', 'A4A8', 'B2B6']};    // wip: 0 bwp: 2 | wic: 0 bwc: 2
+    var lsn = this.left_scenes, rsn = this.right_scenes;
+    return seqs8[options.pres_mode].map(function(str) {
+      return [(str[0] === 'A' ? lsn : rsn)[+str[1]-1]
+             ,(str[2] === 'A' ? lsn : rsn)[+str[3]-1]];
+    });
+  }
+
+  Workspace.prototype.advanceScenePair = function() {
+    this.scene_pair_index = (this.scene_pair_index+1) % this.scene_pair_sequence.length;
+    this.active_scene_pair = this.scene_pair_sequence[this.scene_pair_index];
   }
 
   Workspace.prototype.perceived_feature = function(event) {
     this.perception_count++;
-    console.log(event);
     if (event.percept.arity === 1) {
       this.log(3, 'perceived', event.percept.key
                    , '(t=' + event.time + ') on'
@@ -162,11 +192,11 @@ PI.v0_4_0 = (function() {
   Workspace.prototype.initAttentionNet = function() {
     var aNet = this.attentionNet;
     this.scenes.forEach(function (sn) {
-      sn.objs.forEach(function (on) { aNet.addObject(on) });
+      sn.objs.forEach(function (on) { aNet.addObject(on, options.attention.obj.initial) });
     });
 
     aNet.addSelector(new Selector());
-    options.features.forEach(function (feature) { aNet.addFeature(feature) });
+    options.features.forEach(function (feature) { aNet.addFeature(feature, options.attention.sel.initial) });
   }
 
   Workspace.prototype.changeAttention = function(thing, delta, min, max) {
@@ -212,26 +242,28 @@ PI.v0_4_0 = (function() {
     var lvl = level;
     level = (level === 3 ? '' : this.log_symbol[level])
           + '[' + this.step + ']';
-    if (lvl == 1) console.error.apply(console, arguments);
-    else if (lvl == 2) console.warn.apply(console, arguments);
-    else if (lvl == 3) console.info.apply(console, arguments);
-    else console.log.apply(console, arguments);
     if (this.logCallback) {
       var msg = Array.prototype.join.call(arguments, ' ');
       this.logCallback(msg);
+    } else {
+      if (lvl == 1) console.error.apply(console, arguments);
+      else if (lvl == 2) console.warn.apply(console, arguments);
+      else if (lvl == 3) console.info.apply(console, arguments);
+      else console.log.apply(console, arguments);
     }
   }
 
   // TODO: attention net should handle this later (maybe)
   Workspace.prototype.getRandomTime = function() {
-    return Random.pick(['start', 'end']);
+    return Random.pick_weighted(['start', 'end'], function(el) {
+      return options.attention.time[el];
+    });
   }
 
   // TODO: implement an attention shifting algorithm that shifts
   // attention from old to new scenes slowly over time.
   Workspace.prototype.getActiveScenePair = function() {
-    return this.activeScenes;
-    //return Random.pickN(2, this.scenes);
+    return this.active_scene_pair;
   }
 
   Workspace.prototype.getRandomFeature = function() {
@@ -306,7 +338,7 @@ PI.v0_4_0 = (function() {
 
   // TODO: attention net should handle this later (maybe)
   Workspace.prototype.getRandomScene = function() {
-    return Random.pick(this.activeScenes);
+    return Random.pick(this.getActiveScenePair());
   }
 
   Workspace.prototype.getRandomObject = function(scene) {
@@ -342,10 +374,7 @@ PI.v0_4_0 = (function() {
     this.ws.step++;
     if (this.followups.length === 0) this.runBehaviors();
     this.runCodelet();
-    this.ws.attentionNet.normalize('objects');
-    this.ws.attentionNet.normalize('features');
-    // don't normalize selectors since we want to add new selectors
-    // with a constant attention value
+    this.ws.attentionNet.clamp('all', 0.1, 1, 0.001);
   }
 
   /// Default urgency is 10. Urgency must be above 0.
@@ -691,6 +720,12 @@ PI.v0_4_0 = (function() {
   }
 
   SolutionCodelet.prototype.run = function () {
+    if (Math.random()<0.1) {
+      this.ws.advanceScenePair();
+    }
+    return;
+
+
     var self = this;
     sels = this.ws.getSelectorInfoArray();
     var sel = this.ws.getRandomSelector({no_blank: true, filter: function(sel) {

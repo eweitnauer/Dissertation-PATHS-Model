@@ -1,31 +1,52 @@
 // Copyright Erik Weitnauer 2014
 
-/*
-Development goal:
-
-The AttentionNet keeps track of an attention value for each attribute, relationship
-and selector added to it. It knows about connections between the feature types along
-which the attention flows can visualize both the current attention values in a grid
-layout and the connection structure in a force graph layout. It has methods to increase
-and decrease attention, spread attention and to pick a random element based on attention.
-
-First steps:
-
-* add an attribute or relationships to the the attentionNet
-* add a selector to the attentionNet
-* add an object to the attentionNet
-* get the attention-value for any element in the attentionNet
-* select an attr/rel/selector randomly but weighted by their attentions
-* boost the attention to an element in the attentionNet
-* use WeakMap
-*/
-
+/**
+ * The AttentionNet keeps track of an attention value for each attribute,
+ * relationship and selector added to it. It can visualize selectors and
+ * features with their attention values. It can be used to increase and
+ * decrease attention, as well as retrieving attention.
+ *
+ * The attention base values are translated into the real attention values
+ * using a sigmoid function. Attention values should only be changed using
+ * the addToAttentionValue function.
+ */
 AttentionNet = function() {
 	this.features = [];
 	this.selectors = [];
 	this.objects = [];
 	this.objects_by_scene = null; // internal cache
 	this.attention_values = new WeakMap();
+}
+
+/// In google, search for 1/(1+exp(8*(0.5-x))) from -0.1 to 1.1
+AttentionNet.prototype.sigmoid = function(x) {
+	if (x===0) return 0;
+	return 1/(1+Math.exp(8*(0.5-x)));
+}
+
+/// Clamps all attention values of the passed type ('features',
+/// 'selectors', 'objects') to the passed interval. The default
+/// for the interval is min=0 and max=1. Pass a cooldown to have it
+/// subtracted from all attention values before clamping.
+/// Attention values of 0 will not be changed at all.
+AttentionNet.prototype.clamp = function(type, min, max, cooldown) {
+	if (typeof(min) === 'undefined') min = 0;
+	if (typeof(max) === 'undefined') max = 1;
+	if (!type || type === 'all') {
+		this.clamp('features', min, max, cooldown);
+		this.clamp('selectors', min, max, cooldown);
+		this.clamp('objects', min, max, cooldown);
+		return;
+	}
+	var att, i;
+	for (i=0; i<this[type].length; i++) {
+		att = this.attention_values.get(this[type][i]);
+		if (att === 0) continue;
+		if (cooldown) att -= cooldown;
+		att = att < min ? min : att;
+		att = att > max ? max : att;
+		this.attention_values.set(this[type][i], att);
+	}
 }
 
 /// Updates all attention values, so that for 'features', 'selectors'
@@ -89,7 +110,7 @@ AttentionNet.prototype.addElement = function(type, element, val) {
 /// Can throw "unknown element" exception.
 AttentionNet.prototype.getAttentionValue = function(el) {
 	if (!this.attention_values.has(el)) throw "unknown element";
-	return this.attention_values.get(el);
+	return this.sigmoid(this.attention_values.get(el));
 }
 
 /// Can throw "unknown element" exception.
@@ -132,7 +153,7 @@ AttentionNet.prototype.getRandomObject = function(scene) {
 	try {
 		return Random.pick_weighted(scene.objs, function (onode) {
 			if (!self.attention_values.has(onode)) throw "unknown object";
-		  return self.attention_values.get(onode);
+		  return self.getAttentionValue(onode);
 		});
 	} catch (e) {
 		return null;
@@ -144,7 +165,7 @@ AttentionNet.prototype.getRandomFeature = function() {
 	var self = this;
 	try {
 		return Random.pick_weighted(this.features, function (feature) {
-			return self.attention_values.get(feature);
+			return self.getAttentionValue(feature);
 		});
 	} catch (e) {
 		if (!(e instanceof String)) throw e;
@@ -166,7 +187,7 @@ AttentionNet.prototype.getRandomSelector = function(options) {
 	});
 	if (sels.length === 0) return null;
 	return Random.pick_weighted(sels, function (sel) {
-		return self.attention_values.get(sel);
+		return self.getAttentionValue(sel);
 	});
 }
 
@@ -176,7 +197,7 @@ AttentionNet.prototype.getRandomObjectOrSelector = function(scene) {
 	try {
 		return Random.pick_weighted(elements, function (el) {
 			if (!self.attention_values.has(el)) throw "unknown object";
-			return self.attention_values.get(el);
+			return self.getAttentionValue(el);
 		});
 	} catch (e) {
 		if (!(e instanceof String)) throw e;
