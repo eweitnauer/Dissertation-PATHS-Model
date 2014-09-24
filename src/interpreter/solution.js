@@ -1,261 +1,56 @@
-// Copyright 2013, Erik Weitnauer.
+// Copyright 2014, Erik Weitnauer.
 
-var Solution = {};
-
-/// Solution of the type "All/a/the object/group is X"
+/// Holds an array of selectors.
+/// Can be in one of 3 different modes: 'unique', 'exists', 'all'
+/// (the default is 'exists').
 /// main_side is either 'left' or 'right' (default: 'left').
-Solution.IsX = function(sel, main_side) {
-	this.sel = sel;
-	this.main_side = main_side || 'left';
-	this.other_side = {left: 'right', right: 'left'}[this.main_side];
+/// selectors is a single selector or an array of selectors
+Solution = function(selectors, main_side, mode) {
+	this.sels = (Array.isArray(selectors) ? selectors.slice()
+	                                      : (selectors ? [selectors] : []));
+	this.mode = mode;
+	this.setMainSide(main_side);
 }
 
-/// Returns true if all scenes match the respecive selector.
-Solution.IsX.prototype.check = function(scenes_l, scenes_r) {
-	var a = this.main_side == 'left'  ? scenes_l : scenes_r
-	   ,b = this.main_side == 'right' ? scenes_l : scenes_r;
-	var sel = this.sel;
-	return a.every(function (scene) {
-			var objs = sel.select(scene.objs, scene);
-			var res = sel.mode == 'all' ? objs.length == scene.objs.length
-																	: objs.length > 0;
-			scene.fits_solution = res;
-			return res;
-	  }) && b.every(function (scene) {
-	  	var objs = sel.select(scene.objs, scene);
-	  	var res = sel.mode == 'all' ? objs.length < scene.objs.length
-	  														  : objs.length == 0;
-	  	scene.fits_solution = res;
-	  	return res;
-	  });
-};
-
-/// Returns a human readable description of the solution.
-Solution.IsX.prototype.describe = function() {
-	return "Only in the " + this.main_side + " scenes, " + this.sel.describe2();
-};
-
-
-
-
-/// Solution composed of a first selector of type 'group', 'unique' or 'all'
-/// and a second selector of type 'all', 'first' or 'unique'. The second selector
-/// is applied to the output of the first selector.
-/// main_side is either 'left' or 'right' (default: 'left').
-Solution.XIsY = function(sel1, sel2, main_side) {
-	this.sel1 = sel1;
-	this.sel2 = sel2;
+Solution.prototype.setMainSide = function (main_side) {
 	this.main_side = main_side || 'left';
 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
+  return this;
 }
 
-/// Returns true if all scenes match the respecive selector.
-Solution.XIsY.prototype.check = function(scenes_l, scenes_r) {
-	var a = this.main_side == 'left'  ? scenes_l : scenes_r
-	   ,b = this.main_side == 'right' ? scenes_l : scenes_r;
-	var sel1 = this.sel1, sel2 = this.sel2;
-	return a.every(function (scene) {
-			var objs = sel1.select(scene.objs, scene);
-			var okay = sel1.mode == 'unique' ? objs.length == 1
-							                         : objs.length > 0;
-			if (okay) {
-				var objs2 = sel2.select(objs, scene);
-				okay = sel2.mode == 'all' ? objs2.length == objs.length
-							                    : (objs2.length > 0 || sel2.mode == 'group');
-			}
-			scene.fits_solution = okay;
-			return okay;
-	  }) && b.every(function (scene) {
-	  	var objs = sel1.select(scene.objs, scene);
-			var okay = sel1.mode == 'unique' ? objs.length == 1
-							                         : (objs.length > 0 || sel2.mode == 'group');
-			if (okay) {
-				var objs2 = sel2.select(objs, scene);
-				okay = sel2.mode == 'all' ? objs2.length < objs.length
-							                    : objs2.length == 0;
-			}
-			scene.fits_solution = okay;
-			return okay;
-	  });
-};
+Solution.prototype.check = function(scenes_l, scenes_r) {
+	var main_scenes  = this.main_side == 'left'  ? scenes_l : scenes_r
+	   ,other_scenes = this.main_side == 'right' ? scenes_l : scenes_r;
+
+	return (main_scenes.every(this.check_scene.bind(this))
+		     && !other_scenes.some(this.check_scene.bind(this)));
+}
+
+/// Applies all selectors consecutively to the scene and checks
+/// whether the resulting group of objects fits the mode of the
+/// solution. If so it returns the number of objects in the resulting
+/// group node, otherwise it returns false.
+Solution.prototype.check_scene = function(scene) {
+	var curr_group = GroupNode.sceneGroup(scene);
+	var prev_group = curr_group;
+	this.sels.forEach(function (sel) {
+		prev_group = curr_group;
+	  curr_group = sel.select(curr_group, scene);
+	});
+	var N = curr_group.objs.length;
+	var res = false;
+	if (this.mode == 'unique' && N == 1) res = 1;
+	else if (this.mode == 'exists' && N > 0) res = N;
+	else if (this.mode == 'all' && N > 0 &&
+	    prev_group.objs.length == N) res = N;
+	scene.fits_solution = !!res;
+	return res;
+}
 
 /// Returns a human readable description of the solution.
-Solution.XIsY.prototype.describe = function() {
+Solution.prototype.describe = function() {
 	var str = "Only in the " + this.main_side + " scenes, ";
-	if (this.sel1.mode == 'all') {
-		if (this.sel2.mode == 'all') return str + this.sel1.describe() + ' are ' + this.sel2.describe2(true);
-		else return str + 'among ' + this.sel1.describe() + ' ' + this.sel2.describe2();
-	} else {
-		return str + this.sel1.describe() + ' is ' + this.sel2.describe2(true);
-	}
+	str += this.mode + ': ';
+	str += this.sels.map(function (sel, i) { return (i==0 ? sel.describe() : sel.describe2(true)) }).join(', ');
+	return str;
 };
-
-// /// Solution of the type "There is always an xxx on the main_side, but not on the other_side." ///////////////////////////
-// /// main_side is either 'left' or 'right' (default: 'left').
-// Solution.Exists = function(sel, main_side) {
-// 	this.sel = sel;
-// 	this.main_side = main_side || 'left';
-// 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
-// }
-
-// /// Returns true if all scenes match the respecive selector.
-// Solution.Exists.prototype.check = function(scenes_l, scenes_r) {
-// 	var a = this.main_side == 'left'  ? scenes_l : scenes_r
-// 	   ,b = this.main_side == 'right' ? scenes_l : scenes_r;
-// 	var thiz = this;
-// 	return a.every(function (scene) { return thiz.sel.selectFirst(scene) }) &&
-// 	    	 b.every(function (scene) { return !thiz.sel.selectFirst(scene) });
-// };
-
-// /// Returns a human readable description of the solution.
-// Solution.Exists.prototype.describe = function() {
-// 	return "There is an object that is " + this.sel.describe() +
-// 	       " in the " + this.main_side + " scenes, but not in the " +
-// 	       {left: 'right', right: 'left'}[this.main_side] + " scenes";
-// };
-
-
-// /// Solution of the type "On the main_side, every X is Y." ///////////////////////////
-// /// main_side is either 'left' or 'right' (default: 'left').
-// Solution.All = function(sel, desc, main_side) {
-// 	this.main_side = main_side || 'left';
-// 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
-// 	this.sel = sel || new ElementSelector();
-// 	this.desc = desc;
-// }
-
-// /// Returns true if all scenes match the respecive selector.
-// Solution.All.prototype.check = function(scenes_l, scenes_r) {
-// 	var thiz = this;
-// 	var f = function(sn, value) {
-// 		var ons = thiz.sel.selectAll(sn), N = ons.length;
-// 		return N != 0 && thiz.desc.matchesAll(ons) == value;
-// 	}
-// 	return scenes_l.every(function (scene) { return f(scene, thiz.main_side == 'left')  }) &&
-// 				 scenes_r.every(function (scene) { return f(scene, thiz.main_side == 'right') });
-// };
-
-// /// Returns a human readable description of the solution.
-// Solution.All.prototype.describe = function() {
-// 	return "On the "  +this.main_side+  " every " +
-// 	       (this.sel.blank() ? 'object' : "[" + this.sel.describe() + "]") +
-// 	       " is " + this.desc.describe();
-// };
-
-
-// /// Solution of the type "On the main_side, the X is R to the Y." ///////////////////////////
-// /// main_side is either 'left' or 'right' (default: 'left').
-// Solution.HasRelation = function(psel, main_side) {
-// 	this.main_side = main_side || 'left';
-// 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
-// 	this.psel = psel;
-// }
-
-// /// Returns true if there is exactly one X, one Y and they are in relation R to
-// /// each other.
-// Solution.HasRelation.prototype.check = function(scenes_l, scenes_r) {
-// 	var thiz = this;
-// 	var for_left = this.main_side == 'left';
-// 	return scenes_l.every(function (scene) {
-// 				   return for_left == (thiz.psel.selectThisAndThis(scene)!=null)
-// 				 }) &&
-// 				 scenes_r.every(function (scene) {
-// 				   return for_left == (thiz.psel.selectThisAndThis(scene)==null)
-// 				 });
-// };
-
-// /// Returns a human readable description of the solution.
-// Solution.HasRelation.prototype.describe = function() {
-// 	return "On the "  +this.main_side+  " the " + this.psel.describe();
-// };
-
-
-// /// Solution of the type "On the main_side, the X is Y." ///////////////////////////
-// /// main_side is either 'left' or 'right' (default: 'left').
-// Solution.HasAttribute = function(sel, desc, main_side) {
-// 	this.main_side = main_side || 'left';
-// 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
-// 	this.sel = sel || new ElementSelector();
-// 	this.desc = desc;
-// }
-
-// /// Returns true if all scenes match the respecive selector.
-// Solution.HasAttribute.prototype.check = function(scenes_l, scenes_r) {
-// 	var thiz = this;
-// 	var f = function(sn, value) {
-// 		var on = thiz.sel.selectThis(sn);
-// 		if (!on) return false;
-// 		return value == thiz.desc.matches(on);
-// 	}
-// 	return scenes_l.every(function (scene) { return f(scene, thiz.main_side == 'left')  }) &&
-// 				 scenes_r.every(function (scene) { return f(scene, thiz.main_side == 'right') });
-// };
-
-// /// Returns a human readable description of the solution.
-// Solution.HasAttribute.prototype.describe = function() {
-// 	return "On the "  +this.main_side+  " the " +
-// 	       (this.sel.blank() ? 'object' : "[" + this.sel.describe() + "]") +
-// 	       " is " + this.desc.describe();
-// };
-
-
-// /// Solution of the type "On the main_side, the group of all objects is X." ///////////////////////////
-// /// main_side is either 'left' or 'right' (default: 'left').
-// Solution.SceneHasAttribute = function(desc, main_side) {
-// 	this.main_side = main_side || 'left';
-// 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
-// 	this.desc = desc;
-// }
-
-// /// Returns true if all scenes match the respecive selector.
-// Solution.SceneHasAttribute.prototype.check = function(scenes_l, scenes_r) {
-// 	var thiz = this;
-// 	var f = function(sn, value) {
-// 		var on = thiz.sel.selectThis(sn);
-// 		if (!on) return false;
-// 		return value == thiz.desc.matches(on);
-// 	}
-// 	return scenes_l.every(function (scene) { return f(scene, thiz.main_side == 'left')  }) &&
-// 				 scenes_r.every(function (scene) { return f(scene, thiz.main_side == 'right') });
-// };
-
-// /// Returns a human readable description of the solution.
-// Solution.HasAttribute.prototype.describe = function() {
-// 	return "On the "  +this.main_side+  " the " +
-// 	       (this.sel.blank() ? 'object' : "[" + this.sel.describe() + "]") +
-// 	       " is " + this.desc.describe();
-// };
-
-// /// Solution of the type "The xxx object is yyy on the main_side and zzz on the other_side." ///////////////////////////
-// /// main_side is either 'left' or 'right' (default: 'left').
-// Solution.X_is_A_vs_B = function(selx, sela, selb, main_side) {
-// 	this.main_side = main_side || 'left';
-// 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
-// 	this.sel = {};
-// 	this.sel[this.main_side] = sela;
-// 	this.sel[this.other_side] = selb;
-// 	this.sel.x = selx;
-// }
-
-// /// Returns true if all scenes match the respecive selector.
-// Solution.X_is_A_vs_B.prototype.check = function(scenes_l, scenes_r) {
-// 	var thiz = this;
-// 	return (
-// 		scenes_l.every(function (scene) {
-// 			var xs = thiz.sel.x.select(scene);
-// 			return (xs.length == 1 &&  thiz.sel.left.matches(xs[0])
-// 				                     && !thiz.sel.right.matches(xs[0]));
-// 		}) &&
-// 		scenes_r.every(function (scene) {
-// 			var xs = thiz.sel.x.select(scene);
-// 			return (xs.length == 1 && !thiz.sel.left.matches(xs[0])
-// 				                     &&  thiz.sel.right.matches(xs[0]));
-// 		}));
-// };
-
-// /// Returns a human readable description of the solution.
-// Solution.X_is_A_vs_B.prototype.describe = function() {
-// 	return "The " + this.sel.x.describe(true) + " object is " +
-// 	       this.sel[this.main_side].describe(true)  + " in all " +this.main_side+ " scenes and " +
-// 	       this.sel[this.other_side].describe(true) + " in all " +this.other_side+ " scenes.";
-// };
