@@ -3,7 +3,7 @@
 /// Holds an array of selectors.
 /// Can be in one of 3 different modes: 'unique', 'exists', 'all'
 /// (the default is 'exists').
-/// main_side is either 'left' or 'right' (default: 'left').
+/// main_side is either 'left', 'right' or 'both' (default: 'left').
 /// selectors is a single selector or an array of selectors
 Solution = function(selectors, main_side, mode) {
 	this.sels = (Array.isArray(selectors) ? selectors.slice()
@@ -19,8 +19,10 @@ Solution.prototype.setMainSide = function (main_side) {
 }
 
 Solution.prototype.check = function(scenes_l, scenes_r) {
-	var main_scenes  = this.main_side == 'left'  ? scenes_l : scenes_r
-	   ,other_scenes = this.main_side == 'right' ? scenes_l : scenes_r;
+	var main_scenes  = this.main_side == 'left'  ? scenes_l
+	                   : (this.main_side == 'right' ? scenes_r : scenes_l.concat(scenes_r))
+	   ,other_scenes = this.main_side == 'right' ? scenes_l
+	    							 : (this.main_side == 'left' ? scenes_r : []);
 
 	return (main_scenes.every(this.check_scene.bind(this))
 		     && !other_scenes.some(this.check_scene.bind(this)));
@@ -49,8 +51,8 @@ Solution.prototype.check_scene = function(scene) {
 
 /// Returns a human readable description of the solution.
 Solution.prototype.describe = function() {
-	var str = "Only in the " + this.main_side + " scenes, ";
+	var str = this.main_side === 'both' ? "In all scenes, " : "Only in the " + this.main_side + " scenes, ";
 	str += this.mode + ': ';
-	str += this.sels.map(function (sel, i) { return (i==0 ? sel.describe() : sel.describe2(true)) }).join(', ');
+	str += this.sels.map(function (sel, i) { return (i===0 ? sel.describe() : sel.describe2(true)) }).join(', ');
 	return str;
 };
