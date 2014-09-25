@@ -11,7 +11,7 @@ TouchAttribute.prototype.constant = false;
 
 TouchAttribute.prototype.perceive = function(group) {
   this.group = group;
-  if (group.objs.length < 2) this.val = 0;
+  if (group.objs.length < 2) this.val = 100;
   else {
     var nodes = [];
     for (var i=0; i<group.objs.length; i++) { nodes.push(i) }
