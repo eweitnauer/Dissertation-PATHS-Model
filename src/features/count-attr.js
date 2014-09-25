@@ -17,5 +17,6 @@ CountAttribute.prototype.get_activity = function() {
 }
 
 CountAttribute.prototype.get_label = function() {
-  return this.val;
+	if (this.val < 4) return this.val;
+	return ">=4";
 }
