@@ -56,10 +56,12 @@ PhysicsScene.prototype.step = function(dt) {
 		this.world.Step(dt, 10, 10);
 	} catch(err) {
 		console.log('caught error', err, 'during Box2D simulation step');
-		console.log('trying again from initial state...');
-		var curr_time = this.world.curr_time;
-		this.reset();
-		this.simulate(curr_time+dt);
+		console.log('trying again after finding new contacts...');
+		this.world.m_contactManager.FindNewContacts();
+		//var curr_time = this.world.curr_time;
+		//this.reset();
+		//this.simulate(curr_time+dt);
+		this.step(dt);
 	}
   this.world.curr_time += dt;
   if (this.emit_changes) this.onWorldChange.emit(this.world.curr_time);
