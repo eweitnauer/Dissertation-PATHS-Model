@@ -2,7 +2,7 @@
 
 /**
  * The AttentionNet keeps track of an attention value for each attribute,
- * relationship and selector added to it. It can visualize selectors and
+ * relationship and solution added to it. It can visualize solutions and
  * features with their attention values. It can be used to increase and
  * decrease attention, as well as retrieving attention.
  *
@@ -12,7 +12,7 @@
  */
 AttentionNet = function() {
 	this.features = [];
-	this.selectors = [];
+	this.solutions = [];
 	this.objects = [];
 	this.objects_by_scene = null; // internal cache
 	this.attention_values = new WeakMap();
@@ -20,12 +20,13 @@ AttentionNet = function() {
 
 /// In google, search for 1/(1+exp(8*(0.5-x))) from -0.1 to 1.1
 AttentionNet.prototype.sigmoid = function(x) {
-	if (x===0) return 0;
-	return 1/(1+Math.exp(8*(0.5-x)));
+	return x;
+	//if (x===0) return 0;
+	//return 1/(1+Math.exp(8*(0.5-x)));
 }
 
 /// Clamps all attention values of the passed type ('features',
-/// 'selectors', 'objects') to the passed interval. The default
+/// 'solutions', 'objects') to the passed interval. The default
 /// for the interval is min=0 and max=1. Pass a cooldown to have it
 /// subtracted from all attention values before clamping.
 /// Attention values of 0 will not be changed at all.
@@ -34,7 +35,7 @@ AttentionNet.prototype.clamp = function(type, min, max, cooldown) {
 	if (typeof(max) === 'undefined') max = 1;
 	if (!type || type === 'all') {
 		this.clamp('features', min, max, cooldown);
-		this.clamp('selectors', min, max, cooldown);
+		this.clamp('solutions', min, max, cooldown);
 		this.clamp('objects', min, max, cooldown);
 		return;
 	}
@@ -49,14 +50,14 @@ AttentionNet.prototype.clamp = function(type, min, max, cooldown) {
 	}
 }
 
-/// Updates all attention values, so that for 'features', 'selectors'
+/// Updates all attention values, so that for 'features', 'solutions'
 /// and 'objects' the attentions add up to 1.
 /// The `type` argument is optional, if not passed, all types are
 /// normalized.
 AttentionNet.prototype.normalize = function(type) {
 	if (!type) {
 		this.normalize('features');
-		this.normalize('selectors');
+		this.normalize('solutions');
 		this.normalize('objects');
 		return;
 	}
@@ -93,12 +94,12 @@ AttentionNet.prototype.objectsByScene = function() {
 	return this.objects_by_scene;
 }
 
-/// Type can be 'feature', 'selector' and 'object'. Optionally pass an
+/// Type can be 'feature', 'solution' and 'object'. Optionally pass an
 /// attention value (default: 1.0).
 /// Returns true if successfully inserted.
 AttentionNet.prototype.addElement = function(type, element, val) {
 	if (typeof(val) === 'undefined') val = 1.0;
-	var map = {feature: this.features, selector: this.selectors, object: this.objects};
+	var map = {feature: this.features, solution: this.solutions, object: this.objects};
 	var arr = map[type];
 	if (!arr) return false;
 	if (arr.indexOf(element) != -1) return false;
@@ -136,9 +137,9 @@ AttentionNet.prototype.addFeature = function(feature, val) {
 
 /// Returns true if successfully inserted. Optionally pass an attention value
 /// (default: 1.0).
-AttentionNet.prototype.addSelector = function(selector, val) {
-	if (this.selectors.some(function (sel) { return sel.equals(selector) })) return false;
-	return this.addElement('selector', selector, val);
+AttentionNet.prototype.addSolution = function(solution, val) {
+	if (this.solutions.some(function (sol) { return sol.equals(solution) })) return false;
+	return this.addElement('solution', solution, val);
 }
 
 /// Returns true if successfully inserted. Optionally pass an attention value
@@ -176,24 +177,24 @@ AttentionNet.prototype.getRandomFeature = function() {
 /// Chooses a random object from the passed scene based on their attention values.
 /// Available options:
 /// no_blank (bool), type ('group' or 'object'), filter (function)
-AttentionNet.prototype.getRandomSelector = function(options) {
+AttentionNet.prototype.getRandomSolution = function(options) {
 	options = options || {};
 	var self = this;
-	var sels = this.selectors.filter(function(sel) {
-		return (self.getAttentionValue(sel) > 0
-			&& (!options.no_blank || !sel.blank())
-		  && (!options.type || sel.getType() === options.type)
-		  && (!options.filter || options.filter(sel)));
+	var sols = this.solutions.filter(function(sol) {
+		return (self.getAttentionValue(sol) > 0
+			&& (!options.no_blank || !sol.sel.blank())
+		  && (!options.type || sol.sel.getType() === options.type)
+		  && (!options.filter || options.filter(sol)));
 	});
-	if (sels.length === 0) return null;
-	return Random.pick_weighted(sels, function (sel) {
-		return self.getAttentionValue(sel);
+	if (sols.length === 0) return null;
+	return Random.pick_weighted(sols, function (sol) {
+		return self.getAttentionValue(sol);
 	});
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
-AttentionNet.prototype.getRandomObjectOrSelector = function(scene) {
-	var elements = this.selectors.contact(scene.objs);
+AttentionNet.prototype.getRandomObjectOrSolution = function(scene) {
+	var elements = this.solutions.contact(scene.objs);
 	try {
 		return Random.pick_weighted(elements, function (el) {
 			if (!self.attention_values.has(el)) throw "unknown object";

@@ -195,15 +195,15 @@ PI.v0_4_2 = (function() {
       sn.objs.forEach(function (on) { aNet.addObject(on, options.attention.obj.initial) });
     });
 
-    aNet.addSelector(new Selector());
+    aNet.addSolution(new Solution(new Selector(), 'both'));
     options.features.forEach(function (feature) { aNet.addFeature(feature, options.attention.sel.initial) });
   }
 
   Workspace.prototype.changeAttention = function(thing, delta, min, max) {
     var self = this;
-    if (thing instanceof Selector) {
+    if (thing instanceof Solution) {
       this.attentionNet.addToAttentionValue(thing, delta, min || 0, max || 1);
-      this.spreadAttentionFromSelectorToFeatures(thing, delta);
+      this.spreadAttentionFromHypothesisToFeatures(thing, delta);
     } else if (thing instanceof GroupNode) {
       var N = thing.objs.length;
       thing.objs.forEach(function(obj) {
@@ -220,12 +220,12 @@ PI.v0_4_2 = (function() {
     return this.attentionNet.getAttentionValue(thing);
   }
 
-  Workspace.prototype.getSelectorInfoArray = function() {
+  Workspace.prototype.getHypothesisInfoArray = function() {
     var self = this;
-    return this.attentionNet.selectors.map(function(sel) {
-      return { val: self.attentionNet.getAttentionValue(sel)
-             , sel: sel.describe()
-             , src: sel }
+    return this.attentionNet.solutions.map(function(sol) {
+      return { val: self.attentionNet.getAttentionValue(sol)
+             , sol: sol.describe()
+             , src: sol }
     });
   }
 
@@ -270,41 +270,41 @@ PI.v0_4_2 = (function() {
     return this.attentionNet.getRandomFeature();
   }
 
-  Workspace.prototype.getRandomSelector = function(options) {
-    return this.attentionNet.getRandomSelector(options);
+  Workspace.prototype.getRandomHypothesis = function(options) {
+    return this.attentionNet.getRandomSolution(options);
   }
 
-  /// Returns true if the selector was new and inserted.
-  Workspace.prototype.addSelector = function(sel, val) {
+  /// Returns true if the solution was new and inserted.
+  Workspace.prototype.addHypothesis = function(sol, val) {
     if (arguments.length === 1) val = 1.0;
-    if (this.attentionNet.addSelector(sel, val)) {
-      this.log(3, 'added selector', sel.describe());
-      this.spreadAttentionFromSelectorToFeatures(sel, val);
+    if (this.attentionNet.addSolution(sol, val)) {
+      this.log(3, 'added solution hypothesis', sol.describe());
+      this.spreadAttentionFromHypothesisToFeatures(sol, val);
       return true;
     }
     return false;
   }
 
-  Workspace.prototype.spreadAttentionFromSelectorToFeatures = function(sel, val) {
+  Workspace.prototype.spreadAttentionFromHypothesisToFeatures = function(sol, val) {
     var self = this;
     if (options.attention.feature.from_sel) {
-      sel.forEachFeature(function(feature) {
+      var N = sol.sel.featureCount();
+      sol.sel.forEachFeature(function(feature) {
         var old_val = self.attentionNet.getAttentionValue(feature);
         if (old_val === 0) return;
-        self.changeAttention(feature, val * options.attention.feature.from_sel, 0.01, 1);
+        self.changeAttention(feature, val *options.attention.feature.from_sel / N, 0.01, 1);
       });
     }
   }
 
-  /// Sets the attention value of the passed selector to 0 so it is
+  /// Sets the attention value of the passed solution to 0 so it is
   /// never choosen again by the attention net but is still there so it
   /// won't be added again.
-  /// TODO: reduce attention of connected nodes in the attention net
-  Workspace.prototype.blockSelector = function(sel) {
-    this.log(3, 'blocking selector', sel.describe());
-    var old_val = this.attentionNet.getAttentionValue(sel);
-    this.attentionNet.setAttentionValue(sel, 0);
-    this.spreadAttentionFromSelectorToFeatures(sel, -old_val);
+  Workspace.prototype.blockHypothesis = function(sol) {
+    this.log(3, 'blocking solution hypothesis', sol.describe());
+    var old_val = this.attentionNet.getAttentionValue(sol);
+    this.attentionNet.setAttentionValue(sol, 0);
+    this.spreadAttentionFromHypothesisToFeatures(sol, -old_val);
   }
 
   Workspace.prototype.blockFeature = function(feature) {
@@ -444,7 +444,7 @@ PI.v0_4_2 = (function() {
 
 
 
-  /// Will create Attr-, NewSelector-, RefineSelector-, and SolveCodelets. What is created
+  /// Will create Attr-, NewHypothesis-, RefineHypothesis-, and SolveCodelets. What is created
   /// next will depend on a "mindset" value: 0 is complete explore and 1 complete exploit
   /// behavior. For now it just creates one of the four codelet types with a preset and fixed
   /// probability.
@@ -454,8 +454,8 @@ PI.v0_4_2 = (function() {
     this.name = 'MainBehavior';
     this.mindset = 0.25;
     this.codelet_infos = [{klass: AttrCodelet, mindset: 0}
-                         //,{klass: NewSelectorCodelet, mindset: 0.5} //TODO: this codelet need input data currently
-                         ,{klass: CombineSelectorCodelet, mindset: 1}
+                         //,{klass: NewHypothesisCodelet, mindset: 0.5} //TODO: this codelet need input data currently
+                         ,{klass: CombineHypothesisCodelet, mindset: 1}
                          ,{klass: SolutionCodelet, mindset: 1}];
   }
 
@@ -474,8 +474,8 @@ PI.v0_4_2 = (function() {
 
   /**
    * Chooses an object or a group of objects and then an attribute or
-   * relationship which it perceives. It may spawn NewSelectorCodelets (with
-   * the current attribute) and RefineSelectorCodelets (with the current
+   * relationship which it perceives. It may spawn NewHypothesisCodelets (with
+   * the current attribute) and RefineHypothesisCodelets (with the current
    * attribute and a different attribute the same object has).
    */
   var AttrCodelet = function(coderack) {
@@ -490,7 +490,7 @@ PI.v0_4_2 = (function() {
   }
 
   AttrCodelet.prototype.spawnNewSelCodelet = function (percept, time) {
-    this.coderack.insert(new NewSelectorCodelet(this.coderack, percept, time));
+    this.coderack.insert(new NewHypothesisCodelet(this.coderack, percept, time));
   };
 
   AttrCodelet.prototype.isActive = function(percept) {
@@ -524,8 +524,8 @@ PI.v0_4_2 = (function() {
     var feature = this.ws.getRandomFeature();
     var scene = this.ws.getRandomScene();
     if (feature.prototype.targetType == 'group') {
-      sel = this.ws.getRandomSelector({type: 'object'});
-      target = this.ws.getOrCreateGroupBySelector(sel, scene);
+      var hyp = this.ws.getRandomHypothesis({type: 'object'});
+      target = this.ws.getOrCreateGroupBySelector(hyp.sel, scene);
       if (target.empty()) return; // TODO: decrease selector attention
     } else if (feature.prototype.targetType == 'obj') {
       target = this.ws.getRandomObject(scene);
@@ -537,48 +537,48 @@ PI.v0_4_2 = (function() {
   }
 
   /**
-   * Uses the passed attribute / relationship and side to create the
-   * respective selector. Then it applies the selector to the currently active
+   * Uses the passed attribute / relationship and side to create the respective
+   * hypothesis + selector. Then it applies the hypothesis to the currently active
    * scenes. If all scenes match or only the scenes of one side match, it adds
-   * the selector to the global list of selectors.
+   * the hypothesis to the global list of hypotheses.
    */
-  var NewSelectorCodelet = function(coderack, percept_or_sel, time) {
+  var NewHypothesisCodelet = function(coderack, percept_or_hyp, time) {
     this.coderack = coderack;
     this.followup = [];
     this.ws = this.coderack.ws;
-    if (percept_or_sel instanceof Selector) this.selector = percept_or_sel;
-    else this.percept = percept_or_sel;
+    if (percept_or_hyp instanceof Solution) this.hypothesis = percept_or_hyp;
+    else this.percept = percept_or_hyp;
     this.time = time;
   }
 
-  NewSelectorCodelet.prototype.describe = function() {
-    if (this.selector) return 'NewSelectorCodelet(' + this.selector.describe() + ')';
-    else return 'NewSelectorCodelet(' + this.percept.key + '=' + this.percept.val + ')';
+  NewHypothesisCodelet.prototype.describe = function() {
+    if (this.hypothesis) return 'NewHypothesisCodelet(' + this.hypothesis.describe() + ')';
+    else return 'NewHypothesisCodelet(' + this.percept.key + '=' + this.percept.val + ')';
   }
 
-  NewSelectorCodelet.prototype.createAttrSel = function() {
+  NewHypothesisCodelet.prototype.createAttrHyp = function() {
     var time = this.percept.constant ? 'start' : this.time;
-    return (new Selector()).use_attr(this.percept, time);
+    return new Solution((new Selector()).use_attr(this.percept, time));
   }
 
   /**
    * We need to construct a selector that matches the target object of the
    * relationship. This is tough in general, so we'll just search through
-   * all existing object selectors and pick one that matches the target object.
+   * all existing object hypotheses and pick one that matches the target object.
    * If none does, returns null.
    */
-  NewSelectorCodelet.prototype.createRelSel = function() {
+  NewHypothesisCodelet.prototype.createRelHyp = function() {
     var other = this.percept.other.object_node;
-    var other_sel = this.ws.getRandomSelector({type: 'object'
-      ,filter: function(sel) {
-        return !sel.hasRelationships() && sel.matchesObject(other);
+    var other_sel = this.ws.getRandomHypothesis({type: 'object'
+      ,filter: function(sol) {
+        return !sol.sel.hasRelationships() && sol.sel.matchesObject(other);
       }
     });
     if (!other_sel) return null;
-    return (new Selector()).use_rel(other_sel, this.percept, this.time);
+    return new Solution((new Selector()).use_rel(other_sel.sel, this.percept, this.time));
   }
 
-  NewSelectorCodelet.prototype.getAttFromMatchResult = function
+  NewHypothesisCodelet.prototype.getAttFromMatchResult = function
   (same_side, match_count, is_obj_sel) {
     var vals = options.attention.sel.match;
     if (!vals) return 0;
@@ -590,77 +590,77 @@ PI.v0_4_2 = (function() {
   }
 
   /**
-   * Create selector with the passed percept and apply it to the current
-   * scenes. Then add it to the active selectors if it matches all scenes
+   * Create hypothesis with the passed percept and apply it to the current
+   * scenes. Then add it to the active hypotheses if it matches all scenes
    * or just all scenes from one side.
    */
-  NewSelectorCodelet.prototype.run = function() {
+  NewHypothesisCodelet.prototype.run = function() {
     var self = this;
 
-    var sel = this.selector;
-    if (!sel) {
-      if (this.percept.arity === 1) sel = this.createAttrSel();
-      else if (this.percept.arity === 2) sel = this.createRelSel();
+    var hyp = this.hypothesis;
+    if (!hyp) {
+      if (this.percept.arity === 1) hyp = this.createAttrHyp();
+      else if (this.percept.arity === 2) hyp = this.createRelHyp();
       if (this.percept.group && !this.percept.group.selector.blank()) {
         this.ws.log(4, 'perceived group feature based on selector result');
-        sel = sel.mergedWith(this.percept.group.selector);
+        hyp.sel = hyp.sel.mergedWith(this.percept.group.selector);
       }
     }
-    if (!sel) return;
+    if (!hyp) return;
 
     var scenes = this.ws.getActiveScenePair();
     var same_side = scenes[0].side === scenes[1].side;
-    var is_obj_sel = sel.getType() === 'object';
+    var is_obj_sel = hyp.sel.getType() === 'object';
     var all_single_objs = true;
     var sel_grps = [];
     var match_count = scenes.filter(function (scene) {
-      var res_group = self.ws.getOrCreateGroupBySelector(sel, scene);
+      var res_group = self.ws.getOrCreateGroupBySelector(hyp.sel, scene);
       sel_grps.push(res_group);
       all_single_objs = all_single_objs && res_group.objs.length === 1;
       return (!res_group.empty());
     }).length;
 
 
-    if (this.ws.addSelector(sel, options.attention.sel.initial)) {
+    if (this.ws.addHypothesis(hyp, options.attention.sel.initial)) {
       var d_att = this.getAttFromMatchResult(same_side, match_count, is_obj_sel);
       if (options.attention.sel.single && all_single_objs)
         d_att += options.attention.sel.single;
-      this.ws.changeAttention(sel, d_att);
-      var sel_att = self.ws.getAttention(sel)
+      this.ws.changeAttention(hyp, d_att);
+      var hyp_att = self.ws.getAttention(hyp)
       if (options.attention.obj.from_sel) {
         sel_grps.forEach(function(group) {
-          self.ws.changeAttention(group, sel_att * options.attention.obj.from_sel);
+          self.ws.changeAttention(group, hyp_att * options.attention.obj.from_sel);
         });
       }
     }
   }
 
   /** Will pick two generalizing type selectors and combine them. */
-  var CombineSelectorCodelet = function(coderack) {
+  var CombineHypothesisCodelet = function(coderack) {
     this.coderack = coderack;
     this.followup = [];
     this.ws = this.coderack.ws;
   }
 
-  CombineSelectorCodelet.prototype.describe = function() {
-    return 'CombineSelectorCodelet';
+  CombineHypothesisCodelet.prototype.describe = function() {
+    return 'CombineHypothesisCodelet';
   }
 
-  CombineSelectorCodelet.prototype.run = function() {
-    var sel1 = this.ws.getRandomSelector({no_blank: true, filter:
-      function(sel) { return (sel.type !== 'mixed') && sel.too_general }
+  CombineHypothesisCodelet.prototype.run = function() {
+    var hyp1 = this.ws.getRandomHypothesis({no_blank: true, filter:
+      function(sol) { return (sol.sel.type !== 'mixed') && sol.sel.too_general }
     });
-    if (!sel1) return;
-    var sel2 = this.ws.getRandomSelector({no_blank: true, filter:
-      function(sel) { return ((sel !== sel1) && (sel.type === sel1.type) && sel.too_general)  }
+    if (!hyp1) return;
+    var hyp2 = this.ws.getRandomHypothesis({no_blank: true, filter:
+      function(sol) { return ((sol !== hyp1) && (sol.sel.type === hyp1.type) && sol.sel.too_general)  }
     });
-    if (!sel2) return;
-    var sel12 = sel1.mergedWith(sel2);
-    if (sel12.equals(sel1) || sel12.equals(sel2)) return;
+    if (!hyp2) return;
+    var hyp12 = hyp1.mergedWith(hyp2);
+    if (!hyp12 || hyp12.equals(hyp1) || hyp12.equals(hyp2)) return;
 
-    this.ws.log(3, 'combining', sel1.describe(), 'and', sel2.describe());
+    this.ws.log(3, 'combining', hyp1.describe(), 'and', hyp2.describe());
 
-    this.coderack.insert(new NewSelectorCodelet(this.coderack, sel12));
+    this.coderack.insert(new NewHypothesisCodelet(this.coderack, hyp12));
   }
 
 
@@ -678,81 +678,10 @@ PI.v0_4_2 = (function() {
     return 'SolutionCodelet';
   }
 
-  /**
-   * Set the solution mode and applies the solution to both sides. If
-   * successful, it calls the success_callback with the solution as argument.
-   * Otherwise, it calls the fail_callback (if one was passed) with "too
-   * specific" or "too general" as first argument. In the "too general" case,
-   * a second bool paramenter is passed that is true if the the selector
-   * matches all objects in all scenes (and therefore can be replaced with the
-   * blank selector).
-   */
-  SolutionCodelet.prototype.runWithSolution = function(sol, sol_mode, success_callback, fail_callback) {
-    sol.mode = sol_mode;
-
-    var lscenes = this.ws.left_scenes
-       ,rscenes = this.ws.right_scenes;
-
-    var l_matched_objs_count = lscenes.map(sol.check_scene.bind(sol))
-       ,r_matched_objs_count = rscenes.map(sol.check_scene.bind(sol))
-       ,l_match_count = l_matched_objs_count.filter(function (n) { return n }).length
-       ,r_match_count = r_matched_objs_count.filter(function (n) { return n }).length
-       ,l_total_obj_count = lscenes.reduce(function (count, scene) { return count + scene.objs.length }, 0)
-       ,r_total_obj_count = rscenes.reduce(function (count, scene) { return count + scene.objs.length }, 0)
-       ,l_no_match = l_match_count === 0
-       ,r_no_match = r_match_count === 0
-       ,l_all_match = l_match_count == lscenes.length
-       ,r_all_match = r_match_count == rscenes.length
-       ,same_as_blank = l_all_match && r_all_match &&
-                        l_matched_objs_count===l_total_obj_count &&
-                        r_matched_objs_count===r_total_obj_count;
-
-    if (l_no_match && r_all_match) { // right solution?
-      return success_callback(sol.setMainSide('right'));
-    }
-    if (l_all_match && r_no_match) { // left solution?
-      return success_callback(sol.setMainSide('left'));
-    }
-    if (!l_all_match && !r_all_match) { // matches too little -> reject
-      if (fail_callback) return fail_callback("too specific");
-    }
-    if (fail_callback) fail_callback("too general", same_as_blank);
-  }
-
   SolutionCodelet.prototype.run = function () {
     if (Math.random()<0.1) {
       this.ws.advanceScenePair();
     }
-    return;
-
-
-    var self = this;
-    sels = this.ws.getSelectorInfoArray();
-    var sel = this.ws.getRandomSelector({no_blank: true, filter: function(sel) {
-      return !sel.too_general && !sel.too_specific;
-    }});
-    if (!sel) return;
-    var sol = new Solution(sel);
-    var found_sol = false;
-    var addSolFn = function(sol) {
-      self.ws.addSolution(sol);
-      found_sol = true;
-    }
-
-    var is_group_sol = (sol.sels[sol.sels.length-1].getType() === 'group'
-                     || sol.sels[sol.sels.length-1].getType() === 'mixed');
-    var res = this.runWithSolution(sol, 'exists', addSolFn, function(reason, same_as_blank) {
-      if (reason == 'too specific') {
-        self.ws.blockSelector(sel);
-      } else if (reason == 'too general') {
-        sel.too_general = true;
-        if (!is_group_sol) { // unique or all don't make sense for
-          self.runWithSolution(sol, 'all', addSolFn);          // group based solutions
-          self.runWithSolution(sol, 'unique', addSolFn);
-        }
-        if (same_as_blank) self.ws.blockSelector(sel);
-      }
-    });
   }
 
   return {Workspace: Workspace

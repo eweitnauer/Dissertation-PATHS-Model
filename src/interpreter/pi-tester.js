@@ -137,13 +137,16 @@ PITester.prototype.get_current_pi = function() {
 
 /// Pass the html table element and the tester will use d3 to
 /// bind & update it with the selector data from the current pi.
-PITester.prototype.updateSelectorTable = function(table_el, clickCallback) {
-	var selectors = this.ws ? this.ws.getSelectorInfoArray() : [];
+PITester.prototype.updateHypothesisTable = function(table_el, clickCallback) {
+	var selectors = this.ws ? this.ws.getHypothesisInfoArray() : [];
 
 	var trs = d3.select(table_el)
 	  .selectAll('tr')
 	  .data(selectors)
 	  .sort(function(a, b) { return b.val-a.val });
+
+	var side_str = { 'both': '', 'left': 'left', 'right': 'right'};
+	var mode_str = { 'all': 'A', 'exists': 'E', 'unique': '1'};
 
 	trs.enter().append('tr');
 	trs.exit().remove();
@@ -151,7 +154,10 @@ PITester.prototype.updateSelectorTable = function(table_el, clickCallback) {
 		.on('click', function(info) {	clickCallback(info.src) })
 		.style('color', function(d) { return d.val === 0 ? 'silver' : 'black' })
 	  .selectAll('td')
-	  .data(function(d) { return [d.sel, d.val.toFixed(2)] })
+	  .data(function(d) { return [ side_str[d.src.main_side]
+	  	                         , mode_str[d.src.mode]
+	  	                         , d.src.sel.describe()
+	  	                         , d.val.toFixed(2)] })
 
 	tds.enter().append('td');
 	tds.exit().remove();

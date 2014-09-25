@@ -3,15 +3,15 @@
 /// Holds an array of selectors.
 /// Can be in one of 3 different modes: 'unique', 'exists', 'all'
 /// (the default is 'exists').
-/// main_side is either 'left', 'right' or 'both' (default: 'left').
+/// main_side is either 'left', 'right', 'both'
 Solution = function(selector, main_side, mode) {
 	this.sel = selector;
-	this.mode = mode;
+	this.mode = mode || 'exists';
 	this.setMainSide(main_side);
 }
 
 Solution.prototype.setMainSide = function (main_side) {
-	this.main_side = main_side || 'left';
+	this.main_side = main_side || 'both';
 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
   return this;
 }
@@ -24,6 +24,30 @@ Solution.prototype.check = function(scenes_l, scenes_r) {
 
 	return (main_scenes.every(this.check_scene.bind(this))
 		     && !other_scenes.some(this.check_scene.bind(this)));
+}
+
+Solution.prototype.equals = function(other) {
+	return (this.mode === other.mode
+	     && this.main_side === other.main_side
+	     && this.sel.equals(other.sel));
+}
+
+Solution.prototype.mergedWith = function(other) {
+	var mode = (this.mode === other.mode ? mode : 'exists');
+	var side;
+	if (other.main_side === this.main_side) side = this.main_side;
+	else if (this.main_side === 'both') side = other.main_side;
+	else if (other.main_side === 'both') side = this.main_side;
+	else return null; // incompatible sides
+	return new Solution(this.sel.mergedWith(other.sel), side, mode);
+}
+
+/// Returns a group node that contains all objects that match the solution
+/// in the passed scene.
+Solution.prototype.applyToScene = function(scene) {
+	if (this.main_side === 'left' && !this.isLeftScene(scene)) return new GroupNode(null, [], this.sel);
+	if (this.main_side === 'right' && this.isLeftScene(scene)) return new GroupNode(null, [], this.sel);
+	return this.sel.applyToScene(scene);
 }
 
 /// Applies all selectors consecutively to the scene and checks
@@ -45,7 +69,8 @@ Solution.prototype.check_scene = function(scene) {
 
 /// Returns a human readable description of the solution.
 Solution.prototype.describe = function() {
-	var str = this.main_side === 'both' ? "In all scenes, " : "Only in the " + this.main_side + " scenes, ";
+	var str = "";
+	if (this.main_side) str += this.main_side === 'both' ? "In all scenes, " : "Only in the " + this.main_side + " scenes, ";
 	str += this.mode + ': ' + this.sel.describe();
 	return str;
 };

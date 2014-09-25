@@ -346,7 +346,11 @@ SceneInteractor.prototype.scaling = function(val) {
 SceneInteractor.prototype.applySelector = function(sel) {
 	var gn = sel.applyToScene(this.sn);
 	this.selectShapes(gn.objs);
-	//var ons = gn.objs.map(function(obj) { return obj.object_node });
+}
+
+SceneInteractor.prototype.applySolution = function(sol) {
+	var gn = sol.applyToScene(this.sn);
+	this.selectShapes(gn.objs);
 }
 
 SceneInteractor.prototype.colorize_values = function(value_getter) {

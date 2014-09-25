@@ -157,7 +157,7 @@ function setup_options() {
 
 function after_step_callback() {
   d3.select('#solver-step').text(tester.curr_step-1);
-  updateSelectorTable();
+  updateHypothesisTable();
   updateFeatureList();
   updateActiveScenes();
   updateSolutionList();
@@ -184,16 +184,16 @@ function updateSolutionList() {
   tester.updateSolutionList(d3.select("#solutions ol").node());
 }
 
-function updateSelectorTable() {
-  tester.updateSelectorTable(d3.select("#selector-table").node(), selectorClicked);
+function updateHypothesisTable() {
+  tester.updateHypothesisTable(d3.select("#selector-table").node(), hypothesisClicked);
 }
 
-function selectorClicked(selector) {
-  console.log('sel=', selector.describe());
-  sel = selector;
-  // apply the selector to all scenes
+function hypothesisClicked(hyp) {
+  console.log('sel=', hyp.describe());
+  sel = hyp;
+  // apply the hyp to all scenes
   for (var p in problems) {
-    problems[p].svis.applySelector(selector);
+    problems[p].svis.applySolution(hyp);
   }
 }
 
@@ -219,7 +219,7 @@ function resetClicked() {
   tester.reset();
   d3.select('#solver-step').text('0');
   log_area.selectAll('*').remove();
-  updateSelectorTable();
+  updateHypothesisTable();
   updateFeatureList();
   updateActiveScenes();
   updateSolutionList();

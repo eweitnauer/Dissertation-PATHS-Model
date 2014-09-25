@@ -38,6 +38,10 @@ Selector.prototype.hasRelationships = function() {
 	return this.rels.length > 0;
 }
 
+Selector.prototype.featureCount = function() {
+	return this.obj_attrs.length + this.grp_attrs.length + this.rels.length;
+}
+
 /// Calls the passed function once for each feature that is part of the
 /// selector.
 Selector.prototype.forEachFeature = function(fn) {
