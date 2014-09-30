@@ -42,7 +42,7 @@ PITester.prototype.initNextRep = function() {
 	this.curr_rep++;
 	this.curr_step = 0;
 	this.clear_scenes();
-	this.ws = new this.pi.Workspace(this.scenes, this.log_level);
+	this.ws = this.pi.createWorkspace(this.scenes, this.log_level);
 	if (this.logCallback) this.ws.logCallback = this.logCallback;
 	if (this.start_callback) this.start_callback();
 	console.log('run',this.curr_rep,'of',this.reps);
