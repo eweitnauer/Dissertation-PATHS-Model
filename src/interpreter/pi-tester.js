@@ -145,7 +145,7 @@ PITester.prototype.updateHypothesisTable = function(table_el, clickCallback) {
 	  .data(selectors)
 	  .sort(function(a, b) { return b.val-a.val });
 
-	var side_str = { 'both': '', 'left': 'left', 'right': 'right'};
+	var side_str = { 'both': 'LR', 'left': 'L', 'right': 'R', 'fail': '--'};
 	var mode_str = { 'all': 'A', 'exists': 'E', 'unique': '1'};
 
 	trs.enter().append('tr');
@@ -157,6 +157,7 @@ PITester.prototype.updateHypothesisTable = function(table_el, clickCallback) {
 	  .data(function(d) { return [ side_str[d.src.main_side]
 	  	                         , mode_str[d.src.mode]
 	  	                         , d.src.sel.describe()
+	  	                         , (d.src.lmatches + d.src.rmatches)
 	  	                         , d.val.toFixed(2)] })
 
 	tds.enter().append('td');

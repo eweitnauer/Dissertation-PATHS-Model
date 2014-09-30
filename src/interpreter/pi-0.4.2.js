@@ -4,7 +4,7 @@ var PI = PI || {};
 /*
 
 Version 0.4.2
-- TODO: we don't use solution codelets anymore. Instead, we keep track of which
+- We don't use solution codelets anymore. Instead, we keep track of which
 left and right scenes each selector fits and if they all fit, its a solution!
 
 Version 0.4.1
@@ -47,29 +47,35 @@ PI.v0_4_2 = (function() {
               , OnGroundAttribute, RightRelationship, LeftRelationship
               , TouchAttribute, TouchRelationship, SupportsRelationship
               , HitsRelationship, CollidesRelationship, LeftAttribute, RightAttribute
-              , TopMostAttribute, MovableUpAttribute]//, SquareAttribute, RectangleAttribute, TriangleAttribute, LeftAttribute, RightAttribute]//[RightRelationship, LeftRelationship, ShapeAttribute, CountAttribute, OnGroundAttribute]
+              , TopMostAttribute, MovableUpAttribute]
+    //features: [ SquareAttribute, CircleAttribute, TriangleAttribute, CountAttribute ]
   , pres_mode: 'interleaved-sim-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
   , pres_time: 100 // every x steps, switch to the next scene pair
   , attention:
     { time: { start: 0.67, end: 0.33 }
     , sel: {
         initial: 0.1 // new selectors start with this attention value
-      , single: 0.3  // raise attention to selectors that match only a single objects per scene
+      , single: 0.2  // raise attention to selectors that match only a single objects per scene
       , match:  // raise attention according to which scenes where matched in a scene pair
         {
-          same_side:
-          {
-            matched_0: { obj_sel:  0  , grp_sel: 0 }
-          , matched_1: { obj_sel: -0.3, grp_sel: 0 }
-          , matched_2: { obj_sel:  0.1, grp_sel: 0.1 }
-          }
-        , both_sides:
-          {
-            matched_0: { obj_sel: -0.3, grp_sel: 0 }
-          , matched_1: { obj_sel:  0.2, grp_sel: 0.2 }
-          , matched_2: { obj_sel: -0.1, grp_sel: 0 }
-          }
+          left: 0.2
+        , right: 0.2
+        , both: 0.1
+        , fail: 0
         }
+        //   same_side:
+        //   {
+        //     matched_0: { obj_sel:  0  , grp_sel: 0 }
+        //   , matched_1: { obj_sel: -0.3, grp_sel: 0 }
+        //   , matched_2: { obj_sel:  0.1, grp_sel: 0.1 }
+        //   }
+        // , both_sides:
+        //   {
+        //     matched_0: { obj_sel: -0.3, grp_sel: 0 }
+        //   , matched_1: { obj_sel:  0.2, grp_sel: 0.2 }
+        //   , matched_2: { obj_sel: -0.1, grp_sel: 0 }
+        //   }
+        // }
       }
     , feature: {
         initial: 0.1
@@ -140,6 +146,7 @@ PI.v0_4_2 = (function() {
   }
 
   Workspace.prototype.advanceScenePair = function() {
+    this.scene_pair_steps = 0;
     this.scene_pair_index = (this.scene_pair_index+1) % this.scene_pair_sequence.length;
     this.active_scene_pair = this.scene_pair_sequence[this.scene_pair_index];
   }
@@ -372,6 +379,7 @@ PI.v0_4_2 = (function() {
 
   Coderack.prototype.step = function() {
     this.ws.step++;
+    this.ws.scene_pair_steps++;
     if (this.followups.length === 0) this.runBehaviors();
     this.runCodelet();
     this.ws.attentionNet.clamp('all', 0.1, 1, 0.001);
@@ -455,6 +463,7 @@ PI.v0_4_2 = (function() {
     this.mindset = 0.25;
     this.codelet_infos = [{klass: AttrCodelet, mindset: 0}
                          //,{klass: NewHypothesisCodelet, mindset: 0.5} //TODO: this codelet need input data currently
+                         ,{klass: CheckHypothesisCodelet, mindset: 0.75 }
                          ,{klass: CombineHypothesisCodelet, mindset: 1}
                          ,{klass: SolutionCodelet, mindset: 1}];
   }
@@ -578,17 +587,6 @@ PI.v0_4_2 = (function() {
     return new Solution((new Selector()).use_rel(other_sel.sel, this.percept, this.time));
   }
 
-  NewHypothesisCodelet.prototype.getAttFromMatchResult = function
-  (same_side, match_count, is_obj_sel) {
-    var vals = options.attention.sel.match;
-    if (!vals) return 0;
-    vals = same_side ? vals.same_side : vals.both_sides;
-    if (match_count === 0) vals = vals.matched_0;
-    else if (match_count === 1) vals = vals.matched_1;
-    else vals = vals.matched_2;
-    return is_obj_sel ? vals.obj_sel : vals.grp_sel;
-  }
-
   /**
    * Create hypothesis with the passed percept and apply it to the current
    * scenes. Then add it to the active hypotheses if it matches all scenes
@@ -608,32 +606,59 @@ PI.v0_4_2 = (function() {
     }
     if (!hyp) return;
 
-    var scenes = this.ws.getActiveScenePair();
-    var same_side = scenes[0].side === scenes[1].side;
-    var is_obj_sel = hyp.sel.getType() === 'object';
-    var all_single_objs = true;
-    var sel_grps = [];
-    var match_count = scenes.filter(function (scene) {
-      var res_group = self.ws.getOrCreateGroupBySelector(hyp.sel, scene);
-      sel_grps.push(res_group);
-      all_single_objs = all_single_objs && res_group.objs.length === 1;
-      return (!res_group.empty());
-    }).length;
-
-
     if (this.ws.addHypothesis(hyp, options.attention.sel.initial)) {
-      var d_att = this.getAttFromMatchResult(same_side, match_count, is_obj_sel);
-      if (options.attention.sel.single && all_single_objs)
-        d_att += options.attention.sel.single;
+      this.coderack.insert(new CheckHypothesisCodelet(this.coderack, hyp));
+    }
+  }
+
+  var CheckHypothesisCodelet = function(coderack, hyp) {
+    this.coderack = coderack;
+    this.ws = this.coderack.ws;
+    this.followup = [];
+    this.hypothesis = hyp;
+  }
+
+  CheckHypothesisCodelet.prototype.describe = function() {
+    return 'CheckHypothesisCodelet';
+  }
+
+  CheckHypothesisCodelet.prototype.getAttFromHypothesis = function(hyp) {
+    var vals = options.attention.sel.match;
+    if (!vals) return 0;
+    var val = vals[hyp.main_side];
+    if (options.attention.sel.single && hyp.selects_single_objs)
+      val += options.attention.sel.single;
+    return val;
+  }
+
+  CheckHypothesisCodelet.prototype.run = function() {
+    var hyp = this.hypothesis;
+    var scene_pair_id = this.ws.scene_pair_index;
+    if (!hyp) {
+      // get a hypothesis that was not matched against the current scene pair yet
+      hyp = this.ws.getRandomHypothesis({no_blank: true, filter:
+        function(sol) { return (!sol.wasMatchedAgainst(scene_pair_id)) }
+      });
+    }
+    if (!hyp) return;
+
+    var selected_groups = hyp.checkScenePair( this.ws.getActiveScenePair()
+                                            , this.ws.scene_pair_index);
+    if (hyp.main_side === 'fail') this.ws.blockHypothesis(hyp);
+    else {
+      if (hyp.isSolution(this.ws.scene_pair_sequence.length)) this.ws.addSolution(hyp);
+      var self = this;
+      var d_att = this.getAttFromHypothesis(hyp);
       this.ws.changeAttention(hyp, d_att);
-      var hyp_att = self.ws.getAttention(hyp)
+      var hyp_att = this.ws.getAttention(hyp)
       if (options.attention.obj.from_sel) {
-        sel_grps.forEach(function(group) {
+        selected_groups.forEach(function(group) {
           self.ws.changeAttention(group, hyp_att * options.attention.obj.from_sel);
         });
       }
     }
   }
+
 
   /** Will pick two generalizing type selectors and combine them. */
   var CombineHypothesisCodelet = function(coderack) {
@@ -657,8 +682,8 @@ PI.v0_4_2 = (function() {
     if (!hyp2) return;
     var hyp12 = hyp1.mergedWith(hyp2);
     if (!hyp12 || hyp12.equals(hyp1) || hyp12.equals(hyp2)) return;
+    this.ws.log(3, 'combined', hyp1.describe(), 'and', hyp2.describe());
 
-    this.ws.log(3, 'combining', hyp1.describe(), 'and', hyp2.describe());
 
     this.coderack.insert(new NewHypothesisCodelet(this.coderack, hyp12));
   }
@@ -679,7 +704,7 @@ PI.v0_4_2 = (function() {
   }
 
   SolutionCodelet.prototype.run = function () {
-    if (Math.random()<0.1) {
+    if (this.ws.scene_pair_steps > 50) {
       this.ws.advanceScenePair();
     }
   }

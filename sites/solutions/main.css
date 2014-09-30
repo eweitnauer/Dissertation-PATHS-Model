@@ -73,7 +73,7 @@ svg {
 }
 
 #selector-table td:nth-child(1) {
-	width: 2.5em;
+	width: 1.5em;
 	text-align: left;
 }
 
@@ -83,6 +83,11 @@ svg {
 }
 
 #selector-table td:nth-child(4) {
+	width: 0.5em;
+	text-align: center;
+}
+
+#selector-table td:nth-child(5) {
 	width: 3em;
 	text-align: right;
 }
