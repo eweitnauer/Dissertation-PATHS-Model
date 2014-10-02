@@ -98,12 +98,17 @@ Workspace.prototype.register_events = function() {
 
 Workspace.prototype.initAttentionNet = function() {
   var aNet = this.attentionNet, options = this.options;
+
+  var blank_sol = new Solution(new Selector(), 'both');
+  aNet.addSolution(blank_sol);
+
   this.scenes.forEach(function (sn) {
     sn.objs.forEach(function (on) { aNet.addObject(on, options.attention.obj.initial) });
   });
 
-  aNet.addSolution(new Solution(new Selector(), 'both'));
-  options.features.forEach(function (feature) { aNet.addFeature(feature, options.attention.sel.initial) });
+  options.features.forEach(function (info) {
+    aNet.addFeature(info.klass, info.initial_activation);
+  });
 }
 
 Workspace.prototype.changeAttention = function(thing, delta, min, max) {
@@ -174,12 +179,13 @@ Workspace.prototype.getActiveScenePair = function() {
   return this.active_scene_pair;
 }
 
-Workspace.prototype.getRandomFeature = function() {
-  return this.attentionNet.getRandomFeature();
+/// Available options: type ('obj' or 'group'), filter (Feature->bool)
+Workspace.prototype.getRandomFeature = function(options) {
+  return this.attentionNet.getRandomFeature(options);
 }
 
 Workspace.prototype.getRandomHypothesis = function(options) {
-  return this.attentionNet.getRandomSolution(this.options);
+  return this.attentionNet.getRandomSolution(options);
 }
 
 /// Returns true if the solution was new and inserted.
@@ -230,29 +236,62 @@ Workspace.prototype.addSolution = function(sol) {
 Workspace.prototype.getGroupBySelector = function(sel, scene) {
   for (var i=0; i<scene.groups.length; i++) {
     var g = scene.groups[i];
-    if (g.selector.equals(sel)) return g;
+    if (g.selectors.indexOf(sel) !== -1) return g;
   }
   return null;
+}
+
+Workspace.prototype.arraysIdentical = function(a1, a2) {
+  if (a1.length !== a2.length) return false;
+  for (var i=0; i<a1.length; i++) {
+    if (a2.indexOf(a1[i]) === -1) return false;
+  }
+  return true;
 }
 
 Workspace.prototype.getOrCreateGroupBySelector = function(sel, scene) {
   if (!scene) throw "missing scene argument";
   var group = this.getGroupBySelector(sel, scene);
   if (group) return group;
-  // group not in scene yet, create
+  // no group has this selector associated, look if there is a group with the
+  // same objects in it as the selector would select
   group = sel.applyToScene(scene);
-  if (!group.empty()) scene.groups.push(group);
+  if (group.empty()) return;
+  for (var i=0; i<scene.groups.length; i++) {
+    if (this.arraysIdentical(scene.groups[i].objs, group.objs)) {
+      scene.groups[i].selectors.push(sel);
+      return scene.groups[i];
+    }
+  }
+  // a new group!
+  scene.groups.push(group);
   return group;
 };
 
-// TODO: attention net should handle this later (maybe)
+/// Selects a random group from the passed scene based on the attention values
+/// of the respective group selectors. Returns null if no group could be selected.
+/// Options: not_empty (bool), filter (GroupNode->bool)
+Workspace.prototype.getRandomGroup = function(scene, options) {
+  options = options || {};
+  var aNet = this.attentionNet;
+  var self = this;
+  // get groups through selectors
+  var hyp = this.getRandomHypothesis({filter: function(hyp) {
+    var group = self.getOrCreateGroupBySelector(hyp.sel, scene);
+    return ( (!options.not_empty || !group.empty())
+          && (!options.filter || options.filter(group)));
+  }});
+  return this.getGroupBySelector(hyp.sel, scene);
+}
+
 Workspace.prototype.getRandomScene = function() {
   return Random.pick(this.getActiveScenePair());
 }
 
-Workspace.prototype.getRandomObject = function(scene) {
+/// You may pass a filter function in the options (ObjectNode->bool).
+Workspace.prototype.getRandomObject = function(scene, options) {
   if (typeof(scene) == 'undefined') scene = this.getRandomScene();
-  return this.attentionNet.getRandomObject(scene);
+  return this.attentionNet.getRandomObject(scene, options);
 }
 
 /// Pass an object or group node.

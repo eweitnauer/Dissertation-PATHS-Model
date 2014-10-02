@@ -25,7 +25,9 @@ CheckHypothesisCodelet.prototype.run = function() {
   if (!hyp) {
     // get a hypothesis that was not matched against the current scene pair yet
     hyp = this.ws.getRandomHypothesis({no_blank: true, filter:
-      function(sol) { return (!sol.wasMatchedAgainst(scene_pair_id)) }
+      function(sol) {
+        return (!sol.wasMatchedAgainst(scene_pair_id))
+      }
     });
   }
   if (!hyp) return;

@@ -52,9 +52,15 @@ NewHypothesisCodelet.prototype.run = function() {
   if (!hyp) {
     if (this.percept.arity === 1) hyp = this.createAttrHyp();
     else if (this.percept.arity === 2) hyp = this.createRelHyp();
-    if (this.percept.group && !this.percept.group.selector.blank()) {
+    var g = this.percept.group;
+    if (g) {
+      // pick a non blank selector from the groups selector list
       this.ws.log(4, 'perceived group feature based on selector result');
-      hyp.sel = hyp.sel.mergedWith(this.percept.group.selector);
+      var sol = this.ws.getRandomHypothesis({ filter: function(sol) {
+        return !sol.sel.blank() && g.selectors.indexOf(sol.sel) !== -1;
+      }});
+      if (!sol) return;
+      hyp.sel = hyp.sel.mergedWith(sol.sel);
     }
   }
   if (!hyp) return;

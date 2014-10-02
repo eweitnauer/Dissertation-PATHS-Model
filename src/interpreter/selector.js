@@ -167,11 +167,11 @@ Selector.prototype.matchesGroup = function(group) {
 Selector.prototype.select = function(group_node, scene_node, test_fn) {
 	if (this.blank()) return group_node;
 
-	var selector = this.mergedWith(group_node.selector);
+	var selector = this.mergedWith(group_node.selectors[0]);
 	var gn = group_node.clone();
 	var type = this.getType();
 	var self = this;
-	gn.selector = selector;
+	gn.selectors = [selector];
 	// first apply object-level features
 	if (type === 'mixed' || type === 'object') {
 		var nodes = gn.objs

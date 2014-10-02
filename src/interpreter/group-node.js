@@ -3,11 +3,12 @@
 /// A GroupNode represents a group of objects in one scene. Pass the SceneNode the
 /// group belongs to. Optionally, pass an selector array that was used to create the
 /// group node.
-GroupNode = function(scene_node, objs, selector) {
+GroupNode = function(scene_node, objs, selectors) {
   this.scene_node = scene_node;
   this.objs = objs || [];   // shapes
   this.times = {};
-  this.selector = selector || new Selector();
+  this.selectors = selectors ? Array.isArray(selectors) ? selectors.slice() : [selectors]
+                            : [new Selector()];
 }
 
 /// The ObjectNode will send 'perceived' and 'retrieved' events {feature, target}.
@@ -21,7 +22,7 @@ GroupNode.prototype.empty = function() {
 /// CAUTION: The times field that holds all cached percepts is the same
 /// reference as in the original group node!
 GroupNode.prototype.clone = function() {
-  var gn = new GroupNode(this.scene_node, this.objs.slice(), this.selector);
+  var gn = new GroupNode(this.scene_node, this.objs.slice(), this.selectors);
   gn.times = this.times;
   return gn;
 }
@@ -69,6 +70,7 @@ GroupNode.prototype.getAttr = function(key, opts) {
   var o = PBP.extend({}, opts);
   // if time was not passed, use the current state of the oracle
   if (!o.time) o.time = this.scene_node.oracle.curr_state;
+  if (GroupNode.attrs[key].constant) o.time = 'start';
   // if the attr is cached, just return it
   if ((o.time in this.times) && (key in this.times[o.time])) {
     var res = this.times[o.time][key];

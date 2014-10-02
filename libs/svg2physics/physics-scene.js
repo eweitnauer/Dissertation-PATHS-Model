@@ -57,7 +57,18 @@ PhysicsScene.prototype.step = function(dt) {
 	} catch(err) {
 		console.log('caught error', err, 'during Box2D simulation step');
 		console.log('trying again after finding new contacts...');
-		this.world.m_contactManager.FindNewContacts();
+
+		var broadPhase = this.world.m_contactManager.m_broadPhase;
+		this.forEachBody(function(body) {
+		  for (var f = body.m_fixtureList; f; f = f.m_next) {
+		  	if (!f.m_proxy) {
+		  		console.log(body, fixture, 'has no m_proxy set. Creating it now...');
+      		f.CreateProxy(broadPhase, body.m_xf);
+      	}
+     	}
+  	});
+
+		//this.world.m_contactManager.FindNewContacts();
 		//var curr_time = this.world.curr_time;
 		//this.reset();
 		//this.simulate(curr_time+dt);

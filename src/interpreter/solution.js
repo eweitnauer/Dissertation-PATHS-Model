@@ -43,6 +43,7 @@ Solution.prototype.checkScenePair = function(pair, pair_id) {
     if (scene.side === 'right') {self.rchecks++; if (matches) self.rmatches++ }
   });
   this.matchedAgainst.push(pair_id);
+  console.log(this.matchedAgainst);
 
   if (this.lmatches+this.rmatches === this.lchecks+this.rchecks) this.setMainSide('both');
   else if (this.lmatches === 0 && this.rmatches === this.rchecks) this.setMainSide('right');

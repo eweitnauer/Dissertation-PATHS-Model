@@ -149,29 +149,35 @@ AttentionNet.prototype.addObject = function(object, val) {
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
-AttentionNet.prototype.getRandomObject = function(scene) {
+/// Available options:
+/// filter (ObjectNode->bool)
+AttentionNet.prototype.getRandomObject = function(scene, options) {
+	options = options || {};
 	var self = this;
-	try {
-		return Random.pick_weighted(scene.objs, function (onode) {
-			if (!self.attention_values.has(onode)) throw "unknown object";
-		  return self.getAttentionValue(onode);
-		});
-	} catch (e) {
-		return null;
-	}
+	var objs = scene.objs.filter(function(obj) {
+		return ( self.getAttentionValue(obj) > 0
+		     && (!options.filter || options.filter(obj)));
+	});
+	if (objs.length === 0) return null;
+	return Random.pick_weighted(objs, function (obj) {
+		return self.getAttentionValue(obj);
+	});
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
-AttentionNet.prototype.getRandomFeature = function() {
+/// Available options: type ('obj' or 'group'), filter (Feature->bool)
+AttentionNet.prototype.getRandomFeature = function(options) {
+	options = options || {};
 	var self = this;
-	try {
-		return Random.pick_weighted(this.features, function (feature) {
-			return self.getAttentionValue(feature);
-		});
-	} catch (e) {
-		if (!(e instanceof String)) throw e;
-		return null;
-	}
+	var features = this.features.filter(function(feature) {
+		return ( self.getAttentionValue(feature) > 0
+			   && (!options.type || feature.prototype.targetType === options.type)
+		     && (!options.filter || options.filter(feature)));
+	});
+	if (features.length === 0) return null;
+	return Random.pick_weighted(features, function (feature) {
+		return self.getAttentionValue(feature);
+	});
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
