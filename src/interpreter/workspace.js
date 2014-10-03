@@ -261,6 +261,9 @@ Workspace.prototype.getOrCreateGroupBySelector = function(sel, scene) {
   if (group.empty()) return null;
   for (var i=0; i<scene.groups.length; i++) {
     if (this.arraysIdentical(scene.groups[i].objs, group.objs)) {
+      if (scene.groups[i].selectors.some(function(ssel) { return ssel.equals(sel) })) {
+        throw "about to insert double selector";
+      }
       scene.groups[i].selectors.push(sel);
       return scene.groups[i];
     }
@@ -282,6 +285,7 @@ Workspace.prototype.getRandomGroup = function(scene, options) {
     var group = self.getOrCreateGroupBySelector(hyp.sel, scene);
     return (group && (!options.filter || options.filter(group)));
   }});
+  if (!hyp) return null;
   return this.getGroupBySelector(hyp.sel, scene);
 }
 

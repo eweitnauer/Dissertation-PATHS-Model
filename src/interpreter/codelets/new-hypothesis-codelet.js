@@ -65,7 +65,7 @@ NewHypothesisCodelet.prototype.run = function() {
   }
   if (!hyp) return;
 
-  if (this.ws.addHypothesis(hyp, this.ws.options.attention.sel.initial)) {
+  if (this.ws.addHypothesis(hyp, 0)) { // initial att. will be set by CheckHypCodelet
     this.coderack.insert(new CheckHypothesisCodelet(this.coderack, hyp));
   }
 }

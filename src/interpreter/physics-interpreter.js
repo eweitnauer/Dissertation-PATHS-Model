@@ -96,13 +96,17 @@ PI.v0_4_3 = (function() {
   , attention:
     { time: { start: 0.67, end: 0.33 }
     , sel: {
-        initial: 0.1 // new selectors start with this attention value
-      , single: 0.2  // raise attention to selectors that match only a single objects per scene
-      , match:  // raise attention according to which scenes where matched in a scene pair
+        initial: // initial attention for selectors based on first match
         {
-          left: 0.2
-        , right: 0.2
-        , both: 0.1
+          one_side: 0.4
+        , both_sides: 0.2
+        , fail: 0
+        }
+      , single: 0.05  // raise attention to selectors that match only a single objects per scene
+      , update:       // raise attention according to which scenes where matched in a scene pair
+        {
+          one_side: 0.15
+        , both_sides: 0.05
         , fail: 0
         }
       }

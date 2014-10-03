@@ -9,10 +9,15 @@ CheckHypothesisCodelet.prototype.describe = function() {
   return 'CheckHypothesisCodelet';
 }
 
+CheckHypothesisCodelet.prototype.side_map = { 'left' : 'one_side', 'right': 'one_side'
+  , 'both': 'both_sides', 'fail': 'fail' };
+
 CheckHypothesisCodelet.prototype.getAttFromHypothesis = function(hyp) {
-  var vals = this.ws.options.attention.sel.match;
-  if (!vals) return 0;
-  var val = vals[hyp.main_side];
+  var val;
+  if (hyp.matchedAgainst.length === 1) val = this.ws.options.attention.sel.initial;
+  else val = this.ws.options.attention.sel.update;
+
+  val = val[this.side_map[hyp.main_side]];
   if (this.ws.options.attention.sel.single && hyp.selects_single_objs)
     val += this.ws.options.attention.sel.single;
   return val;
@@ -24,7 +29,7 @@ CheckHypothesisCodelet.prototype.run = function() {
   var scene_pair_id = this.ws.scene_pair_index;
   if (!hyp) {
     // get a hypothesis that was not matched against the current scene pair yet
-    hyp = this.ws.getRandomHypothesis({no_blank: true, filter:
+    hyp = this.ws.getRandomHypothesis({filter:
       function(sol) {
         return (!sol.wasMatchedAgainst(scene_pair_id))
       }

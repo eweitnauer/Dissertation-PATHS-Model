@@ -189,7 +189,9 @@ Selector.prototype.select = function(group_node, scene_node, test_fn) {
 };
 
 Selector.prototype.applyToScene = function(scene) {
-	return this.select(GroupNode.sceneGroup(scene), scene);
+	var group = this.select(GroupNode.sceneGroup(scene), scene);
+	group.selectors = [this];
+	return group;
 }
 
 /// Returns a human readable description of the attributes used in this selector.
