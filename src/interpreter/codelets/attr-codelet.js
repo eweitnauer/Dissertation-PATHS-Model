@@ -90,7 +90,7 @@ AttrCodelet.prototype.run = function() {
     feature = this.ws.getRandomFeature();
     var node_filter = this.isNotCachedNodeFilter(feature, this.time);
     if (feature.prototype.targetType == 'group') {
-      target = this.ws.getRandomGroup(scene, { not_empty: true, filter: node_filter });
+      target = this.ws.getRandomGroup(scene, { filter: node_filter });
       if (!target) return;
       //var hyp = this.ws.getRandomHypothesis({type: 'object'});
       //target = this.ws.getOrCreateGroupBySelector(hyp.sel, scene);

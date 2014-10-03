@@ -249,6 +249,8 @@ Workspace.prototype.arraysIdentical = function(a1, a2) {
   return true;
 }
 
+/// Will not create an empty group (from a non-matching selector) but return
+/// null is this case.
 Workspace.prototype.getOrCreateGroupBySelector = function(sel, scene) {
   if (!scene) throw "missing scene argument";
   var group = this.getGroupBySelector(sel, scene);
@@ -256,7 +258,7 @@ Workspace.prototype.getOrCreateGroupBySelector = function(sel, scene) {
   // no group has this selector associated, look if there is a group with the
   // same objects in it as the selector would select
   group = sel.applyToScene(scene);
-  if (group.empty()) return;
+  if (group.empty()) return null;
   for (var i=0; i<scene.groups.length; i++) {
     if (this.arraysIdentical(scene.groups[i].objs, group.objs)) {
       scene.groups[i].selectors.push(sel);
@@ -278,8 +280,7 @@ Workspace.prototype.getRandomGroup = function(scene, options) {
   // get groups through selectors
   var hyp = this.getRandomHypothesis({filter: function(hyp) {
     var group = self.getOrCreateGroupBySelector(hyp.sel, scene);
-    return ( (!options.not_empty || !group.empty())
-          && (!options.filter || options.filter(group)));
+    return (group && (!options.filter || options.filter(group)));
   }});
   return this.getGroupBySelector(hyp.sel, scene);
 }
