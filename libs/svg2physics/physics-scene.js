@@ -62,7 +62,7 @@ PhysicsScene.prototype.step = function(dt) {
 		this.forEachBody(function(body) {
 		  for (var f = body.m_fixtureList; f; f = f.m_next) {
 		  	if (!f.m_proxy) {
-		  		console.log(body, fixture, 'has no m_proxy set. Creating it now...');
+		  		console.log(body, f, 'has no m_proxy set. Creating it now...');
       		f.CreateProxy(broadPhase, body.m_xf);
       	}
      	}
