@@ -3,6 +3,8 @@ var PI = PI || {};
 
 /*
 Version 0.4.3
+- bugfixes
+- separate values for initial and consequitive attention update for selectors
 
 Version 0.4.2
 - We don't use solution codelets anymore. Instead, we keep track of which
@@ -51,37 +53,38 @@ PI.v0_4_3 = (function() {
               , { klass: TouchRelationship,    initial_activation: high }
               , { klass: CircleAttribute,      initial_activation: mid }
               , { klass: SquareAttribute,      initial_activation: mid }
-              // , { klass: TriangleAttribute,    initial_activation: mid }
-              // , { klass: RectangleAttribute,   initial_activation: mid }
-              // , { klass: ShapeAttribute,       initial_activation: high }
+                // , { klass: TriangleAttribute,    initial_activation: mid }
+                // , { klass: RectangleAttribute,   initial_activation: mid }
+                // , { klass: ShapeAttribute,       initial_activation: high }
               , { klass: CountAttribute,       initial_activation: mid }
               , { klass: CloseAttribute,       initial_activation: mid }
-              // , { klass: CloseRelationship,    initial_activation: mid }
+                // , { klass: CloseRelationship,    initial_activation: mid }
               , { klass: SmallAttribute,       initial_activation: mid }
-              // , { klass: LargeAttribute,       initial_activation: mid }
+                // , { klass: LargeAttribute,       initial_activation: mid }
               , { klass: TopMostAttribute,     initial_activation: mid }
-              // , { klass: LeftMostAttribute,    initial_activation: low }
-              // , { klass: RightMostAttribute,   initial_activation: low }
-              // , { klass: FarRelationship,      initial_activation: low }
-              // , { klass: FarAttribute,         initial_activation: low }
+                // , { klass: LeftMostAttribute,    initial_activation: low }
+                // , { klass: RightMostAttribute,   initial_activation: low }
+                // , { klass: FarRelationship,      initial_activation: low }
+                // , { klass: FarAttribute,         initial_activation: low }
               , { klass: OnTopRelationship,    initial_activation: low }
               , { klass: OnGroundAttribute,    initial_activation: low }
               , { klass: RightRelationship,    initial_activation: low }
               , { klass: LeftRelationship,     initial_activation: low }
-              // , { klass: AboveRelationship,    initial_activation: low }
-              // , { klass: BelowRelationship,    initial_activation: low }
-              // , { klass: BesideRelationship,   initial_activation: low }
-              // , { klass: BottomAttribute,      initial_activation: low }
-              // , { klass: TopAttribute,         initial_activation: low }
+                // , { klass: AboveRelationship,    initial_activation: low }
+                // , { klass: BelowRelationship,    initial_activation: low }
+                // , { klass: BesideRelationship,   initial_activation: low }
+                // , { klass: BottomAttribute,      initial_activation: low }
+                // , { klass: TopAttribute,         initial_activation: low }
               , { klass: TouchAttribute,       initial_activation: low }
               , { klass: SupportsRelationship, initial_activation: low }
               , { klass: HitsRelationship,     initial_activation: low }
-              // , { klass: GetHitsRelationship,     initial_activation: low }
+               // , { klass: GetHitsRelationship,     initial_activation: low }
               , { klass: CollidesRelationship, initial_activation: low }
               , { klass: LeftAttribute,        initial_activation: low }
               , { klass: RightAttribute,       initial_activation: low }
               , { klass: MovableUpAttribute,   initial_activation: low }
               ]
+    // features: [ { klass: CountAttribute,       initial_activation: mid } ]
     // features: [ { klass: SquareAttribute,   initial_activation: low }
     //           , { klass: TriangleAttribute, initial_activation: low } ]
   , pres_mode: 'interleaved-sim-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
@@ -116,17 +119,19 @@ PI.v0_4_3 = (function() {
     }
     , obj: {
         initial: 0.1
-      , from_sel: 1.0 // scale that is applied when spreading attention from new selectors to objects
+      , from_sel_scale: 0.2 // scale that is applied when spreading attention from new selectors to objects
       , attr_boost: { // only apply at time "start"
           moves: 0.3
-        , top_most: 0.1 // often will get boosted via sel.single, too
-        , left_most: 0.1
-        , right_most: 0.1
+        // , top_most: 0.1 // this & below: often will get boosted via sel.single, too
+        // , single: 0.1
+        // , left_most: 0.1
+        // , right_most: 0.1
         }
       , rel_boost: { // only apply at time "start"
           hits: [0.2, 0]
         , collides: [0.1, 0.1]
         }
+      , single_boost: 0.2
       }
     }
   };

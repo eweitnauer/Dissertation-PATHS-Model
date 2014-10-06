@@ -23,29 +23,21 @@ AttrCodelet.prototype.isActive = function(percept) {
   return percept.get_activity() > pbpSettings.activation_threshold;
 }
 
-AttrCodelet.prototype.perceiveAttr = function(target, feature) {
-  var time = (feature.prototype.constant ? 'start' : this.time);
-  percept = target.get(feature.prototype.key, {time: time});
-  if (this.isActive(percept)) {
-    this.spawnNewSelCodelet(percept, time);
-  }
+AttrCodelet.prototype.perceiveAttr = function(target, feature, time) {
+  return target.get(feature.prototype.key, {time: time});
 }
 
-AttrCodelet.prototype.perceiveRel = function(scene, target_obj, feature) {
+AttrCodelet.prototype.perceiveRel = function(scene, target_obj, feature, time) {
   if (scene.objs.length < 2) {
     this.ws.blockFeature(feature);
     return;
   }
-  var time = (feature.prototype.constant ? 'start' : this.time);
   var key = feature.prototype.key;
   var other = this.ws.getRandomObject(scene, {filter: function(obj) {
     return obj !== target_obj && !target_obj.getFromCache(key, { other: obj, time: time });
   }});
   if (!other) return;
-  percept = target_obj.get(key, {other: other, time: time});
-  if (percept && percept.get_activity() > pbpSettings.activation_threshold) {
-    this.spawnNewSelCodelet(percept, time);
-  }
+  return target_obj.get(key, {other: other, time: time});
 }
 
 AttrCodelet.prototype.shouldPickFeatureFirst = function() {
@@ -73,7 +65,9 @@ AttrCodelet.prototype.isNotCachedNodeFilter = function(feature, time) {
   var key = feature.prototype.key;
   time = (feature.prototype.constant ? 'start' : time);
   if (feature.prototype.arity === 1)
-    return function(node) { return !node.getFromCache(key, { time: time }) }
+    return function(node) {
+      return !node.getFromCache(key, { time: time })
+    }
   // we have a relationship, check whether all relationships of given type
   // between node and all the other objects in the scene have been perceived
   return function(node) {
@@ -91,45 +85,24 @@ AttrCodelet.prototype.run = function() {
     var node_filter = this.isNotCachedNodeFilter(feature, this.time);
     if (feature.prototype.targetType == 'group') {
       target = this.ws.getRandomGroup(scene, { filter: node_filter });
-      if (!target) return;
-      //var hyp = this.ws.getRandomHypothesis({type: 'object'});
-      //target = this.ws.getOrCreateGroupBySelector(hyp.sel, scene);
-      //if (target.empty()) return;
-    } else if (feature.prototype.targetType == 'obj') {
+    } else {
       target = this.ws.getRandomObject(scene, { filter: node_filter });
-    } else throw "unknown target type";
-    if (!target) return; // TODO: disencourage perception
-
-    if (feature.prototype.arity == 1) this.perceiveAttr(target, feature);
-    else if (feature.prototype.arity == 2) this.perceiveRel(scene, target, feature);
-    else throw "only features with arity 1 or 2 are supported";
+    }
   }
-
   else { // pick obj or group first
     var pick_group = this.shouldPickGroup();
     target = pick_group ? this.ws.getRandomGroup(scene) : this.ws.getRandomObject(scene);
     if (!target) return;
     feature = this.ws.getRandomFeature({ type: pick_group ? 'group' : 'obj'
         , filter: this.isNotCachedFeatureFilter(target, this.time) });
-    if (!feature) return; // TODO: disencourage perception
-
-    if (feature.prototype.arity == 1) this.perceiveAttr(target, feature);
-    else if (feature.prototype.arity == 2) this.perceiveRel(scene, target, feature);
-    else throw "only features with arity 1 or 2 are supported";
   }
 
-  // var target;
-  // var feature = this.ws.getRandomFeature();
-  // var scene = this.ws.getRandomScene();
-  // if (feature.prototype.targetType == 'group') {
-  //   var hyp = this.ws.getRandomHypothesis({type: 'object'});
-  //   target = this.ws.getOrCreateGroupBySelector(hyp.sel, scene);
-  //   if (target.empty()) return; // TODO: decrease selector attention
-  // } else if (feature.prototype.targetType == 'obj') {
-  //   target = this.ws.getRandomObject(scene);
-  // } else throw "unknown target type";
-
-  // if (feature.prototype.arity == 1) this.perceiveAttr(target, feature);
-  // else if (feature.prototype.arity == 2) this.perceiveRel(scene, target, feature);
-  // else throw "only features with arity 1 or 2 are supported";
+  if (!feature || !target) return; // TODO: disencourage perception
+  var time = (feature.prototype.constant ? 'start' : this.time);
+  var percept = (feature.prototype.arity == 1
+                ? this.perceiveAttr(target, feature, time)
+                : this.perceiveRel(scene, target, feature, time));
+  if (percept && this.isActive(percept)) {
+    this.spawnNewSelCodelet(percept, time);
+  }
 }

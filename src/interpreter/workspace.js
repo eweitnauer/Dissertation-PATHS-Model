@@ -219,7 +219,7 @@ Workspace.prototype.blockHypothesis = function(sol) {
   this.log(3, 'blocking solution hypothesis', sol.describe());
   var old_val = this.attentionNet.getAttentionValue(sol);
   this.attentionNet.setAttentionValue(sol, 0);
-  this.spreadAttentionFromHypothesisToFeatures(sol, -old_val);
+  this.spreadAttentionFromHypothesisToFeatures(sol, -old_val*0.5);
 }
 
 Workspace.prototype.blockFeature = function(feature) {

@@ -45,10 +45,12 @@ CheckHypothesisCodelet.prototype.run = function() {
     var self = this;
     var d_att = this.getAttFromHypothesis(hyp);
     this.ws.changeAttention(hyp, d_att);
-    var hyp_att = this.ws.getAttention(hyp)
-    if (options.attention.obj.from_sel) {
+    //var hyp_att = this.ws.getAttention(hyp)
+    if (options.attention.obj.from_sel_scale) {
+      d_att *= options.attention.obj.from_sel_scale;
+      if (hyp.selects_single_objs) d_att += options.attention.obj.single_boost;
       selected_groups.forEach(function(group) {
-        self.ws.changeAttention(group, hyp_att * options.attention.obj.from_sel);
+        self.ws.changeAttention(group, d_att);
       });
     }
   }

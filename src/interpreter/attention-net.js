@@ -20,9 +20,9 @@ AttentionNet = function() {
 
 /// In google, search for 1/(1+exp(8*(0.5-x))) from -0.1 to 1.1
 AttentionNet.prototype.sigmoid = function(x) {
-	return x;
-	//if (x===0) return 0;
-	//return 1/(1+Math.exp(8*(0.5-x)));
+	//return x;
+	if (x===0) return 0;
+	return 1/(1+Math.exp(8*(0.5-x)));
 }
 
 /// Clamps all attention values of the passed type ('features',

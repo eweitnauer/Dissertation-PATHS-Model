@@ -50,8 +50,10 @@ Selector.prototype.forEachFeature = function(fn) {
 		fn(pbpSettings.obj_attrs[this.obj_attrs[i].key]);
 	for (i=0; i<this.grp_attrs.length; i++)
 		fn(pbpSettings.group_attrs[this.grp_attrs[i].key]);
-	for (i=0; i<this.rels.length; i++)
+	for (i=0; i<this.rels.length; i++) {
 		fn(pbpSettings.obj_rels[this.rels[i].key]);
+		this.rels[i].other_sel.forEachFeature(fn);
+	}
 }
 
 /** Returns a new selector that has all attributes from this and the passed selector.

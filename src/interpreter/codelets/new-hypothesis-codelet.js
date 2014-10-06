@@ -40,6 +40,17 @@ NewHypothesisCodelet.prototype.createRelHyp = function() {
   return new Solution((new Selector()).use_rel(other_sel.sel, this.percept, this.time));
 }
 
+NewHypothesisCodelet.prototype.mergeBaseSelector = function(hyp) {
+  var g = this.percept.group;
+  if (g.objs.length < g.scene_node.objs.length) {
+    this.ws.log(4, 'perceived group feature based on selector result');
+    var base_hyp = this.ws.getRandomHypothesis({ filter: function(sol) {
+      return g.selectors.indexOf(sol.sel) !== -1;
+    }});
+    hyp.sel = hyp.sel.mergedWith(base_hyp.sel);
+  }
+}
+
 /**
  * Create hypothesis with the passed percept and apply it to the current
  * scenes. Then add it to the active hypotheses if it matches all scenes
@@ -51,17 +62,8 @@ NewHypothesisCodelet.prototype.run = function() {
   var hyp = this.hypothesis;
   if (!hyp) {
     if (this.percept.arity === 1) hyp = this.createAttrHyp();
-    else if (this.percept.arity === 2) hyp = this.createRelHyp();
-    var g = this.percept.group;
-    if (g) {
-      // pick a non blank selector from the groups selector list
-      this.ws.log(4, 'perceived group feature based on selector result');
-      var sol = this.ws.getRandomHypothesis({ filter: function(sol) {
-        return !sol.sel.blank() && g.selectors.indexOf(sol.sel) !== -1;
-      }});
-      if (!sol) return;
-      hyp.sel = hyp.sel.mergedWith(sol.sel);
-    }
+    else hyp = this.createRelHyp();
+    if (hyp && this.percept.targetType === 'group') this.mergeBaseSelector(hyp);
   }
   if (!hyp) return;
 
