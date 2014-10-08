@@ -13,6 +13,7 @@ Solution = function(selector, main_side, mode) {
 	this.rchecks = 0;
 	this.lmatches = 0;
 	this.rmatches = 0;
+	this.scene_pair_count = 8;
 	this.selects_single_objs = true;
 }
 
@@ -26,9 +27,9 @@ Solution.prototype.wasMatchedAgainst = function(scene_pair_id) {
 	return this.matchedAgainst.indexOf(scene_pair_id) !== -1;
 }
 
-Solution.prototype.isSolution = function(scene_pair_count) {
-	return ( this.rmatches === 0 && this.lmatches == scene_pair_count
-	      || this.lmatches === 0 && this.rmatches == scene_pair_count);
+Solution.prototype.isSolution = function() {
+	return ( this.rmatches === 0 && this.lmatches == this.scene_pair_count
+	      || this.lmatches === 0 && this.rmatches == this.scene_pair_count);
 }
 
 Solution.prototype.checkScenePair = function(pair, pair_id) {
@@ -44,9 +45,10 @@ Solution.prototype.checkScenePair = function(pair, pair_id) {
   });
   this.matchedAgainst.push(pair_id);
 
-  if (this.lmatches+this.rmatches === this.lchecks+this.rchecks) this.setMainSide('both');
-  else if (this.lmatches === 0 && this.rmatches === this.rchecks) this.setMainSide('right');
+  if (this.lmatches === 0 && this.rmatches === this.rchecks) this.setMainSide('right');
   else if (this.rmatches === 0 && this.lmatches === this.lchecks) this.setMainSide('left');
+  else if (this.lmatches > 0 && this.rmatches === this.rchecks) this.setMainSide('both');
+  else if (this.rmatches > 0 && this.lmatches === this.lchecks) this.setMainSide('both');
   else this.setMainSide('fail');
 
   return selected_groups;
