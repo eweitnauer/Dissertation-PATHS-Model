@@ -79,6 +79,10 @@ Solution.prototype.mergedWith = function(other) {
 	return new Solution(this.sel.mergedWith(other.sel), side, mode);
 }
 
+Solution.prototype.clone = function() {
+	return new Solution(this.sel.clone(), this.main_side, this.mode);
+}
+
 /// Returns a group node that contains all objects that match the solution
 /// in the passed scene.
 Solution.prototype.applyToScene = function(scene) {

@@ -83,8 +83,10 @@ PI.v0_4_3 = (function() {
               , { klass: LeftAttribute,        initial_activation: low }
               , { klass: RightAttribute,       initial_activation: low }
               , { klass: MovableUpAttribute,   initial_activation: low }
-              ]
-    // features: [ { klass: CountAttribute,       initial_activation: mid } ]
+             ]
+    // features: [ { klass: SquareAttribute,       initial_activation: mid }
+    //           , { klass: SupportsRelationship, initial_activation: low }
+    //           , { klass: CountAttribute,       initial_activation: mid } ]
     // features: [ { klass: SquareAttribute,   initial_activation: low }
     //           , { klass: TriangleAttribute, initial_activation: low } ]
   , pres_mode: 'interleaved-sim-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
@@ -97,7 +99,7 @@ PI.v0_4_3 = (function() {
                       // picked first during perception
     }
   , attention:
-    { time: { start: 0.67, end: 0.33 }
+    { time: { start:1, end:0 }//{ start: 0.67, end: 0.33 }
     , sel: {
         initial: // initial attention for selectors based on first match
         {

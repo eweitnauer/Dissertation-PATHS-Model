@@ -73,6 +73,16 @@ Selector.prototype.mergedWith = function(other_sel) {
 	return sel;
 }
 
+Selector.prototype.clone = function() {
+	var sel = new Selector(this.unique);
+	var add_attr = function(attr) { sel.add_attr(attr) };
+	var add_rel = function(rel) { sel.add_rel(rel) };
+	this.obj_attrs.forEach(add_attr);
+	this.grp_attrs.forEach(add_attr);
+	this.rels.forEach(add_rel);
+	return sel;
+}
+
 /// Will extract the attribute's key, label, activation and constant property. Pass the time
 /// at which the attribute values should match (default: 'start').
 Selector.prototype.use_attr = function(attr, time) {
@@ -242,6 +252,11 @@ Selector.AttrMatcher = function(key, label, active, time, type) {
 	this.time = time || 'start';
 }
 
+Selector.AttrMatcher.prototype.clone = function() {
+	return new Selector.AttrMatcher( this.key, this.label, this.active
+		                             , this.time, this.type);
+}
+
 /// Will extract the attribute's key, label, activation and constant property. Pass the time
 /// at which the attribute values should match (default: 'start').
 Selector.AttrMatcher.fromAttribute = function(attr, time) {
@@ -282,6 +297,11 @@ Selector.RelMatcher = function(other_sel, key, label, active, time) {
 	this.constant = pbpSettings.obj_rels[key].prototype.constant;
 	this.symmetric = pbpSettings.obj_rels[key].prototype.symmetric;
 	this.time = time || 'start';
+}
+
+Selector.RelMatcher.prototype.clone = function() {
+	return new Selector.RelMatcher( this.other_sel, this.key, this.label
+		                            , this.active, this.time);
 }
 
 /// Returns true if the other RelMatcher is the same as this one.
