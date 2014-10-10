@@ -12,15 +12,34 @@ CheckHypothesisCodelet.prototype.describe = function() {
 CheckHypothesisCodelet.prototype.side_map = { 'left' : 'one_side', 'right': 'one_side'
   , 'both': 'both_sides', 'fail': 'fail' };
 
-CheckHypothesisCodelet.prototype.getAttFromHypothesis = function(hyp) {
+CheckHypothesisCodelet.prototype.getDeltaAttForHypothesis = function(hyp, specificity) {
   var val;
   if (hyp.matchedAgainst.length === 1) val = this.ws.options.attention.sel.initial;
   else val = this.ws.options.attention.sel.update;
 
   val = val[this.side_map[hyp.main_side]];
-  if (this.ws.options.attention.sel.single && hyp.selects_single_objs)
-    val += this.ws.options.attention.sel.single;
+  val += specificity * this.ws.options.attention.sel.specificity;
+  console.log('sel specificity boost', specificity * this.ws.options.attention.sel.specificity);
   return val;
+}
+
+CheckHypothesisCodelet.prototype.getSpecificity = function(scenes, groups) {
+  var sum = 0;
+  for (var i=0; i<groups.length; i++) {
+    if (groups[i].empty()) continue;
+    sum += 1-groups[i].objs.length/scenes[i].objs.length;
+  }
+  return sum/scenes.length;
+}
+
+CheckHypothesisCodelet.prototype.updateAttention = function(hyp, specificity, sel_groups) {
+  var options = this.ws.options;
+  var d_att = this.getDeltaAttForHypothesis(hyp, specificity);
+  this.ws.changeAttention(hyp, d_att);
+  d_att *= options.attention.obj.from_sel_scale;
+  for (var i=0; i<sel_groups.length; i++) {
+    this.ws.changeAttention(sel_groups[i], d_att);
+  }
 }
 
 CheckHypothesisCodelet.prototype.run = function() {
@@ -37,21 +56,15 @@ CheckHypothesisCodelet.prototype.run = function() {
   }
   if (!hyp) return;
 
-  var selected_groups = hyp.checkScenePair( this.ws.getActiveScenePair()
-                                          , this.ws.scene_pair_index);
-  if (hyp.main_side === 'fail') this.ws.blockHypothesis(hyp);
-  else {
-    if (hyp.isSolution(this.ws.scene_pair_sequence.length)) this.ws.addSolution(hyp);
-    var self = this;
-    var d_att = this.getAttFromHypothesis(hyp);
-    this.ws.changeAttention(hyp, d_att);
-    //var hyp_att = this.ws.getAttention(hyp)
-    if (options.attention.obj.from_sel_scale) {
-      d_att *= options.attention.obj.from_sel_scale;
-      if (hyp.selects_single_objs) d_att += options.attention.obj.single_boost;
-      selected_groups.forEach(function(group) {
-        self.ws.changeAttention(group, d_att);
-      });
-    }
+  var scenes = this.ws.getActiveScenePair();
+  var selected_groups = hyp.checkScenePair(scenes, this.ws.scene_pair_index);
+  if (hyp.main_side === 'fail') {
+    this.ws.blockHypothesis(hyp);
+    return;
   }
+
+  if (hyp.isSolution(this.ws.scene_pair_sequence.length)) this.ws.addSolution(hyp);
+
+  var specificity = this.getSpecificity(scenes, selected_groups);
+  this.updateAttention(hyp, specificity, selected_groups);
 }

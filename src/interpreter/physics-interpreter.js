@@ -107,7 +107,7 @@ PI.v0_4_3 = (function() {
         , both_sides: 0.2
         , fail: 0
         }
-      , single: 0.05  // raise attention to selectors that match only a single objects per scene
+      , specificity: 0.1  // raise attention to selectors that match less than all objects per scene
       , update:       // raise attention according to which scenes where matched in a scene pair
         {
           one_side: 0.15
@@ -133,7 +133,6 @@ PI.v0_4_3 = (function() {
           hits: [0.2, 0]
         , collides: [0.1, 0.1]
         }
-      , single_boost: 0.2
       }
     }
   };

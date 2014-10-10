@@ -119,7 +119,7 @@ Workspace.prototype.changeAttention = function(thing, delta, min, max) {
   } else if (thing instanceof GroupNode) {
     var N = thing.objs.length;
     thing.objs.forEach(function(obj) {
-      self.attentionNet.addToAttentionValue(obj.object_node, delta, min, max);
+      self.attentionNet.addToAttentionValue(obj.object_node, delta/N, min, max);
     });
   } else if (thing instanceof ObjectNode) {
     self.attentionNet.addToAttentionValue(thing, delta, min, max);

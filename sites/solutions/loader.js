@@ -281,7 +281,7 @@ function setup_solve() {
     res = tester.run();
 
     for (p in problems) problems[p].svis.colorize_values(function(on) {
-      return on.object_node.getActivity();
+      return on.getActivity();
     });
   });
 }

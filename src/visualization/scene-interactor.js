@@ -16,7 +16,7 @@ var SceneInteractor = function(physics_scene, scene_node, svg) {
 	this.selected = [];
 	this.value_getter = null;
 	this.group_getter = null;
-	this.metric_color_scale = d3.scale.pow().exponent(1.5).domain([0, 100]).range(['silver', 'orange']);
+	this.metric_color_scale = d3.scale.pow().exponent(1.5).domain([0, 100]).range(['white', '#888']);
 	this.ordinal_color_scale = d3.scale.category10();
 	this.highlight_mode = 'values'; // 'values' or 'groups' or 'none'
 
@@ -258,7 +258,7 @@ SceneInteractor.prototype.addShape = function(container, shape) {
 	  	d3.event.stopPropagation();
 	  	if (d3.event.shiftKey) self.toggleSelection(d);
 	  	else self.selectShapes([d]);
-	  	if (self.value_getter) console.log(self.value_getter(d));
+	  	if (self.value_getter) console.log(self.value_getter(d.object_node));
 	  	console.log("obj=", d.object_node.describe());
 	  	obj = d;
 	  });
@@ -273,8 +273,16 @@ SceneInteractor.prototype.addText = function(container) {
     .text(function (d) { return d.id });
 }
 
+SceneInteractor.prototype.updateScales = function() {
+	if (this.value_getter && this.highlight_mode == 'values') {
+		var ext = d3.extent(this.sn.objs, this.value_getter);
+  	this.metric_color_scale.domain([ext[0]/2, (100+ext[1])/2]);
+	}
+}
+
 SceneInteractor.prototype.updateScene = function() {
 	if (!this.drawing) return;
+  this.updateScales();
 	var thiz = this;
 
 	// select
@@ -299,11 +307,11 @@ SceneInteractor.prototype.updateScene = function() {
 	gs.attr('transform', function (d) { return "translate(" + d.x + "," +  d.y + ")" });
 	gs.select('.shape-container-rot').attr('transform', function (d) { return "rotate(" + d.rot*180/Math.PI + ")" });
 	gs.select('.shape')
-	  .classed('unseen', function (d) { return d.obj_node === undefined });
+	  .classed('unseen', function (d) { return d.object_node === undefined });
 	if (this.highlight_mode == 'values' && this.value_getter) {
 		gs.select('.shape')
 		  .filter(function(d) {return d.movable})
-			.style('fill', function (d) { return thiz.metric_color_scale(thiz.value_getter(d)) })
+			.style('fill', function (d) { return thiz.metric_color_scale(thiz.value_getter(d.object_node)) })
 	} else if (this.highlight_mode == 'groups' && this.group_getter) {
 		gs.select('.shape')
 			.filter(function(d) {return d.movable})

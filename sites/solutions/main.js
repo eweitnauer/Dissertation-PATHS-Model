@@ -117,9 +117,9 @@ function option_callback(d) {
     var opts = {};
     d.opts.forEach(function (o) { if (o.checked) opts[o.name] = true });
     if (d.name == 'attention') {
-      p.svis.colorize_values(function(shape) {
-        if (!tester || !tester.ws) return 0;
-        return tester.ws.attentionNet.getAttentionValue(shape.object_node) * 100;
+      p.svis.colorize_values(function(on) {
+        if (!on || !tester || !tester.ws) return 0;
+        return tester.ws.attentionNet.getAttentionValue(on) * 100;
       });
       p.svis.draw();
     } else if (d.name == 'groups') {
@@ -138,7 +138,7 @@ function option_callback(d) {
       if (opts.moves) vals.push(get_movement_attention(p.sn));
       if (opts.single) vals.push(get_single_attention(p.sn));
       vals = mean_map(vals);
-      p.svis.colorize_values(function(vals) { return function(shape) { return vals[shape.id] }}(vals));
+      p.svis.colorize_values(function(vals) { return function(on) { return vals[on.obj.id] }}(vals));
     } else if (d.name == 'uniqueness') {
       var vals = [];
       if (opts.shape) vals.push(get_uniqueness(group_by_shape(p.sn.objs)));
@@ -146,7 +146,7 @@ function option_callback(d) {
       if (opts.moves) vals.push(get_uniqueness(group_by_attributes(p.sn.objs, ['moves'])));
       if (opts.spatial) vals.push(get_uniqueness(group_by_distance(p.sn)));
       vals = mean_map(vals);
-      p.svis.colorize_values(function(vals) { return function(shape) { return vals[shape.id] }}(vals));
+      p.svis.colorize_values(function(vals) { return function(on) { return vals[on.obj.id] }}(vals));
     }
   }
 }
