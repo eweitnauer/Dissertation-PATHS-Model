@@ -21,7 +21,7 @@ CombineHypothesisCodelet.prototype.run = function() {
   });
   if (!hyp1) return;
   var hyp2 = this.ws.getRandomHypothesis({no_blank: true, filter:
-    function(sol) { return sol !== hyp1 && sol.main_side == 'both' }
+    function(sol) { return sol !== hyp1 && sol.main_side === 'both' }
   });
   if (!hyp2) return;
   var hyp12;
