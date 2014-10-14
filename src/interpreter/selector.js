@@ -369,6 +369,7 @@ Selector.RelMatcher.prototype.matches = function(node, others) {
 
 	var matching_others = others.filter(match_fn);
 
+	if (!this.active) return matching_others.length === others.length;
 	if (this.other_sel.unique && matching_others.length != 1) return false;
 	return matching_others.length > 0;
 }

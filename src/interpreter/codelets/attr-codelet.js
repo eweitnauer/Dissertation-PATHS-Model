@@ -102,7 +102,7 @@ AttrCodelet.prototype.run = function() {
   var percept = (feature.prototype.arity == 1
                 ? this.perceiveAttr(target, feature, time)
                 : this.perceiveRel(scene, target, feature, time));
-  if (percept && this.isActive(percept)) {
+  if (percept) { // && this.isActive(percept)) {
     this.spawnNewSelCodelet(percept, time);
   }
 }

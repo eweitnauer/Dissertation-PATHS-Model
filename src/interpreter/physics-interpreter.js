@@ -99,7 +99,7 @@ PI.v0_4_3 = (function() {
                       // picked first during perception
     }
   , attention:
-    { time: { start:1, end:0 }//{ start: 0.67, end: 0.33 }
+    { time: { start: 0.67, end: 0.33 }//{ start: 0.67, end: 0.33 }
     , sel: {
         initial: // initial attention for selectors based on first match
         {
