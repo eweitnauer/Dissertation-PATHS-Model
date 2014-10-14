@@ -16,6 +16,7 @@ AttentionNet = function() {
 	this.objects = [];
 	this.objects_by_scene = null; // internal cache
 	this.attention_values = new WeakMap();
+	this.cps = 15; // complexity penalty steepness
 }
 
 /// In google, search for 1/(1+exp(8*(0.5-x))) from -0.1 to 1.1
@@ -23,6 +24,17 @@ AttentionNet.prototype.sigmoid = function(x) {
 	//return x;
 	if (x===0) return 0;
 	return 1/(1+Math.exp(8*(0.5-x)));
+}
+
+AttentionNet.prototype.setComplexityPenaltySteepness = function(val) {
+	this.cps = val;
+}
+
+/// google: plot 1-1/(1+exp(15*(0.25-x/10)))  from 0 to 10
+AttentionNet.prototype.getPosteriori = function(sol) {
+	if (sol instanceof Solution)
+		return 1-1/(1+Math.exp(this.cps*(0.25-sol.sel.getComplexity()/10)));
+	else return 1;
 }
 
 /// Clamps all attention values of the passed type ('features',
@@ -111,7 +123,7 @@ AttentionNet.prototype.addElement = function(type, element, val) {
 /// Can throw "unknown element" exception.
 AttentionNet.prototype.getAttentionValue = function(el) {
 	if (!this.attention_values.has(el)) throw "unknown element";
-	return this.sigmoid(this.attention_values.get(el));
+	return this.sigmoid(this.attention_values.get(el)) * this.getPosteriori(el);
 }
 
 /// Can throw "unknown element" exception.

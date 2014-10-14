@@ -114,6 +114,7 @@ PI.v0_4_3 = (function() {
         , both_sides: 0.05
         , fail: 0
         }
+      , complexity_penalty_steepness: 20 // posteriori is 1-1/(1+exp(cps*(0.25-complexity/10)))
       }
     , feature: {
         initial: 0.1
@@ -139,6 +140,7 @@ PI.v0_4_3 = (function() {
 
   var createWorkspace = function(scenes, loglevel) {
     var ws = new Workspace(scenes, options, loglevel);
+    ws.attentionNet.setComplexityPenaltySteepness(options.attention.sel.complexity_penalty_steepness);
     ws.coderack.behaviors.push(new MainBehavior(ws.coderack));
     return ws;
   }

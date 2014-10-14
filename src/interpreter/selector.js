@@ -17,6 +17,8 @@ var Selector = function(unique) {
 	this.grp_attrs = [];	  // group attributes
 	this.rels = [];         // object relationships
 	this.unique = !!unique;
+
+	this.cached_complexity = null;
 }
 
 /// Can be 'object', 'group' or 'mixed'. A blank selector is of 'object' type.
@@ -25,6 +27,22 @@ Selector.prototype.getType = function() {
 	if (this.grp_attrs.length === 0) return 'object';
 	if (this.obj_attrs.length === 0 && this.rels.length === 0) return 'group';
 	return 'mixed';
+}
+
+Selector.prototype.getComplexity = function() {
+	var c = 0;
+	for (var i=0; i<this.obj_attrs.length; i++) {
+	  c += this.obj_attrs[i].getComplexity();
+	}
+	for (var i=0; i<this.grp_attrs.length; i++) {
+	  c += this.grp_attrs[i].getComplexity();
+	}
+	for (var i=0; i<this.rels.length; i++) {
+	  c += this.rels[i].getComplexity();
+	}
+	if (this.cached_complexity === null) this.cached_complexity = c;
+	if (this.cached_complexity !== c) throw "cached complexity got stale!";
+	return c;
 }
 
 /// Returns true if the selector has no matchers and will therefore match anything.
@@ -266,6 +284,13 @@ Selector.AttrMatcher.fromAttribute = function(attr, time) {
 	 ,time);
 }
 
+Selector.AttrMatcher.prototype.getComplexity = function() {
+	var c = 1;
+	if (this.time !== 'start') c++;
+	if (!this.active) c++;
+	return c;
+}
+
 /// Returns true if the other AttrMatcher is the same as this one.
 Selector.AttrMatcher.prototype.equals = function(other) {
 	return (this.key === other.key && this.label === other.label &&
@@ -302,6 +327,14 @@ Selector.RelMatcher = function(other_sel, key, label, active, time) {
 Selector.RelMatcher.prototype.clone = function() {
 	return new Selector.RelMatcher( this.other_sel, this.key, this.label
 		                            , this.active, this.time);
+}
+
+Selector.RelMatcher.prototype.getComplexity = function() {
+	var c = 1;
+	if (this.time !== 'start') c++;
+	if (!this.active) c++;
+	c += this.other_sel.getComplexity();
+	return c;
 }
 
 /// Returns true if the other RelMatcher is the same as this one.
