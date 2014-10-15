@@ -19,7 +19,6 @@ CheckHypothesisCodelet.prototype.getDeltaAttForHypothesis = function(hyp, specif
 
   val = val[this.side_map[hyp.main_side]];
   val += specificity * this.ws.options.attention.sel.specificity;
-  console.log('sel specificity boost', specificity * this.ws.options.attention.sel.specificity);
   return val;
 }
 
@@ -39,6 +38,15 @@ CheckHypothesisCodelet.prototype.updateAttention = function(hyp, specificity, se
   d_att *= options.attention.obj.from_sel_scale;
   for (var i=0; i<sel_groups.length; i++) {
     this.ws.changeAttention(sel_groups[i], d_att);
+  }
+}
+
+CheckHypothesisCodelet.prototype.updateObjectSelectorArrays = function(groups, sel) {
+  for (var i=0; i<groups.length; i++) {
+    for (var j=0; j<groups[i].objs.length; j++) {
+      var on = groups[i].objs[j].object_node;
+      on.selectors.push(sel); // in principle, no need to check for duplicates
+    }
   }
 }
 
@@ -62,6 +70,7 @@ CheckHypothesisCodelet.prototype.run = function() {
     this.ws.blockHypothesis(hyp);
     return;
   }
+  this.updateObjectSelectorArrays(selected_groups, hyp.sel);
 
   if (hyp.isSolution(this.ws.scene_pair_sequence.length)) this.ws.addSolution(hyp);
 

@@ -6,6 +6,7 @@ ObjectNode = function(scene_node, obj) {
 	this.obj = obj; obj.object_node = this;
   this.scene_node = scene_node;
 	this.times = {};
+  this.selectors = []; // selectors that match this object
 }
 
 /// list of all possible object attributes
