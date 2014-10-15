@@ -262,7 +262,7 @@ Workspace.prototype.getOrCreateGroupBySelector = function(sel, scene) {
   for (var i=0; i<scene.groups.length; i++) {
     if (this.arraysIdentical(scene.groups[i].objs, group.objs)) {
       if (scene.groups[i].selectors.some(function(ssel) { return ssel.equals(sel) })) {
-        throw "about to insert double selector";
+        throw "I won't insert an existing selector";
       }
       scene.groups[i].selectors.push(sel);
       return scene.groups[i];

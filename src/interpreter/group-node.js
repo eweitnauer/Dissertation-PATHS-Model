@@ -7,8 +7,10 @@ GroupNode = function(scene_node, objs, selectors) {
   this.scene_node = scene_node;
   this.objs = objs || [];   // shapes
   this.times = {};
-  this.selectors = selectors ? Array.isArray(selectors) ? selectors.slice() : [selectors]
-                            : [new Selector()];
+  // selectors that select this group node:
+  this.selectors = selectors ? (Array.isArray(selectors) ? selectors.slice()
+                                                         : [selectors])
+                             : [new Selector()];
 }
 
 /// The ObjectNode will send 'perceived' and 'retrieved' events {feature, target}.
