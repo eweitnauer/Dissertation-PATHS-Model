@@ -126,6 +126,7 @@ PITester.prototype.clear_scenes = function() {
 		s.objs.forEach(function (o) {
 			o.times.start = {};
 			o.times.end = {};
+			o.selectors = [];
 		});
 	});
 }

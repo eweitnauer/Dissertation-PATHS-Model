@@ -100,7 +100,7 @@ Workspace.prototype.initAttentionNet = function() {
   var aNet = this.attentionNet, options = this.options;
 
   var blank_sol = new Solution(new Selector(), 'both');
-  aNet.addSolution(blank_sol);
+  this.addHypothesis(blank_sol);
 
   this.scenes.forEach(function (sn) {
     sn.objs.forEach(function (on) { aNet.addObject(on, options.attention.obj.initial) });
@@ -192,6 +192,7 @@ Workspace.prototype.getRandomHypothesis = function(options) {
 Workspace.prototype.addHypothesis = function(sol, val) {
   if (arguments.length === 1) val = 1.0;
   if (this.attentionNet.addSolution(sol, val)) {
+    sol.sel.solution = sol;
     this.log(3, 'added solution hypothesis', sol.describe());
     this.spreadAttentionFromHypothesisToFeatures(sol, val);
     return true;

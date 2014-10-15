@@ -195,7 +195,8 @@ AttentionNet.prototype.getRandomFeature = function(options) {
 
 /// Chooses a random object from the passed scene based on their attention values.
 /// Available options:
-/// no_blank (bool), type ('group' or 'object'), filter (function), pool (array)
+/// no_blank (bool), type ('group' or 'object'),
+/// filter (function), pool (array), main_side ('both', 'left', 'right', 'fail')
 AttentionNet.prototype.getRandomSolution = function(options) {
 	options = options || {};
 	var self = this;

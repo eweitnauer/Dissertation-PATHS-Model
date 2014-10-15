@@ -32,6 +32,14 @@ Solution.prototype.isSolution = function() {
 	      || this.lmatches === 0 && this.rmatches == this.scene_pair_count);
 }
 
+/// Returns whether combining this with the passed solution could in principle
+/// be a solution.
+Solution.prototype.compatibleWith = function(other) {
+	if (this.lmatches < this.lchecks && other.rmatches < other.rchecks) return false;
+	if (this.rmatches < this.rchecks && other.lmatches < other.lchecks) return false;
+	return true;
+}
+
 Solution.prototype.checkScenePair = function(pair, pair_id) {
   var self = this;
   var selected_groups = [];
