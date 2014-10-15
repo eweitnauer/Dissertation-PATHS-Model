@@ -177,11 +177,12 @@ AttentionNet.prototype.getRandomObject = function(scene, options) {
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
-/// Available options: type ('obj' or 'group'), filter (Feature->bool)
+/// Available options: type ('obj' or 'group'), filter (Feature->bool), pool (array)
 AttentionNet.prototype.getRandomFeature = function(options) {
 	options = options || {};
 	var self = this;
-	var features = this.features.filter(function(feature) {
+	var pool = options.pool || this.features;
+	var features = pool.filter(function(feature) {
 		return ( self.getAttentionValue(feature) > 0
 			   && (!options.type || feature.prototype.targetType === options.type)
 		     && (!options.filter || options.filter(feature)));
@@ -194,11 +195,12 @@ AttentionNet.prototype.getRandomFeature = function(options) {
 
 /// Chooses a random object from the passed scene based on their attention values.
 /// Available options:
-/// no_blank (bool), type ('group' or 'object'), filter (function)
+/// no_blank (bool), type ('group' or 'object'), filter (function), pool (array)
 AttentionNet.prototype.getRandomSolution = function(options) {
 	options = options || {};
 	var self = this;
-	var sols = this.solutions.filter(function(sol) {
+	var pool = options.pool || this.solutions;
+	var sols = pool.filter(function(sol) {
 		return (self.getAttentionValue(sol) > 0
 			&& (!options.no_blank || !sol.sel.blank())
 		  && (!options.type || sol.sel.getType() === options.type)
@@ -208,18 +210,4 @@ AttentionNet.prototype.getRandomSolution = function(options) {
 	return Random.pick_weighted(sols, function (sol) {
 		return self.getAttentionValue(sol);
 	});
-}
-
-/// Chooses a random object from the passed scene based on their attention values.
-AttentionNet.prototype.getRandomObjectOrSolution = function(scene) {
-	var elements = this.solutions.contact(scene.objs);
-	try {
-		return Random.pick_weighted(elements, function (el) {
-			if (!self.attention_values.has(el)) throw "unknown object";
-			return self.getAttentionValue(el);
-		});
-	} catch (e) {
-		if (!(e instanceof String)) throw e;
-		return null;
-	}
 }
