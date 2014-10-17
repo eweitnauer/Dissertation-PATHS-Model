@@ -7,7 +7,12 @@ var b2Body = Box2D.Dynamics.b2Body
    ,b2DistanceProxy = Box2D.Collision.b2DistanceProxy
    ,b2SimplexCache = Box2D.Collision.b2SimplexCache
    ,b2Distance = Box2D.Collision.b2Distance
-   ,b2Vec2 = Box2D.Common.Math.b2Vec2;
+   ,b2Vec2 = Box2D.Common.Math.b2Vec2
+   ,b2BodyDef = Box2D.Dynamics.b2BodyDef
+   ,b2FixtureDef = Box2D.Dynamics.b2FixtureDef
+   ,b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
+   ,b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
+   ,b2AABB = Box2D.Collision.b2AABB;
 
 b2Vec2.prototype.Transformed = function(xf) {
   return new b2Vec2(this.x*xf.R.col1.x + this.y*xf.R.col2.x + xf.position.x,

@@ -31,11 +31,15 @@ NewHypothesisCodelet.prototype.createAttrHyp = function() {
  */
 NewHypothesisCodelet.prototype.createRelHyp = function() {
   var other = this.percept.other.object_node;
-  var other_sel = this.ws.getRandomHypothesis({type: 'object'
-    ,filter: function(sol) {
-      return !sol.sel.hasRelationships() && sol.sel.matchesObject(other);
+  var other_sel = this.ws.getRandomHypothesis({
+    no_blank: true
+  , type: 'object'
+  , filter: function(sol) {
+      return !sol.sel.hasRelationships() && sol.selects_single_objs
+          && sol.sel.matchesObject(other)
     }
   });
+  if (!other_sel) other_sel = this.ws.blank_hypothesis;
   if (!other_sel) return null;
   return new Solution((new Selector()).use_rel(other_sel.sel, this.percept, this.time));
 }

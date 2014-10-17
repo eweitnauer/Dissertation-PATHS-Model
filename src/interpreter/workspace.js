@@ -101,6 +101,7 @@ Workspace.prototype.initAttentionNet = function() {
 
   var blank_sol = new Solution(new Selector(), 'both');
   this.addHypothesis(blank_sol);
+  this.blank_hypothesis = blank_sol;
 
   this.scenes.forEach(function (sn) {
     sn.objs.forEach(function (on) { aNet.addObject(on, options.attention.obj.initial) });
@@ -114,8 +115,11 @@ Workspace.prototype.initAttentionNet = function() {
 Workspace.prototype.changeAttention = function(thing, delta, min, max) {
   var self = this;
   if (thing instanceof Solution) {
+    var before = this.attentionNet.getAttentionValueNoSigmoid(thing);
     this.attentionNet.addToAttentionValue(thing, delta, min || 0, max || 1);
-    this.spreadAttentionFromHypothesisToFeatures(thing, delta);
+    var after = this.attentionNet.getAttentionValueNoSigmoid(thing);
+    console.log('speading att: ', after-before, '(was', delta +')');
+    this.spreadAttentionFromHypothesisToFeatures(thing, after-before);
   } else if (thing instanceof GroupNode) {
     var N = thing.objs.length;
     thing.objs.forEach(function(obj) {
@@ -194,7 +198,8 @@ Workspace.prototype.addHypothesis = function(sol, val) {
   if (this.attentionNet.addSolution(sol, val)) {
     sol.sel.solution = sol;
     this.log(3, 'added solution hypothesis', sol.describe());
-    this.spreadAttentionFromHypothesisToFeatures(sol, val);
+    var after = this.attentionNet.getAttentionValueNoSigmoid(sol);
+    this.spreadAttentionFromHypothesisToFeatures(sol, after);
     return true;
   }
   return false;
@@ -218,9 +223,9 @@ Workspace.prototype.spreadAttentionFromHypothesisToFeatures = function(sol, val)
 /// won't be added again.
 Workspace.prototype.blockHypothesis = function(sol) {
   this.log(3, 'blocking solution hypothesis', sol.describe());
-  var old_val = this.attentionNet.getAttentionValue(sol);
+  var old_val = this.attentionNet.getAttentionValueNoSigmoid(sol);
   this.attentionNet.setAttentionValue(sol, 0);
-  this.spreadAttentionFromHypothesisToFeatures(sol, -old_val*0.5);
+  this.spreadAttentionFromHypothesisToFeatures(sol, -old_val);
 }
 
 Workspace.prototype.blockFeature = function(feature) {

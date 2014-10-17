@@ -287,7 +287,7 @@ Selector.AttrMatcher.fromAttribute = function(attr, time) {
 Selector.AttrMatcher.prototype.getComplexity = function() {
 	var c = 1;
 	if (this.time !== 'start') c++;
-	if (!this.active) c++;
+	if (!this.active) c += 2;
 	return c;
 }
 
@@ -332,7 +332,7 @@ Selector.RelMatcher.prototype.clone = function() {
 Selector.RelMatcher.prototype.getComplexity = function() {
 	var c = 1;
 	if (this.time !== 'start') c++;
-	if (!this.active) c++;
+	if (!this.active) c += 2;
 	c += this.other_sel.getComplexity();
 	return c;
 }

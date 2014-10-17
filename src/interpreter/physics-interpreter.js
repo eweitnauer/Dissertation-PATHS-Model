@@ -53,8 +53,8 @@ PI.v0_4_3 = (function() {
               , { klass: TouchRelationship,    initial_activation: high }
               , { klass: CircleAttribute,      initial_activation: mid }
               , { klass: SquareAttribute,      initial_activation: mid }
-                // , { klass: TriangleAttribute,    initial_activation: mid }
-                // , { klass: RectangleAttribute,   initial_activation: mid }
+              , { klass: TriangleAttribute,    initial_activation: mid }
+              , { klass: RectangleAttribute,   initial_activation: mid }
                 // , { klass: ShapeAttribute,       initial_activation: high }
               , { klass: CountAttribute,       initial_activation: mid }
               , { klass: CloseAttribute,       initial_activation: mid }
@@ -85,8 +85,12 @@ PI.v0_4_3 = (function() {
               , { klass: MovableUpAttribute,   initial_activation: low }
              ]
     // features: [ { klass: SquareAttribute,       initial_activation: mid }
-    //           , { klass: SupportsRelationship, initial_activation: low }
-    //           , { klass: CountAttribute,       initial_activation: mid } ]
+    //           , { klass: RightRelationship,     initial_activation: low }
+    //           , { klass: CircleAttribute,       initial_activation: mid }]
+
+               // , { klass: SupportsRelationship, initial_activation: low }
+               // , { klass: CountAttribute,       initial_activation: mid }
+               // , { klass: CloseAttribute,       initial_activation: mid } ]
     // features: [ { klass: SquareAttribute,   initial_activation: low }
     //           , { klass: TriangleAttribute, initial_activation: low } ]
   , pres_mode: 'interleaved-sim-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
@@ -95,7 +99,7 @@ PI.v0_4_3 = (function() {
     {
       pick_group: 0.3 // probability that a group (vs. an object) is picked as
                       // perception target when the target is picked first
-    , pick_feature_fist: 0.5 // probability that the feature (vs. the target) is
+    , pick_feature_fist: 0.25 // probability that the feature (vs. the target) is
                       // picked first during perception
     }
   , attention:
@@ -107,7 +111,7 @@ PI.v0_4_3 = (function() {
         , both_sides: 0.2
         , fail: 0
         }
-      , specificity: 0.1  // raise attention to selectors that match less than all objects per scene
+      , specificity: 0.1 // raise attention to selectors that match less than all objects per scene
       , update:       // raise attention according to which scenes where matched in a scene pair
         {
           one_side: 0.15

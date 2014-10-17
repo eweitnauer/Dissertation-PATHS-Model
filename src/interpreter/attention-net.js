@@ -126,6 +126,11 @@ AttentionNet.prototype.getAttentionValue = function(el) {
 	return this.sigmoid(this.attention_values.get(el)) * this.getPosteriori(el);
 }
 
+AttentionNet.prototype.getAttentionValueNoSigmoid = function(el) {
+	if (!this.attention_values.has(el)) throw "unknown element";
+	return this.attention_values.get(el) * this.getPosteriori(el);
+}
+
 /// Can throw "unknown element" exception.
 AttentionNet.prototype.setAttentionValue = function(el, val) {
 	if (!this.attention_values.has(el)) throw "unknown element";
