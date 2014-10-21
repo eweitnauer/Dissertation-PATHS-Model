@@ -190,6 +190,18 @@ PITester.prototype.updateFeatureList = function(div_el) {
 	divs.exit().remove();
 }
 
+PITester.prototype.updateCodeletStats = function(div_el) {
+	var stats = this.ws ? d3.values(this.ws.coderack.stats) : [];
+
+	var ps = d3.select(div_el)
+	  .selectAll('.stat')
+	  .data(stats);
+
+	var enter = ps.enter().append('p').classed('stat', true);
+	ps.text(function(d) { return d.name + ': ' + d.success + ' ; ' + d.failure });
+	ps.exit().remove();
+}
+
 PITester.prototype.getActiveScenes = function() {
 	return this.ws ? this.ws.getActiveScenePair() : [];
 }

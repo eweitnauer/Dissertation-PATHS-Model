@@ -161,6 +161,7 @@ function after_step_callback() {
   updateFeatureList();
   updateActiveScenes();
   updateSolutionList();
+  updateCodeletStats();
   for (var p in problems) problems[p].svis.draw();
 }
 
@@ -178,6 +179,10 @@ function finish_callback() {
 
 function updateFeatureList() {
   tester.updateFeatureList(d3.select("#features").node());
+}
+
+function updateCodeletStats() {
+  tester.updateCodeletStats(d3.select('#codelet-stats').node());
 }
 
 function updateSolutionList() {
@@ -212,6 +217,7 @@ function createTester() {
   tester.after_step_callback = after_step_callback;
   tester.finish_callback = finish_callback;
   d3.select('#solutions ol').selectAll('li').remove();
+  d3.select('#codelet-stats').selectAll('*').remove();
   resetClicked();
 }
 
@@ -223,6 +229,7 @@ function resetClicked() {
   updateFeatureList();
   updateActiveScenes();
   updateSolutionList();
+  updateCodeletStats();
   for (var p in problems) {
     problems[p].svis.selectShapes([]);
     problems[p].svis.draw();

@@ -46,47 +46,47 @@ PI.v0_4_3 = (function() {
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = {
-    features: [
-                { klass: StabilityAttribute,   initial_activation: high }
-              , { klass: SingleAttribute,      initial_activation: high }
-              , { klass: MovesAttribute,       initial_activation: high }
-              , { klass: TouchRelationship,    initial_activation: high }
-              , { klass: CircleAttribute,      initial_activation: mid }
-              , { klass: SquareAttribute,      initial_activation: mid }
-              , { klass: TriangleAttribute,    initial_activation: mid }
-              , { klass: RectangleAttribute,   initial_activation: mid }
-                // , { klass: ShapeAttribute,       initial_activation: high }
-              , { klass: CountAttribute,       initial_activation: mid }
-              , { klass: CloseAttribute,       initial_activation: mid }
-                // , { klass: CloseRelationship,    initial_activation: mid }
-              , { klass: SmallAttribute,       initial_activation: mid }
-                // , { klass: LargeAttribute,       initial_activation: mid }
-              , { klass: TopMostAttribute,     initial_activation: mid }
-                // , { klass: LeftMostAttribute,    initial_activation: low }
-                // , { klass: RightMostAttribute,   initial_activation: low }
-                // , { klass: FarRelationship,      initial_activation: low }
-                // , { klass: FarAttribute,         initial_activation: low }
-              , { klass: OnTopRelationship,    initial_activation: low }
-              , { klass: OnGroundAttribute,    initial_activation: low }
-              , { klass: RightRelationship,    initial_activation: low }
-              , { klass: LeftRelationship,     initial_activation: low }
-                // , { klass: AboveRelationship,    initial_activation: low }
-                // , { klass: BelowRelationship,    initial_activation: low }
-                // , { klass: BesideRelationship,   initial_activation: low }
-                // , { klass: BottomAttribute,      initial_activation: low }
-                // , { klass: TopAttribute,         initial_activation: low }
-              , { klass: TouchAttribute,       initial_activation: low }
-              , { klass: SupportsRelationship, initial_activation: low }
-              , { klass: HitsRelationship,     initial_activation: low }
-               // , { klass: GetHitsRelationship,     initial_activation: low }
-              , { klass: CollidesRelationship, initial_activation: low }
-              , { klass: LeftAttribute,        initial_activation: low }
-              , { klass: RightAttribute,       initial_activation: low }
-              , { klass: MovableUpAttribute,   initial_activation: low }
-             ]
-    // features: [ { klass: SquareAttribute,       initial_activation: mid }
-    //           , { klass: RightRelationship,     initial_activation: low }
-    //           , { klass: CircleAttribute,       initial_activation: mid }]
+    // features: [
+    //             { klass: StabilityAttribute,   initial_activation: high }
+    //           , { klass: SingleAttribute,      initial_activation: high }
+    //           , { klass: MovesAttribute,       initial_activation: high }
+    //           , { klass: TouchRelationship,    initial_activation: high }
+    //           , { klass: CircleAttribute,      initial_activation: mid }
+    //           , { klass: SquareAttribute,      initial_activation: mid }
+    //           , { klass: TriangleAttribute,    initial_activation: mid }
+    //           , { klass: RectangleAttribute,   initial_activation: mid }
+    //             // , { klass: ShapeAttribute,       initial_activation: high }
+    //           , { klass: CountAttribute,       initial_activation: mid }
+    //           , { klass: CloseAttribute,       initial_activation: mid }
+    //             // , { klass: CloseRelationship,    initial_activation: mid }
+    //           , { klass: SmallAttribute,       initial_activation: mid }
+    //             // , { klass: LargeAttribute,       initial_activation: mid }
+    //           , { klass: TopMostAttribute,     initial_activation: mid }
+    //             // , { klass: LeftMostAttribute,    initial_activation: low }
+    //             // , { klass: RightMostAttribute,   initial_activation: low }
+    //             // , { klass: FarRelationship,      initial_activation: low }
+    //             // , { klass: FarAttribute,         initial_activation: low }
+    //           , { klass: OnTopRelationship,    initial_activation: low }
+    //           , { klass: OnGroundAttribute,    initial_activation: low }
+    //           , { klass: RightRelationship,    initial_activation: low }
+    //           , { klass: LeftRelationship,     initial_activation: low }
+    //             // , { klass: AboveRelationship,    initial_activation: low }
+    //             // , { klass: BelowRelationship,    initial_activation: low }
+    //             // , { klass: BesideRelationship,   initial_activation: low }
+    //             // , { klass: BottomAttribute,      initial_activation: low }
+    //             // , { klass: TopAttribute,         initial_activation: low }
+    //           , { klass: TouchAttribute,       initial_activation: low }
+    //           , { klass: SupportsRelationship, initial_activation: low }
+    //           , { klass: HitsRelationship,     initial_activation: low }
+    //            // , { klass: GetHitsRelationship,     initial_activation: low }
+    //           , { klass: CollidesRelationship, initial_activation: low }
+    //           , { klass: LeftAttribute,        initial_activation: low }
+    //           , { klass: RightAttribute,       initial_activation: low }
+    //           , { klass: MovableUpAttribute,   initial_activation: low }
+    //          ]
+    features: [ { klass: SquareAttribute,       initial_activation: mid }
+              , { klass: RightRelationship,     initial_activation: low }
+              , { klass: CircleAttribute,       initial_activation: mid }]
 
                // , { klass: SupportsRelationship, initial_activation: low }
                // , { klass: CountAttribute,       initial_activation: mid }

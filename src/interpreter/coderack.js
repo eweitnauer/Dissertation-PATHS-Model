@@ -6,8 +6,19 @@ var Coderack = function(workspace) {
   this.behaviors = [];
   this.followups = []; // these are done first and in order
   this.ws = workspace;
+
+  this.stats = this.createStats();
 }
 Coderack.prototype = [];
+
+Coderack.prototype.createStats = function() {
+  var cdls = [ AttrCodelet, NewHypothesisCodelet, CheckHypothesisCodelet
+             , CombineHypothesisCodelet];
+  var res = {};
+  cdls.forEach(function(cdl) {
+    res[cdl.prototype.name] = {success: 0, failure: 0, name: cdl.prototype.name} });
+  return res;
+}
 
 Coderack.prototype.step = function() {
   this.ws.step++;
@@ -65,6 +76,13 @@ Coderack.prototype.runBehaviors = function() {
   });
 }
 
+Coderack.prototype.addStats = function(codelet, res) {
+  if (!this.stats[codelet.name]) this.stats[codelet.name] =
+    { name: codelet.name, success: 0, failure: 0};
+  if (res) this.stats[codelet.name].success++;
+  else this.stats[codelet.name].failure++;
+}
+
 Coderack.prototype.runCodelet = function() {
   var cdl;
   if (this.followups.length > 0) {
@@ -76,6 +94,7 @@ Coderack.prototype.runCodelet = function() {
   }
   this.ws.log(3, 'running', cdl.describe());
   var res = cdl.run();
+  this.addStats(cdl, res);
 
   if (res && cdl.followup && cdl.followup.length > 0) {
     while (cdl.followup.length > 0) this.insert(cdl.followup.shift(), cdl.urgency);

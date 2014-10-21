@@ -11,6 +11,8 @@ var AttrCodelet = function(coderack) {
   this.time = this.ws.getRandomTime();
 }
 
+AttrCodelet.prototype.name = 'AttrC';
+
 AttrCodelet.prototype.describe = function() {
   return 'AttrCodelet';
 }
@@ -92,17 +94,18 @@ AttrCodelet.prototype.run = function() {
   else { // pick obj or group first
     var pick_group = this.shouldPickGroup();
     target = pick_group ? this.ws.getRandomGroup(scene) : this.ws.getRandomObject(scene);
-    if (!target) return;
+    if (!target) return false;
     feature = this.ws.getRandomFeature({ type: pick_group ? 'group' : 'obj'
         , filter: this.isNotCachedFeatureFilter(target, this.time) });
   }
 
-  if (!feature || !target) return; // TODO: disencourage perception
+  if (!feature || !target) return false;
   var time = (feature.prototype.constant ? 'start' : this.time);
   var percept = (feature.prototype.arity == 1
                 ? this.perceiveAttr(target, feature, time)
                 : this.perceiveRel(scene, target, feature, time));
-  if (percept) { // && this.isActive(percept)) {
+  if (percept) {
     this.spawnNewSelCodelet(percept, time);
-  }
+    return true;
+  } else return false;
 }

@@ -5,6 +5,8 @@ var CombineHypothesisCodelet = function(coderack) {
   this.ws = this.coderack.ws;
 }
 
+CombineHypothesisCodelet.prototype.name = 'CombHypC';
+
 CombineHypothesisCodelet.prototype.describe = function() {
   return 'CombineHypothesisCodelet';
 }
@@ -22,12 +24,12 @@ CombineHypothesisCodelet.prototype.run = function() {
   var hyp1 = this.ws.getRandomHypothesis(
     { no_blank: true, pool: hyp_pool, main_side: 'both' }
   );
-  if (!hyp1) return;
+  if (!hyp1) return false;
   var hyp2 = this.ws.getRandomHypothesis(
     { no_blank: true, pool: hyp_pool, main_side: 'both'
     , filter: function(hyp) { return hyp !== hyp1 && hyp.compatibleWith(hyp1) }}
   );
-  if (!hyp2) return;
+  if (!hyp2) return false;
   // var hyp1 = this.ws.getRandomHypothesis({no_blank: true, filter:
   //   function(sol) { return sol.main_side === 'both' }
   // });
@@ -46,9 +48,10 @@ CombineHypothesisCodelet.prototype.run = function() {
   // } else {
     hyp12 = hyp1.mergedWith(hyp2);
   // }
-  if (!hyp12 || hyp12.equals(hyp1) || hyp12.equals(hyp2)) return;
+  if (!hyp12 || hyp12.equals(hyp1) || hyp12.equals(hyp2)) return false;
 
   this.ws.log(3, 'combined', hyp1.describe(), 'and', hyp2.describe());
 
   this.coderack.insert(new NewHypothesisCodelet(this.coderack, hyp12));
+  return true;
 }

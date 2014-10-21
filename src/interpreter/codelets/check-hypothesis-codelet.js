@@ -1,9 +1,11 @@
 var CheckHypothesisCodelet = function(coderack, hyp) {
-    this.coderack = coderack;
-    this.ws = this.coderack.ws;
-    this.followup = [];
-    this.hypothesis = hyp;
-  }
+  this.coderack = coderack;
+  this.ws = this.coderack.ws;
+  this.followup = [];
+  this.hypothesis = hyp;
+}
+
+CheckHypothesisCodelet.prototype.name = 'CheckHypC';
 
 CheckHypothesisCodelet.prototype.describe = function() {
   return 'CheckHypothesisCodelet';
@@ -62,13 +64,13 @@ CheckHypothesisCodelet.prototype.run = function() {
       }
     });
   }
-  if (!hyp) return;
+  if (!hyp) return false;
 
   var scenes = this.ws.getActiveScenePair();
   var selected_groups = hyp.checkScenePair(scenes, this.ws.scene_pair_index);
   if (hyp.main_side === 'fail') {
     this.ws.blockHypothesis(hyp);
-    return;
+    return true;
   }
   this.updateObjectSelectorArrays(selected_groups, hyp.sel);
 
@@ -76,4 +78,5 @@ CheckHypothesisCodelet.prototype.run = function() {
 
   var specificity = this.getSpecificity(scenes, selected_groups);
   this.updateAttention(hyp, specificity, selected_groups);
+  return true;
 }

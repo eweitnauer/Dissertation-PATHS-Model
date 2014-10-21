@@ -13,6 +13,8 @@ var NewHypothesisCodelet = function(coderack, percept_or_hyp, time) {
   this.time = time;
 }
 
+NewHypothesisCodelet.prototype.name = 'NewHypC';
+
 NewHypothesisCodelet.prototype.describe = function() {
   if (this.hypothesis) return 'NewHypothesisCodelet(' + this.hypothesis.describe() + ')';
   else return 'NewHypothesisCodelet(' + this.percept.key + '=' + this.percept.val + ')';
@@ -69,9 +71,10 @@ NewHypothesisCodelet.prototype.run = function() {
     else hyp = this.createRelHyp();
     if (hyp && this.percept.targetType === 'group') this.mergeBaseSelector(hyp);
   }
-  if (!hyp) return;
+  if (!hyp) return false;
 
   if (this.ws.addHypothesis(hyp, 0)) { // initial att. will be set by CheckHypCodelet
     this.coderack.insert(new CheckHypothesisCodelet(this.coderack, hyp));
-  }
+    return true;
+  } else return false;
 }
