@@ -191,14 +191,15 @@ PITester.prototype.updateFeatureList = function(div_el) {
 }
 
 PITester.prototype.updateCodeletStats = function(div_el) {
-	var stats = this.ws ? d3.values(this.ws.coderack.stats) : [];
+	var stats = this.ws ? d3.values(this.ws.coderack.cdl_stats) : [];
 
 	var ps = d3.select(div_el)
 	  .selectAll('.stat')
 	  .data(stats);
 
 	var enter = ps.enter().append('p').classed('stat', true);
-	ps.text(function(d) { return d.name + ': ' + d.success + ' ; ' + d.failure });
+	ps.text(function(d) { return d.name + ': ' + d.success + ' ; ' + d.failure
+	                           + ' [' + d.activity.toFixed(2) + ']' });
 	ps.exit().remove();
 }
 

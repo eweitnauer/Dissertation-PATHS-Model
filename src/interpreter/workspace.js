@@ -17,6 +17,8 @@ var Workspace = function(scenes, options, log_level) {
   this.log_symbol = {1: 'EE', 2: 'WW', 3: 'II', 4: 'DB'};
   this.step = 1;
 
+  this.events = d3.dispatch('switched_scenes');
+
   this.scene_pair_sequence = this.generateSceneSequence();
   this.scene_pair_index = 0;
   this.scene_pair_steps = 0;
@@ -49,6 +51,7 @@ Workspace.prototype.advanceScenePair = function() {
   this.scene_pair_steps = 0;
   this.scene_pair_index = (this.scene_pair_index+1) % this.scene_pair_sequence.length;
   this.active_scene_pair = this.scene_pair_sequence[this.scene_pair_index];
+  this.events.switched_scenes();
 }
 
 Workspace.prototype.perceived_feature = function(event) {
@@ -193,16 +196,21 @@ Workspace.prototype.getRandomHypothesis = function(options) {
 }
 
 /// Returns true if the solution was new and inserted.
-Workspace.prototype.addHypothesis = function(sol, val) {
+Workspace.prototype.addHypothesis = function(hyp, val) {
   if (arguments.length === 1) val = 1.0;
-  if (this.attentionNet.addSolution(sol, val)) {
-    sol.sel.solution = sol;
-    this.log(3, 'added solution hypothesis', sol.describe());
-    var after = this.attentionNet.getAttentionValueNoSigmoid(sol);
-    this.spreadAttentionFromHypothesisToFeatures(sol, after);
-    return true;
-  }
-  return false;
+  if (!this.isNewHypothesis(hyp)) return false;
+  this.attentionNet.addSolution(hyp, val);
+  hyp.sel.solution = hyp;
+  this.log(3, 'added solution hypothesis', hyp.describe());
+  var after = this.attentionNet.getAttentionValueNoSigmoid(hyp);
+  this.spreadAttentionFromHypothesisToFeatures(hyp, after);
+  return true;
+}
+
+Workspace.prototype.isNewHypothesis = function(hyp) {
+  return this.attentionNet.solutions.every(function (other) {
+    return !other.equals(hyp)
+  });
 }
 
 Workspace.prototype.spreadAttentionFromHypothesisToFeatures = function(sol, val) {

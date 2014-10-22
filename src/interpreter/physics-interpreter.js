@@ -85,7 +85,7 @@ PI.v0_4_3 = (function() {
     //           , { klass: MovableUpAttribute,   initial_activation: low }
     //          ]
     features: [ { klass: SquareAttribute,       initial_activation: mid }
-              , { klass: RightRelationship,     initial_activation: low }
+              // , { klass: RightRelationship,     initial_activation: low }
               , { klass: CircleAttribute,       initial_activation: mid }]
 
                // , { klass: SupportsRelationship, initial_activation: low }

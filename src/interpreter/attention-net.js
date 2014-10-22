@@ -155,7 +155,6 @@ AttentionNet.prototype.addFeature = function(feature, val) {
 /// Returns true if successfully inserted. Optionally pass an attention value
 /// (default: 1.0).
 AttentionNet.prototype.addSolution = function(solution, val) {
-	if (this.solutions.some(function (sol) { return sol.equals(solution) })) return false;
 	return this.addElement('solution', solution, val);
 }
 

@@ -49,8 +49,9 @@ CombineHypothesisCodelet.prototype.run = function() {
     hyp12 = hyp1.mergedWith(hyp2);
   // }
   if (!hyp12 || hyp12.equals(hyp1) || hyp12.equals(hyp2)) return false;
+  if (!this.ws.isNewHypothesis(hyp12)) return false;
 
-  this.ws.log(3, 'combined', hyp1.describe(), 'and', hyp2.describe());
+  this.ws.log(2, 'combined', hyp1.describe(), 'and', hyp2.describe());
 
   this.coderack.insert(new NewHypothesisCodelet(this.coderack, hyp12));
   return true;

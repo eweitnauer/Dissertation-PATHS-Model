@@ -7,16 +7,33 @@ var Coderack = function(workspace) {
   this.followups = []; // these are done first and in order
   this.ws = workspace;
 
-  this.stats = this.createStats();
+  this.cdl_stats = this.createStats();
+  this.init();
 }
 Coderack.prototype = [];
+
+Coderack.prototype.init = function() {
+  var self = this;
+  this.ws.events.on('switched_scenes', function() {
+    self.cdl_stats[AttrCodelet.prototype.name].activity += 0.1;
+    self.cdl_stats[CheckHypothesisCodelet.prototype.name].activity += 0.1;
+  });
+}
+
+Coderack.prototype.codeletFinished = function(codelet, res) {
+  var stat = this.cdl_stats[codelet.name];
+  if (res) stat.success++;
+  else stat.failure++;
+  stat.activity = Math.min(1, Math.max(0.1, stat.activity + (res ? 0.015 : -0.01)));
+}
 
 Coderack.prototype.createStats = function() {
   var cdls = [ AttrCodelet, NewHypothesisCodelet, CheckHypothesisCodelet
              , CombineHypothesisCodelet];
   var res = {};
   cdls.forEach(function(cdl) {
-    res[cdl.prototype.name] = {success: 0, failure: 0, name: cdl.prototype.name} });
+    res[cdl.prototype.name] = { success: 0, failure: 0, name: cdl.prototype.name
+                              , activity: 0.5 } });
   return res;
 }
 
@@ -76,13 +93,6 @@ Coderack.prototype.runBehaviors = function() {
   });
 }
 
-Coderack.prototype.addStats = function(codelet, res) {
-  if (!this.stats[codelet.name]) this.stats[codelet.name] =
-    { name: codelet.name, success: 0, failure: 0};
-  if (res) this.stats[codelet.name].success++;
-  else this.stats[codelet.name].failure++;
-}
-
 Coderack.prototype.runCodelet = function() {
   var cdl;
   if (this.followups.length > 0) {
@@ -94,7 +104,7 @@ Coderack.prototype.runCodelet = function() {
   }
   this.ws.log(3, 'running', cdl.describe());
   var res = cdl.run();
-  this.addStats(cdl, res);
+  this.codeletFinished(cdl, res);
 
   if (res && cdl.followup && cdl.followup.length > 0) {
     while (cdl.followup.length > 0) this.insert(cdl.followup.shift(), cdl.urgency);
