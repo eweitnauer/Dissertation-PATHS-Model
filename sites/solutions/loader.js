@@ -178,7 +178,7 @@ function finish_callback() {
 }
 
 function updateFeatureList() {
-  tester.updateFeatureList(d3.select("#features").node());
+  tester.updateFeatureList(d3.select("#features").node(), featureClicked);
 }
 
 function updateCodeletStats() {
@@ -200,6 +200,11 @@ function hypothesisClicked(hyp) {
   for (var p in problems) {
     problems[p].svis.applySolution(hyp);
   }
+}
+
+function featureClicked(feature) {
+  tester.ws.changeAttention(feature, 1, 0, 1);
+  updateFeatureList();
 }
 
 function logText(text) {

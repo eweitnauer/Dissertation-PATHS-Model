@@ -167,7 +167,7 @@ PITester.prototype.updateHypothesisTable = function(table_el, clickCallback) {
 	tds.text(function(d) { return d });
 }
 
-PITester.prototype.updateFeatureList = function(div_el) {
+PITester.prototype.updateFeatureList = function(div_el, click_callback) {
 	var features = this.ws ? this.ws.getFeatureInfoArray() : [];
 
 	var divs = d3.select(div_el)
@@ -176,7 +176,8 @@ PITester.prototype.updateFeatureList = function(div_el) {
 
 	var enter = divs.enter()
 		.append('div')
-	    .classed('feature', true);
+	    .classed('feature', true)
+	if (click_callback) enter.on('click', function(d) { click_callback(d.src) });
 	enter.append('div')
 		.classed('key', true)
 	  .text(function(d) { return d.key.split('_').join(' ') });
@@ -192,6 +193,7 @@ PITester.prototype.updateFeatureList = function(div_el) {
 
 PITester.prototype.updateCodeletStats = function(div_el) {
 	var stats = this.ws ? d3.values(this.ws.coderack.cdl_stats) : [];
+	var behavior = this.ws.coderack.behaviors[0];
 
 	var ps = d3.select(div_el)
 	  .selectAll('.stat')
@@ -199,7 +201,10 @@ PITester.prototype.updateCodeletStats = function(div_el) {
 
 	var enter = ps.enter().append('p').classed('stat', true);
 	ps.text(function(d) { return d.name + ': ' + d.success + ' ; ' + d.failure
-	                           + ' [' + d.activity.toFixed(2) + ']' });
+	                           + ' ['
+	                           + behavior.getBottomUpAttention(d.name).toFixed(2) + '*'
+	                           + behavior.getTopDownAttention(d.name).toFixed(2) + ' = '
+	                           + behavior.getCombinedAttention(d.name).toFixed(2) + ']' });
 	ps.exit().remove();
 }
 

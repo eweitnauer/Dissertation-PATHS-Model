@@ -15,16 +15,22 @@ Coderack.prototype = [];
 Coderack.prototype.init = function() {
   var self = this;
   this.ws.events.on('switched_scenes', function() {
-    self.cdl_stats[AttrCodelet.prototype.name].activity += 0.1;
-    self.cdl_stats[CheckHypothesisCodelet.prototype.name].activity += 0.1;
+    var attr_stat = self.cdl_stats[AttrCodelet.prototype.name];
+    var check_stat = self.cdl_stats[CheckHypothesisCodelet.prototype.name];
+    attr_stat.activity = Math.min(1, Math.max(0.1, attr_stat.activity + 0.1));
+    check_stat.activity = Math.min(1, Math.max(0.1, check_stat.activity + 0.1));
   });
+}
+
+Coderack.prototype.getCodeletTypeActivity = function(cdl_klass) {
+  return this.cdl_stats[cdl_klass.prototype.name].activity;
 }
 
 Coderack.prototype.codeletFinished = function(codelet, res) {
   var stat = this.cdl_stats[codelet.name];
   if (res) stat.success++;
   else stat.failure++;
-  stat.activity = Math.min(1, Math.max(0.1, stat.activity + (res ? 0.015 : -0.01)));
+  stat.activity = Math.min(1, Math.max(0.1, stat.activity + (res ? 0.01 : -0.01)));
 }
 
 Coderack.prototype.createStats = function() {
@@ -42,8 +48,8 @@ Coderack.prototype.step = function() {
   this.ws.scene_pair_steps++;
   if (this.followups.length === 0) this.runBehaviors();
   this.runCodelet();
-  this.ws.attentionNet.clamp('solutions', 0, 1, 0.001);
-  this.ws.attentionNet.clamp('features', 0.1, 1, 0.001);
+  this.ws.attentionNet.clamp('solutions', 0.1, 1, 0.001);
+  this.ws.attentionNet.clamp('features', 0.1, 1, 0.0005);
   // this.ws.attentionNet.normalize('features', 0.1, 1);
   this.ws.attentionNet.normalize('objects');
 }

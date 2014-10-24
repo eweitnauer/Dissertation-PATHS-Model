@@ -46,47 +46,47 @@ PI.v0_4_3 = (function() {
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = {
-    // features: [
-    //             { klass: StabilityAttribute,   initial_activation: high }
-    //           , { klass: SingleAttribute,      initial_activation: high }
-    //           , { klass: MovesAttribute,       initial_activation: high }
-    //           , { klass: TouchRelationship,    initial_activation: high }
-    //           , { klass: CircleAttribute,      initial_activation: mid }
-    //           , { klass: SquareAttribute,      initial_activation: mid }
-    //           , { klass: TriangleAttribute,    initial_activation: mid }
-    //           , { klass: RectangleAttribute,   initial_activation: mid }
-    //             // , { klass: ShapeAttribute,       initial_activation: high }
-    //           , { klass: CountAttribute,       initial_activation: mid }
-    //           , { klass: CloseAttribute,       initial_activation: mid }
-    //             // , { klass: CloseRelationship,    initial_activation: mid }
-    //           , { klass: SmallAttribute,       initial_activation: mid }
-    //             // , { klass: LargeAttribute,       initial_activation: mid }
-    //           , { klass: TopMostAttribute,     initial_activation: mid }
-    //             // , { klass: LeftMostAttribute,    initial_activation: low }
-    //             // , { klass: RightMostAttribute,   initial_activation: low }
-    //             // , { klass: FarRelationship,      initial_activation: low }
-    //             // , { klass: FarAttribute,         initial_activation: low }
-    //           , { klass: OnTopRelationship,    initial_activation: low }
-    //           , { klass: OnGroundAttribute,    initial_activation: low }
-    //           , { klass: RightRelationship,    initial_activation: low }
-    //           , { klass: LeftRelationship,     initial_activation: low }
-    //             // , { klass: AboveRelationship,    initial_activation: low }
-    //             // , { klass: BelowRelationship,    initial_activation: low }
-    //             // , { klass: BesideRelationship,   initial_activation: low }
-    //             // , { klass: BottomAttribute,      initial_activation: low }
-    //             // , { klass: TopAttribute,         initial_activation: low }
-    //           , { klass: TouchAttribute,       initial_activation: low }
-    //           , { klass: SupportsRelationship, initial_activation: low }
-    //           , { klass: HitsRelationship,     initial_activation: low }
-    //            // , { klass: GetHitsRelationship,     initial_activation: low }
-    //           , { klass: CollidesRelationship, initial_activation: low }
-    //           , { klass: LeftAttribute,        initial_activation: low }
-    //           , { klass: RightAttribute,       initial_activation: low }
-    //           , { klass: MovableUpAttribute,   initial_activation: low }
-    //          ]
-    features: [ { klass: SquareAttribute,       initial_activation: mid }
-              // , { klass: RightRelationship,     initial_activation: low }
-              , { klass: CircleAttribute,       initial_activation: mid }]
+    features: [
+                { klass: StabilityAttribute,   initial_activation: high }
+              , { klass: SingleAttribute,      initial_activation: high }
+              , { klass: MovesAttribute,       initial_activation: high }
+              , { klass: TouchRelationship,    initial_activation: high }
+              , { klass: CircleAttribute,      initial_activation: mid }
+              , { klass: SquareAttribute,      initial_activation: mid }
+              , { klass: TriangleAttribute,    initial_activation: mid }
+              , { klass: RectangleAttribute,   initial_activation: mid }
+                // , { klass: ShapeAttribute,       initial_activation: high }
+              , { klass: CountAttribute,       initial_activation: mid }
+              , { klass: CloseAttribute,       initial_activation: mid }
+                // , { klass: CloseRelationship,    initial_activation: mid }
+              , { klass: SmallAttribute,       initial_activation: mid }
+                // , { klass: LargeAttribute,       initial_activation: mid }
+              , { klass: TopMostAttribute,     initial_activation: mid }
+                // , { klass: LeftMostAttribute,    initial_activation: low }
+                // , { klass: RightMostAttribute,   initial_activation: low }
+                // , { klass: FarRelationship,      initial_activation: low }
+                // , { klass: FarAttribute,         initial_activation: low }
+              , { klass: OnTopRelationship,    initial_activation: low }
+              , { klass: OnGroundAttribute,    initial_activation: low }
+              , { klass: RightRelationship,    initial_activation: low }
+              , { klass: LeftRelationship,     initial_activation: low }
+                // , { klass: AboveRelationship,    initial_activation: low }
+                // , { klass: BelowRelationship,    initial_activation: low }
+                // , { klass: BesideRelationship,   initial_activation: low }
+                // , { klass: BottomAttribute,      initial_activation: low }
+                // , { klass: TopAttribute,         initial_activation: low }
+              , { klass: TouchAttribute,       initial_activation: low }
+              , { klass: SupportsRelationship, initial_activation: low }
+              , { klass: HitsRelationship,     initial_activation: low }
+               // , { klass: GetHitsRelationship,     initial_activation: low }
+              , { klass: CollidesRelationship, initial_activation: low }
+              , { klass: LeftAttribute,        initial_activation: low }
+              , { klass: RightAttribute,       initial_activation: low }
+              , { klass: MovableUpAttribute,   initial_activation: low }
+             ]
+    // features: [ { klass: SquareAttribute,       initial_activation: mid }]
+    //           , { klass: RightRelationship,     initial_activation: low }
+    //           , { klass: CircleAttribute,       initial_activation: mid }]
 
                // , { klass: SupportsRelationship, initial_activation: low }
                // , { klass: CountAttribute,       initial_activation: mid }
@@ -157,15 +157,52 @@ PI.v0_4_3 = (function() {
     this.cr = coderack;
     this.ws = coderack.ws;
     this.name = 'MainBehavior';
-    this.mindset = 0.25;
-    this.codelet_infos = [{klass: AttrCodelet, mindset: 0}
-                         //,{klass: NewHypothesisCodelet, mindset: 0.5}
-                         ,{klass: CheckHypothesisCodelet, mindset: 0.75 }
-                         ,{klass: CombineHypothesisCodelet, mindset: 1}];
+    this.codelet_infos = [{klass: AttrCodelet, attention: 0.5 }
+                         ,{klass: CheckHypothesisCodelet, attention: 0 }
+                         ,{klass: CombineHypothesisCodelet, attention: 0 }];
+    this.att_getter = function(ci) {
+      return ci.attention * coderack.getCodeletTypeActivity(ci.klass)
+    };
   }
 
-  MainBehavior.prototype.describe = function() {
-    return 'mindset: ' + this.mindset;
+  MainBehavior.prototype.updateAttentions = function() {
+    var hyps = this.ws.attentionNet.solutions;
+    var checked_lr = 0, unchecked = 0; // max attention among respective solutions
+    for (var i=0; i<hyps.length; i++) {
+      var hyp = hyps[i];
+      if (hyp.sel.blank()) continue;
+      var was_checked = hyp.wasMatchedAgainst(this.ws.scene_pair_index);
+      var val = this.ws.attentionNet.getAttentionValue(hyp);
+      if (hyp.main_side === 'both' && was_checked) checked_lr = Math.max(checked_lr, val);
+      if (!was_checked) unchecked = Math.max(unchecked, val);
+    }
+    this.codelet_infos[0].attention = 0.5;
+    this.codelet_infos[1].attention = 1-(1/Math.pow(2, 3*unchecked));
+    this.codelet_infos[2].attention = Math.max(0, 1-(1/Math.pow(2, 2*checked_lr)));
+  }
+
+  MainBehavior.prototype.getTopDownAttention = function(cdl_name) {
+    var ci = this.codelet_infos.filter(function(ci) {
+      return ci.klass.prototype.name === cdl_name
+    })[0];
+    if (ci) return ci.attention;
+    else return 0;
+  }
+
+  MainBehavior.prototype.getBottomUpAttention = function(cdl_name) {
+    var ci = this.codelet_infos.filter(function(ci) {
+      return ci.klass.prototype.name === cdl_name
+    })[0];
+    if (ci) return this.cr.getCodeletTypeActivity(ci.klass);
+    else return 0;
+  }
+
+  MainBehavior.prototype.getCombinedAttention = function(cdl_name) {
+    var ci = this.codelet_infos.filter(function(ci) {
+      return ci.klass.prototype.name === cdl_name
+    })[0];
+    if (ci) return this.att_getter(ci);
+    else return 0;
   }
 
   MainBehavior.prototype.run = function() {
@@ -173,9 +210,8 @@ PI.v0_4_3 = (function() {
       this.ws.advanceScenePair();
     }
     if (this.cr.length > 0) return;
-    var mindset = this.mindset;
-    var mindset_fit = function (cinfo) { return 1-Math.abs(cinfo.mindset-mindset) };
-    var codelet_info = Random.pick_weighted(this.codelet_infos, mindset_fit);
+    this.updateAttentions();
+    var codelet_info = Random.pick_weighted(this.codelet_infos, this.att_getter);
     this.cr.insert(new codelet_info.klass(this.cr));
   }
 

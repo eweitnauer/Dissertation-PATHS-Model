@@ -152,7 +152,8 @@ Workspace.prototype.getFeatureInfoArray = function() {
   var self = this;
   return this.attentionNet.features.map(function(feature) {
     return { key: feature.prototype.key
-           , val: self.attentionNet.getAttentionValue(feature)};
+           , val: self.attentionNet.getAttentionValue(feature)
+           , src: feature };
   });
 }
 
