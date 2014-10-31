@@ -118,7 +118,7 @@ PI.v0_4_3 = (function() {
         , both_sides: 0.05
         , fail: 0
         }
-      , complexity_penalty_steepness: 20 // posteriori is 1-1/(1+exp(cps*(0.25-complexity/10)))
+      , complexity_penalty_steepness: 15 // posteriori is 1-1/(1+exp(cps*(0.25-complexity/10)))
       }
     , feature: {
         initial: 0.1

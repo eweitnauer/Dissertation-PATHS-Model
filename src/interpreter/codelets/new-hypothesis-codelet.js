@@ -37,7 +37,7 @@ NewHypothesisCodelet.prototype.createRelHyp = function() {
     no_blank: true
   , type: 'object'
   , filter: function(sol) {
-      return !sol.sel.hasRelationships() && sol.selects_single_objs
+      return !sol.sel.hasRelationships() && sol.selectsSingleObjects()
           && sol.sel.matchesObject(other)
     }
   });

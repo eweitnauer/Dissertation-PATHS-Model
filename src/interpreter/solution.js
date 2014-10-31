@@ -9,12 +9,12 @@ Solution = function(selector, main_side, mode) {
 	this.mode = mode || 'exists';
 	this.setMainSide(main_side);
 	this.matchedAgainst = [];
-	this.lchecks = 0;
-	this.rchecks = 0;
-	this.lmatches = 0;
-	this.rmatches = 0;
+	this.checks = {left: 0, right: 0};
+	this.matches = {left: 0, right: 0};
+	this.selects_all_objs = {left: 0, right: 0};
+	this.selects_single_objs = {left: 0, right: 0};
 	this.scene_pair_count = 8;
-	this.selects_single_objs = true;
+//	this.selects_single_objs = true;
 }
 
 Solution.prototype.setMainSide = function (main_side) {
@@ -28,35 +28,79 @@ Solution.prototype.wasMatchedAgainst = function(scene_pair_id) {
 }
 
 Solution.prototype.isSolution = function() {
-	return ( this.rmatches === 0 && this.lmatches == this.scene_pair_count
-	      || this.lmatches === 0 && this.rmatches == this.scene_pair_count);
+	return ( this.matches.right === 0 && this.matches.left == this.scene_pair_count
+	      || this.matches.left === 0 && this.matches.right == this.scene_pair_count);
 }
 
 /// Returns whether combining this with the passed solution could in principle
 /// be a solution.
 Solution.prototype.compatibleWith = function(other) {
-	if (this.lmatches < this.lchecks && other.rmatches < other.rchecks) return false;
-	if (this.rmatches < this.rchecks && other.lmatches < other.lchecks) return false;
+	if ( this.matches.left   < this.checks.left
+	  && other.matches.right < other.checks.right) return false;
+	if ( this.matches.right < this.checks.right
+	  && other.matches.left < other.checks.left) return false;
 	return true;
+}
+
+Solution.prototype.selectsSingleObjects = function() {
+	return this.selects_single_objs.left === this.checks.left &&
+	       this.selects_single_objs.right === this.checks.right;
+}
+
+Solution.prototype.selectsAllObjects = function() {
+	return this.selects_all_objs.left === this.checks.left &&
+	       this.selects_all_objs.right === this.checks.right;
+}
+
+Solution.prototype.tryAllMode = function() {
+  if (this.mode === 'all') return false;
+  var main, other;
+  if ( this.selects_all_objs.left === this.checks.left
+    && this.selects_all_objs.right === 0) { main = 'left'; other = 'right' }
+  if ( this.selects_all_objs.right === this.checks.right
+    && this.selects_all_objs.left === 0) { main = 'right'; other = 'left' }
+  if (!main) return false;
+	this.mode = 'all';
+  this.setMainSide(main);
+	this.matches[main] = this.checks[main];
+  this.matches[other] = 0;
+  return true;
+}
+
+Solution.prototype.tryUniqueMode = function() {
+  if (this.mode === 'unique') return false;
+  var main, other;
+  if ( this.selects_single_objs.left === this.checks.left
+    && this.selects_single_objs.right === 0) { main = 'left'; other = 'right' }
+  if ( this.selects_single_objs.right === this.checks.right
+    && this.selects_single_objs.left === 0) { main = 'right'; other = 'left' }
+  if (!main) return false;
+	this.mode = 'unique';
+	this.setMainSide(main);
+	this.matches[main] = this.checks[main];
+  this.matches[other] = 0;
+  return true;
 }
 
 Solution.prototype.checkScenePair = function(pair, pair_id) {
   var self = this;
   var selected_groups = [];
   pair.forEach(function (scene) {
-  	var res_group = self.sel.applyToScene(scene);
-    selected_groups.push(res_group);
-    if (res_group.objs.length > 1) self.selects_single_objs = false;
-    var matches = !res_group.empty();
-    if (scene.side === 'left') {self.lchecks++; if (matches) self.lmatches++ }
-    if (scene.side === 'right') {self.rchecks++; if (matches) self.rmatches++ }
+  	var res = self.check_scene(scene);
+    selected_groups.push(res.group);
+    if (res.group.objs.length === 1) self.selects_single_objs[scene.side]++;
+    if (res.group.objs.length === scene.objs.length) self.selects_all_objs[scene.side]++;
+    self.checks[scene.side]++;
+    if (res.match) self.matches[scene.side]++;
   });
   this.matchedAgainst.push(pair_id);
 
-  if (this.lmatches === 0 && this.rmatches === this.rchecks) this.setMainSide('right');
-  else if (this.rmatches === 0 && this.lmatches === this.lchecks) this.setMainSide('left');
-  else if (this.lmatches > 0 && this.rmatches === this.rchecks) this.setMainSide('both');
-  else if (this.rmatches > 0 && this.lmatches === this.lchecks) this.setMainSide('both');
+  if (this.matches.left === 0 && this.matches.right === this.checks.right) this.setMainSide('right');
+  else if (this.matches.right === 0 && this.matches.left === this.checks.left) this.setMainSide('left');
+  else if (this.tryAllMode()) {}
+  else if (this.tryUniqueMode()) {}
+  else if (this.matches.left > 0 && this.matches.right === this.checks.right) this.setMainSide('both');
+  else if (this.matches.right > 0 && this.matches.left === this.checks.left) this.setMainSide('both');
   else this.setMainSide('fail');
 
   return selected_groups;
@@ -78,7 +122,8 @@ Solution.prototype.equals = function(other) {
 }
 
 Solution.prototype.mergedWith = function(other) {
-	var mode = (this.mode === other.mode ? mode : 'exists');
+	var mode = 'exists'; // always use 'exists' as we automatically switch to the
+	                     // other modes if needed
 	var side;
 	if (other.main_side === this.main_side) side = this.main_side;
 	else if (this.main_side === 'both') side = other.main_side;
@@ -101,19 +146,18 @@ Solution.prototype.applyToScene = function(scene) {
 
 /// Applies all selectors consecutively to the scene and checks
 /// whether the resulting group of objects fits the mode of the
-/// solution. If so it returns the number of objects in the resulting
-/// group node, otherwise it returns false.
+/// solution. It returns an object { match: boolean, group: GroupNode }
+/// where group is the group of the selected nodes.
 Solution.prototype.check_scene = function(scene) {
-	var group0 = GroupNode.sceneGroup(scene);
-	var group1 = this.sel.select(group0, scene);
-	var N = group1.objs.length;
+	var group = this.sel.applyToScene(scene);
+	var N = group.objs.length;
 	var res = false;
-	if (this.mode == 'unique' && N == 1) res = 1;
-	else if (this.mode == 'exists' && N > 0) res = N;
-	else if (this.mode == 'all' && N > 0 &&
-	    group0.objs.length == N) res = N;
-	scene.fits_solution = !!res;
-	return res;
+	if (this.mode == 'unique' && N == 1) res = true;
+	else if (this.mode === 'exists' && N > 0) res = true;
+	else if (this.mode === 'all' && N > 0 &&
+	    scene.objs.length === N) res = true;
+	scene.fits_solution = res;
+	return { match: res, group: group };
 }
 
 /// Returns a human readable description of the solution.

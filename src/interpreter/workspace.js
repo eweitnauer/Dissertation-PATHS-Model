@@ -209,7 +209,7 @@ Workspace.prototype.addHypothesis = function(hyp, val) {
 
 Workspace.prototype.isNewHypothesis = function(hyp) {
   return this.attentionNet.solutions.every(function (other) {
-    return !other.equals(hyp)
+    return !other.sel.equals(hyp.sel) // we ignore the solution mode
   });
 }
 

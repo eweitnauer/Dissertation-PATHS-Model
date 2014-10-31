@@ -159,7 +159,7 @@ PITester.prototype.updateHypothesisTable = function(table_el, clickCallback) {
 	  	                         , mode_str[d.src.mode]
 	  	                         , d.src.sel.describe()
 	  	                         //, d.src.sel.getComplexity()
-	  	                         , (d.src.lmatches + d.src.rmatches) / (d.src.main_side === 'both' ? 2 : 1)
+	  	                         , (d.src.matches.left + d.src.matches.right) / (d.src.main_side === 'both' ? 2 : 1)
 	  	                         , d.val.toFixed(2)] })
 
 	tds.enter().append('td');

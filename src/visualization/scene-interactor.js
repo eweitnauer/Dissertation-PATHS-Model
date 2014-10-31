@@ -357,8 +357,8 @@ SceneInteractor.prototype.applySelector = function(sel) {
 }
 
 SceneInteractor.prototype.applySolution = function(sol) {
-	var gn = sol.applyToScene(this.sn);
-	this.selectShapes(gn.objs);
+	var res = sol.check_scene(this.sn);
+	this.selectShapes(res.match ? res.group.objs : []);
 }
 
 SceneInteractor.prototype.colorize_values = function(value_getter) {

@@ -51,7 +51,10 @@ CombineHypothesisCodelet.prototype.run = function() {
   if (!hyp12 || hyp12.equals(hyp1) || hyp12.equals(hyp2)) return false;
   if (!this.ws.isNewHypothesis(hyp12)) return false;
 
-  this.ws.log(2, 'combined', hyp1.describe(), 'and', hyp2.describe());
+  //this.ws.log(2, 'combined', hyp1.describe(), 'and', hyp2.describe());
+  console.log(2, 'combined', hyp1.describe(), 'and', hyp2.describe());
+  console.log('complexity:', hyp1.sel.getComplexity(), '+'
+             , hyp2.sel.getComplexity(), '==>', hyp12.sel.getComplexity());
 
   this.coderack.insert(new NewHypothesisCodelet(this.coderack, hyp12));
   return true;
