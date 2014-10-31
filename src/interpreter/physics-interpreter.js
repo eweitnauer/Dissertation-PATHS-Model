@@ -168,6 +168,7 @@ PI.v0_4_3 = (function() {
   MainBehavior.prototype.updateAttentions = function() {
     var hyps = this.ws.attentionNet.solutions;
     var checked_lr = 0, unchecked = 0; // max attention among respective solutions
+    var best_expl = null, best_expl_val = 0;
     for (var i=0; i<hyps.length; i++) {
       var hyp = hyps[i];
       if (hyp.sel.blank()) continue;
@@ -175,10 +176,17 @@ PI.v0_4_3 = (function() {
       var val = this.ws.attentionNet.getAttentionValue(hyp);
       if (hyp.main_side === 'both' && was_checked) checked_lr = Math.max(checked_lr, val);
       if (!was_checked) unchecked = Math.max(unchecked, val);
+      if (was_checked && (hyp.main_side === 'left' || hyp.main_side === 'right')) {
+        if (val > best_expl_val) {
+          best_expl = hyp;
+          best_expl_val = val;
+        }
+      }
     }
     this.codelet_infos[0].attention = 0.5;
     this.codelet_infos[1].attention = 1-(1/Math.pow(2, 3*unchecked));
     this.codelet_infos[2].attention = Math.max(0, 1-(1/Math.pow(2, 2*checked_lr)));
+    this.best_expl_val = best_expl_val;
   }
 
   MainBehavior.prototype.getTopDownAttention = function(cdl_name) {
@@ -206,13 +214,14 @@ PI.v0_4_3 = (function() {
   }
 
   MainBehavior.prototype.run = function() {
-    if (this.ws.scene_pair_steps > 50) {
-      this.ws.advanceScenePair();
-    }
     if (this.cr.length > 0) return;
     this.updateAttentions();
-    var codelet_info = Random.pick_weighted(this.codelet_infos, this.att_getter);
-    this.cr.insert(new codelet_info.klass(this.cr));
+    if (this.ws.scene_pair_steps > Math.min(100, 10/this.best_expl_val)) {
+      this.ws.advanceScenePair();
+    } else {
+      var codelet_info = Random.pick_weighted(this.codelet_infos, this.att_getter);
+      this.cr.insert(new codelet_info.klass(this.cr));
+    }
   }
 
   return { createWorkspace: createWorkspace

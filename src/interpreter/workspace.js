@@ -121,7 +121,6 @@ Workspace.prototype.changeAttention = function(thing, delta, min, max) {
     var before = this.attentionNet.getAttentionValueNoSigmoid(thing);
     this.attentionNet.addToAttentionValue(thing, delta, min || 0, max || 1);
     var after = this.attentionNet.getAttentionValueNoSigmoid(thing);
-    console.log('speading att: ', after-before, '(was', delta +')');
     this.spreadAttentionFromHypothesisToFeatures(thing, after-before);
   } else if (thing instanceof GroupNode) {
     var N = thing.objs.length;
