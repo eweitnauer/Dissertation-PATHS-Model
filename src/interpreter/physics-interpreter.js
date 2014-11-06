@@ -41,11 +41,11 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_4_3 = (function() {
+PI.v0_4_3 = (function(opts) {
   var version = '0.4.3';
   var low = 0.1, mid = 0.2, high = 0.3;
 
-  var options = {
+  var options = opts || {
     features: [
                 { klass: StabilityAttribute,   initial_activation: high }
               , { klass: SingleAttribute,      initial_activation: high }
@@ -225,6 +225,7 @@ PI.v0_4_3 = (function() {
   }
 
   return { createWorkspace: createWorkspace
+         , options: options
          , version: version
          };
-})();
+});
