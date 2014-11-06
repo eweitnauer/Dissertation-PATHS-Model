@@ -10,7 +10,7 @@ t.run();
 /// Set the before_step_callback, after_step_callback, start_callback, finish_callback can all
 /// be set to functions.
 PITester = function(pi, scenes, reps, max_steps, max_sols, log_level) {
-	this.pi = (pi=='current' ? this.get_current_pi() : pi);
+	this.pi = (pi=='current' ? PITester.get_current_pi()() : pi);
 	this.scenes = scenes;
 	this.reps = reps || 1;
 	this.curr_rep = 0;
@@ -84,7 +84,7 @@ PITester.prototype.step = function() {
 	  // are we finished?
 	  if (this.curr_rep === this.reps) {
 	  	if (this.finish_callback) this.finish_callback();
-	  	return this.show_stats(this.res);
+	  	return this.show_stats();
 	  }
 	}
 	// next step
@@ -96,28 +96,76 @@ PITester.prototype.setLogCallback = function(cb) {
 	if (this.ws) this.ws.logCallback = this.logCallback;
 }
 
-PITester.prototype.show_stats = function(res) {
-	var sum=0;
-	for (var i=0; i<res.length; i++) if (res[i].solved) sum++;
-	console.log('PI v'+this.pi.version, 'solved', sum, 'of', res.length);
-
-	var stats = function(/*args*/) {
-		for (var i=0; i<arguments.length; i++) {
-		 	var name = arguments[i];
-			var ext = d3.extent(res, function(d) {return d[name]});
-			var avg = d3.mean(res, function(d) {return d[name]});
-			var avg_square = 0;
-			for (var j=0; j<res.length; j++) {
-				avg_square += res[j][name] * res[j][name];
-			}
-			avg_square /= res.length;
-			var std_dev = Math.sqrt(avg_square - avg*avg);
-			console.log(name + ': ' + avg.toFixed(0) + ' +-' + std_dev.toFixed(1)
-			          + ' min=' + ext[0] + ' max=' + ext[1]);
-		}
+PITester.prototype.get_stats = function() {
+	var stats = { };
+	var res = this.res;
+	stats.pi_version = this.pi.version;
+	stats.runs = res.length;
+	stats.solved = res.filter(function(r) { return r.solved }).length;
+	stats.solutions = [];
+	for (var i=0; i<res.length; i++) {
+		var sol = res[i].sols[0];
+		if (!sol) continue;
+		var sol_descr = sol.describe();
+		var same_sol = stats.solutions.filter(function(sinfo) {
+		  return sinfo.sol === sol_descr
+		})[0];
+		if (same_sol) same_sol.count++;
+		else stats.solutions.push({sol: sol_descr, count: 1});
 	}
-	stats('steps', 'perception_count', 'retrieval_count');
-	return res;
+
+	var calc_stat = function(name) {
+		var stat = {name: name};
+		var ext = d3.extent(res, function(d) {return d[name]});
+		var avg = d3.mean(res, function(d) {return d[name]});
+		var avg_square = 0;
+		for (var j=0; j<res.length; j++) {
+			avg_square += res[j][name] * res[j][name];
+		}
+		avg_square /= res.length;
+		var std_dev = Math.sqrt(avg_square - avg*avg);
+		stat.min = ext[0]; stat.max = ext[1];
+		stat.avg = avg; stat.std_dev = std_dev;
+		return stat;
+	}
+
+	stats.steps = calc_stat('steps');
+	stats.perception_count = calc_stat('perception_count');
+	stats.retrieval_count = calc_stat('retrieval_count');
+
+	return stats;
+}
+
+PITester.prototype.show_stats = function() {
+	var stats = this.get_stats();
+	console.log('PI v'+stats.pi_version, 'solved', stats.solved, 'of', stats.runs);
+	for (var key in stats) {
+		if (!stats[key].std_dev) continue;
+		var s = stats[key];
+		console.log( key + ':', s.avg.toFixed(0), '+-' + s.std_dev.toFixed(1)
+			         , 'min=' + s.min, 'max=' + s.max );
+	}
+	// var sum=0;
+	// for (var i=0; i<res.length; i++) if (res[i].solved) sum++;
+	// console.log('PI v'+this.pi.version, 'solved', sum, 'of', res.length);
+
+	// var stats = function(/*args*/) {
+	// 	for (var i=0; i<arguments.length; i++) {
+	// 	 	var name = arguments[i];
+	// 		var ext = d3.extent(res, function(d) {return d[name]});
+	// 		var avg = d3.mean(res, function(d) {return d[name]});
+	// 		var avg_square = 0;
+	// 		for (var j=0; j<res.length; j++) {
+	// 			avg_square += res[j][name] * res[j][name];
+	// 		}
+	// 		avg_square /= res.length;
+	// 		var std_dev = Math.sqrt(avg_square - avg*avg);
+	// 		console.log(name + ': ' + avg.toFixed(0) + ' +-' + std_dev.toFixed(1)
+	// 		          + ' min=' + ext[0] + ' max=' + ext[1]);
+	// 	}
+	// }
+	// stats('steps', 'perception_count', 'retrieval_count');
+	// return res;
 }
 
 PITester.prototype.clear_scenes = function() {
@@ -131,7 +179,7 @@ PITester.prototype.clear_scenes = function() {
 	});
 }
 
-PITester.prototype.get_current_pi = function() {
+PITester.get_current_pi = function() {
 	var curr = d3.keys(PI).reduce(function(a,b) { return a>b ? a : b});
 	return PI[curr];
 }
