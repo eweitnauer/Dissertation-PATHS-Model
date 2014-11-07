@@ -13,7 +13,14 @@ function init() {
 	ps.before_step_callback = show_step;
 	ps.after_step_callback = show_res;
 	ps.progress_callback = show_progress;
+	ps.log_error_callback = log_error;
 	ps.run();
+}
+
+function log_error(error) {
+	div.append('p')
+	  .text('LOGGING ERROR!')
+	  .style({'font-size': '25px', 'color': 'red', 'font-weight': 'bold'})
 }
 
 function show_step(i, N, params) {

@@ -10,14 +10,17 @@ PITestSuite = function(repetitions, max_solver_steps) {
   this.before_step_callback = null;
   this.after_step_callback = null;
   this.progress_callback = null;
+  this.log_error_callback = null;
 }
 
 PITestSuite.prototype.setLogServer = function(url, table_name) {
+  var self = this;
   this.data_logger = { log: function(data) {
     d3.xhr(url+'/'+table_name)
       .header("Content-Type", "application/json")
       .post(JSON.stringify(data), function(error, data) {
         console.log('log server results: ', error, data);
+        if (error && self.log_error_callback) self.log_error_callback(error);
     })
   }}
 }
