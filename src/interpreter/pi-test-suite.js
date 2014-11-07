@@ -6,6 +6,20 @@ PITestSuite = function(repetitions, max_solver_steps) {
 	this.max_solver_steps = max_solver_steps || 1000;
 	this.scene_cache = {}; // pbp -> [scenes]
 	this.results = [];
+  this.data_logger = null;
+  this.before_step_callback = null;
+  this.after_step_callback = null;
+  this.progress_callback = null;
+}
+
+PITestSuite.prototype.setLogServer = function(url, table_name) {
+  this.data_logger = { log: function(data) {
+    d3.xhr(url+'/'+table_name)
+      .header("Content-Type", "application/json")
+      .post(JSON.stringify(data), function(error, data) {
+        console.log('log server results: ', error, data);
+    })
+  }}
 }
 
 PITestSuite.prototype.addParameter = function(name, values) {
@@ -24,7 +38,8 @@ PITestSuite.prototype.run = function() {
       if (params[j].name === 'pbp') pbp = params[j].value;
       else options[params[j].name] = params[j].value;
     }
-    console.log('running test with', params.map(function(param) {
+    if (self.before_step_callback) self.before_step_callback(i, param_settings.length, params);
+    console.log('running test', i, 'of', param_settings.length, 'with', params.map(function(param) {
       return param.name+': '+param.value;
     }).join(', '));
     self.runOne(pbp, options, params, step);
@@ -95,14 +110,24 @@ PITestSuite.prototype.runOne = function(pbp, options, params, callback) {
 	var self = this;
 	tester.finish_callback = function() {
     console.log('finished!');
-		self.logResult(pbp, options, params, tester.get_stats());
+    var stats = tester.get_stats();
+		self.logResult(pbp, options, params, stats);
+    if (self.after_step_callback) self.after_step_callback(params, stats);
     callback();
 	};
+  tester.after_rep_callback = this.progress_callback;
   tester.run();
 }
 
-PITestSuite.prototype.logResult = function(pbp, opts, params, res) {
-	this.results.push({pbp: pbp, options: opts, params: params, res: res});
+PITestSuite.prototype.logResult = function(pbp, opts, params, stats) {
+  opts.features = opts.features.map(function(fi) {
+    return { key: fi.klass.prototype.key
+           , targetType: fi.klass.prototype.targetType
+           , initial_activation: fi.initial_activation }
+  });
+  var res = {pbp: pbp, options: opts, params: params, stats: stats};
+  this.results.push(res);
+  if (this.data_logger) this.data_logger.log(res);
 }
 
 PITestSuite.prototype.createDefaultOptions = function() {

@@ -21,6 +21,7 @@ PITester = function(pi, scenes, reps, max_steps, max_sols, log_level) {
 	this.max_sols = max_sols || 1;
 	this.log_level = log_level || 0;
 	this.after_step_callback = null;
+	this.after_rep_callback = null;
 	this.before_step_callback = null;
 	this.start_callback = null;
 	this.finish_callback = null;
@@ -67,10 +68,10 @@ PITester.prototype.step = function() {
 	if (!this.ws || this.isRepFinished()) this.initNextRep();
 
 	// do a step
-	if (this.before_step_callback) this.before_step_callback(this.curr_step);
+	if (this.before_step_callback) this.before_step_callback(this.curr_step, this.max_steps);
 	this.ws.coderack.step();
 	this.curr_step++;
-	if (this.after_step_callback) this.after_step_callback(this.curr_step);
+	if (this.after_step_callback) this.after_step_callback(this.curr_step, this.max_steps);
 
 	// are we done with the current repetition?
 	if (this.isRepFinished()) {
@@ -81,6 +82,7 @@ PITester.prototype.step = function() {
 	  curr_res.sols = this.ws.solutions;
 	  curr_res.solved = this.ws.solutions.length > 0;
 	  this.res.push(curr_res);
+	  if (this.after_rep_callback) this.after_rep_callback(curr_res.solved, this.curr_rep, this.reps);
 	  // are we finished?
 	  if (this.curr_rep === this.reps) {
 	  	if (this.finish_callback) this.finish_callback();
