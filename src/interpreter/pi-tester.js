@@ -80,7 +80,9 @@ PITester.prototype.step = function() {
 	  curr_res.perception_count = this.ws.perception_count;
 	  curr_res.retrieval_count = this.ws.retrieval_count;
 	  curr_res.sols = this.ws.solutions;
+	  if (this.max_sols === 1) curr_res.sol = this.ws.solutions[0];
 	  curr_res.solved = this.ws.solutions.length > 0;
+	  curr_res.reps = this.reps;
 	  this.res.push(curr_res);
 	  if (this.after_rep_callback) this.after_rep_callback(curr_res.solved, this.curr_rep, this.reps);
 	  // are we finished?
@@ -131,6 +133,7 @@ PITester.prototype.get_stats = function() {
 		return stat;
 	}
 
+	stats.trials = this.res;
 	stats.steps = calc_stat('steps');
 	stats.perception_count = calc_stat('perception_count');
 	stats.retrieval_count = calc_stat('retrieval_count');

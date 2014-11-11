@@ -15,6 +15,14 @@ var connect = function(callback) {
 	});
 }
 
+var findAllDocuments = function(coll_name, opts, callback) {
+  var collection = db.collection(coll_name);
+  collection.find({}, opts).toArray(function(err, docs) {
+    assert.equal(err, null);
+    callback(docs);
+  });
+}
+
 var insertDocuments = function(coll_name, data, callback) {
 	if (!Array.isArray(data)) data = [data];
 	var now = new Date();
@@ -38,3 +46,4 @@ var closeDB = function() {
 exports.insert = insertDocuments;
 exports.close = closeDB;
 exports.connect = connect;
+exports.findAll = findAllDocuments;

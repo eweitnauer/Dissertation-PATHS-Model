@@ -3,7 +3,7 @@ var pixels_per_unit = 50
 
 function init() {
 	div = d3.select('div#log');
-	var ps = new PITestSuite(100, 2000);
+	var ps = new PITestSuite(4, 500);
 	ps.addParameter('pres_mode',
 		['interleaved-sim-sim', 'interleaved-sim-dis'
 		,'interleaved-dis-sim', 'interleaved-dis-dis'

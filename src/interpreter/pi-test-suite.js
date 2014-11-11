@@ -11,12 +11,13 @@ PITestSuite = function(repetitions, max_solver_steps) {
   this.after_step_callback = null;
   this.progress_callback = null;
   this.log_error_callback = null;
+  this.id = Random.uid();
 }
 
 PITestSuite.prototype.setLogServer = function(url, table_name) {
   var self = this;
-  this.data_logger = { log: function(data) {
-    d3.xhr(url+'/'+table_name)
+  this.data_logger = { log: function(data, table) {
+    d3.xhr(url+'/'+(table||table_name))
       .header("Content-Type", "application/json")
       .post(JSON.stringify(data), function(error, data) {
         console.log('log server results: ', error, data);
@@ -29,12 +30,15 @@ PITestSuite.prototype.addParameter = function(name, values) {
 	this.parameters.push({name: name, values: values, i: 0});
 }
 
-PITestSuite.prototype.run = function() {
+PITestSuite.prototype.run = function(start_idx) {
 	var param_settings = this.cartesianProduct(this.parameters);
-  var i = 0, self = this;
+  this.step_count = param_settings.length;
+  var i = start_idx || 0, self = this;
+  // this.logDefaultOptions();
   function step() {
     if (i >= param_settings.length) return;
-		var params = param_settings[i++];
+    var params = param_settings[i++];
+    self.curr_idx = i;
     var options = self.createDefaultOptions();
     var pbp = null;
     for (var j=0; j<params.length; j++) {
@@ -48,6 +52,58 @@ PITestSuite.prototype.run = function() {
     self.runOne(pbp, options, params, step);
   }
   step();
+}
+
+PITestSuite.prototype.runOne = function(pbp, options, params, callback) {
+  var scenes = this.getScenes(pbp);
+  var pi = PITester.get_current_pi()(options);
+  var tester = new PITester( pi, scenes, this.reps, this.max_solver_steps
+                           , 1, 'error');
+  var self = this;
+  tester.finish_callback = function() {
+    console.log('finished!');
+    var stats = tester.get_stats();
+    self.logResult(options, params, stats);
+    if (self.after_step_callback) self.after_step_callback(params, stats);
+    callback();
+  };
+  tester.after_rep_callback = this.progress_callback;
+  tester.run();
+}
+
+// PITestSuite.prototype.logDefaultOptions = function() {
+//   var opts = this.createDefaultOptions();
+//   opts.features = opts.features.map(function(fi) {
+//     return { key: fi.klass.prototype.key
+//            , targetType: fi.klass.prototype.targetType
+//            , initial_activation: fi.initial_activation }
+//   });
+//   var data = { test_id: this.id
+//              , options: opts };
+//   if (this.data_logger) this.data_logger.log(data, 'pi_settings');
+// }
+
+
+PITestSuite.prototype.logResult = function(opts, params, stats) {
+  opts.features = opts.features.map(function(fi) {
+    return { key: fi.klass.prototype.key
+           , targetType: fi.klass.prototype.targetType
+           , initial_activation: fi.initial_activation }
+  });
+  var res = { step_idx: this.curr_idx
+            , step_count: this.step_count
+            , test_id: this.id
+            , options: opts };
+  params.forEach(function(param) { res[param.name] = param.value });
+  for (var trial_idx in stats.trials) {
+    var data = {};
+    PBP.extend(data, res);
+    PBP.extend(data, stats.trials[trial_idx]);
+    data.sol = data.sol.describe();
+    delete data.sols;
+    this.results.push(data);
+    if (this.data_logger) this.data_logger.log(data);
+  }
 }
 
 PITestSuite.prototype.cartesianProduct = function(params) {
@@ -103,34 +159,6 @@ PITestSuite.prototype.loadScenes = function(pbp) {
   	scenes.push(sn);
   }
   return scenes;
-}
-
-PITestSuite.prototype.runOne = function(pbp, options, params, callback) {
-	var scenes = this.getScenes(pbp);
-	var pi = PITester.get_current_pi()(options);
-	var tester = new PITester( pi, scenes, this.reps, this.max_solver_steps
-		                       , 1, 'error');
-	var self = this;
-	tester.finish_callback = function() {
-    console.log('finished!');
-    var stats = tester.get_stats();
-		self.logResult(pbp, options, params, stats);
-    if (self.after_step_callback) self.after_step_callback(params, stats);
-    callback();
-	};
-  tester.after_rep_callback = this.progress_callback;
-  tester.run();
-}
-
-PITestSuite.prototype.logResult = function(pbp, opts, params, stats) {
-  opts.features = opts.features.map(function(fi) {
-    return { key: fi.klass.prototype.key
-           , targetType: fi.klass.prototype.targetType
-           , initial_activation: fi.initial_activation }
-  });
-  var res = {pbp: pbp, options: opts, params: params, stats: stats};
-  this.results.push(res);
-  if (this.data_logger) this.data_logger.log(res);
 }
 
 PITestSuite.prototype.createDefaultOptions = function() {
