@@ -28,6 +28,7 @@ Solution.prototype.wasMatchedAgainst = function(scene_pair_id) {
 }
 
 Solution.prototype.isSolution = function() {
+	if (this.matchedAgainst.length < this.scene_pair_count) return false;
 	return ( this.matches.right === 0 && this.matches.left == this.scene_pair_count
 	      || this.matches.left === 0 && this.matches.right == this.scene_pair_count);
 }
@@ -107,13 +108,18 @@ Solution.prototype.checkScenePair = function(pair, pair_id) {
 }
 
 Solution.prototype.check = function(scenes_l, scenes_r) {
-	if (this.side !== 'left' && this.side !== 'right') return false;
+	if (this.main_side !== 'left' && this.main_side !== 'right') return false;
 
 	var main_scenes  = this.main_side == 'left'  ? scenes_l : scenes_r
-	   ,other_scenes = this.main_side == 'right' ? scenes_l : scenes_r;
+	   ,other_scenes = this.main_side == 'right' ? scenes_l : scenes_r
+	   ,self = this;
 
-	return (main_scenes.every(this.check_scene.bind(this))
-		     && !other_scenes.some(this.check_scene.bind(this)));
+  var check_scene = function(scene) {
+  	return self.check_scene(scene).match;
+  }
+
+	return (main_scenes.every(check_scene)
+	     && !other_scenes.some(check_scene));
 }
 
 Solution.prototype.equals = function(other) {
