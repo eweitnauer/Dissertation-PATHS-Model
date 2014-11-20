@@ -53,14 +53,15 @@ var SVGSceneParser = (function() {
     pixels_per_unit = pixels_per_unit || 100;
     //console.log('parsing', file_url);
     var content = ajaxGetUrl(file_url);
-    var svg_dom = parseXml(content);
-    if (!svg_dom) throw 'Error parsing ' + content;
+    //var svg_dom = parseXml(content);
+    //if (!svg_dom) throw 'Error parsing ' + content;
 
     // WORKAROUND 1
     // normally we would use the svg dom tree directly, but due to this bug in Firefox
     // (https://bugzilla.mozilla.org/show_bug.cgi?id=756985),
     // we need to add it to the main dom tree if we want to use getCTM() dom function.
-    var root = append_svg_to_dom(svg_dom, "hidden_svg_div");
+    //var root = append_svg_to_dom(svg_dom, "hidden_svg_div");
+    var root = append_svg_to_dom(content, "hidden_svg_div");
     var shapes = [];
 
     // the stroke-width must be multiplied with the scaling of the object to get the
@@ -166,7 +167,9 @@ var SVGSceneParser = (function() {
       var child;
       while (child = parent.childNodes[0]) { parent.removeChild(child); }
     }
-    return parent.appendChild(svg_dom.rootElement);
+    //return parent.appendChild(svg_dom.rootElement);
+    parent.innerHTML = svg_dom;
+    return parent.getElementsByTagName('svg')[0];
   }
 
   return pub;
