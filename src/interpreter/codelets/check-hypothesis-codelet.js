@@ -47,7 +47,10 @@ CheckHypothesisCodelet.prototype.updateObjectSelectorArrays = function(groups, s
   for (var i=0; i<groups.length; i++) {
     for (var j=0; j<groups[i].objs.length; j++) {
       var on = groups[i].objs[j].object_node;
-      on.selectors.push(sel); // in principle, no need to check for duplicates
+      // we should not need the following check, as each selector is only applied
+      // once to each scene, the result gets cached
+      if (on.selectors.indexOf(sel) !== -1) throw "duplicate selector!";
+      on.selectors.push(sel);
     }
   }
 }
