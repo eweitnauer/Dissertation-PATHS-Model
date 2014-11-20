@@ -19,10 +19,11 @@ var Box2D = {};
 
 (function (a2j, undefined) {
 
-   if(!(Object.prototype.defineProperty instanceof Function)
-      && Object.prototype.__defineGetter__ instanceof Function
-      && Object.prototype.__defineSetter__ instanceof Function)
+   if(!(Object.defineProperty instanceof Function)
+      && Object.__defineGetter__ instanceof Function
+      && Object.__defineSetter__ instanceof Function)
    {
+      console.log('redefining Object.defineProperty! It was', Object.defineProperty);
       Object.defineProperty = function(obj, p, cfg) {
          if(cfg.get instanceof Function)
             obj.__defineGetter__(p, cfg.get);
