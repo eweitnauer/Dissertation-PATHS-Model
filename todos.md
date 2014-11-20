@@ -1,7 +1,23 @@
 Question: We have three types of things: objects (O), selectors (S) and features (F). We spread activation from S ==> O and from S ==> F. Should we also spread activation for O <==> F and O,F ==> S? One reason to want F ==> S is that this way manually boosting the attention to a feature will also boost attention to that selector. It would also be good to keep the basic selectors like (square) more active later in the game.
 Alternatively, we could build combined selectors based directly on the feature activation.
+We could generally try to split activation into a frequency-based base value that gets added to a context-based value. Here is how this would look:
 
-Todo: Look at how Act-R implements the "activation calculus" for declarative memory (can model short- and long-term memory). Act-R is best for modelling reaction times and timing-based behaviors, memory retrieval and can also simulate what brain reagions should light up in FMRI recodings.
+* features
+    * base: how often perceived normalized by object count per scene
+    * context: activation of objects in current scene with that feature and activation of hypotheses using that feature
+* objects/groups
+    * base: how often was this object perceived normalized by total perceptions
+    * context: activation of features that are active for the object and activation of hypotheses that select this object
+* hypotheses
+    * base: how many scenes does that hypotheses match & type of match
+    * context: activation of features used in the hypothesis and activation of objects selected by the hypothesis
+
+But how to calculate this recursive definition of activity? Is there a way to approximate the behavior by spreading activation between entities?
+
+
+
+
+Idea: keep only 3 or 4 hypotheses in working memory at a time (selected / active / in focus)
 
 Issue: Prior activation of a feature does not make a big difference... We might want to pay attention to feature activity when combining selectors.
 ==> Is this really true? How does it compare to directly giving some base-selectors (e.g. activating "supports" and "square" VS. introducing a highly active "supports (any object)" and "square objects" hypotheses)?
