@@ -2,6 +2,10 @@
 var PI = PI || {};
 
 /*
+Version 0.4.4
+- bugfix: no longer accepts hypotheses as solutions before they were tested
+  on all scenes
+
 Version 0.4.3
 - bugfixes
 - separate values for initial and consequitive attention update for selectors
@@ -41,8 +45,8 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_4_3 = (function(opts) {
-  var version = '0.4.3';
+PI.v0_4_4 = (function(opts) {
+  var version = '0.4.4';
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = opts || {
