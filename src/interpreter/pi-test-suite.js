@@ -99,7 +99,7 @@ PITestSuite.prototype.logResult = function(opts, params, stats) {
     var data = {};
     PBP.extend(data, res);
     PBP.extend(data, stats.trials[trial_idx]);
-    data.sol = data.sol.describe();
+    data.sol = data.sol ? data.sol.describe() : '';
     delete data.sols;
     this.results.push(data);
     if (this.data_logger) this.data_logger.log(data);
