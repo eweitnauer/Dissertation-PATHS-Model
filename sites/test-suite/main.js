@@ -1,5 +1,5 @@
 var pixels_per_unit = 50
-  , div, p;
+  , div, p, t;
 
 function init(idx) {
 	console.log('initializing...');
@@ -15,6 +15,7 @@ function init(idx) {
 	ps.after_step_callback = show_res;
 	ps.progress_callback = show_progress;
 	ps.log_error_callback = log_error;
+	t = Date.now();
 	ps.run(idx || 0);
 }
 
@@ -37,7 +38,8 @@ function show_step(i, N, params) {
 }
 
 function show_progress(solved, i, N) {
-	console.log(solved ? 'OK' : 'FAIL');
+	console.log((solved ? 'OK' : 'FAIL') + ' in ' + ((Date.now()-t)/1000).toFixed(1) + ' sec');
+	t = Date.now();
 	p.append('span').text(solved ? '✓' : '✗').style('color', solved ? 'green' : 'red');
 }
 
