@@ -55,14 +55,14 @@ PhysicsScene.prototype.step = function(dt) {
 	try { // in Box2D.js line 5218, we sometimes have proxyA being undefined
 		this.world.Step(dt, 10, 10);
 	} catch(err) {
-		console.log('caught error', err, 'during Box2D simulation step');
-		console.log('trying again after finding new contacts...');
+		//console.log('caught error', err, 'during Box2D simulation step');
+		//console.log('trying again after finding new contacts...');
 
 		var broadPhase = this.world.m_contactManager.m_broadPhase;
 		this.forEachBody(function(body) {
 		  for (var f = body.m_fixtureList; f; f = f.m_next) {
 		  	if (!f.m_proxy) {
-		  		console.log(body, f, 'has no m_proxy set. Creating it now...');
+		  		//console.log(body, f, 'has no m_proxy set. Creating it now...');
       		f.CreateProxy(broadPhase, body.m_xf);
       	}
      	}
