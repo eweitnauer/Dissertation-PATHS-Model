@@ -244,7 +244,7 @@ Workspace.prototype.blockFeature = function(feature) {
 
 Workspace.prototype.addSolution = function(sol) {
   // do a safety check
-  if (!sol.check(this.left_scenes, this.right_scenes)) {
+  if (!sol.check(this.left_scenes.slice(0,8), this.right_scenes.slice(0,8))) {
     console.error('This "solution" is not valid:', sol.describe());
     console.error(sol);
     throw "this aint no solution!";
