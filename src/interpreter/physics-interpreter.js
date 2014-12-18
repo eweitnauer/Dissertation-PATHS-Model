@@ -99,7 +99,7 @@ PI.v0_4_3 = (function(opts) {
     {
       pick_group: 0.3 // probability that a group (vs. an object) is picked as
                       // perception target when the target is picked first
-    , pick_feature_fist: 0.25 // probability that the feature (vs. the target) is
+    , pick_feature_fist: 0 // probability that the feature (vs. the target) is
                       // picked first during perception
     }
   , attention:
