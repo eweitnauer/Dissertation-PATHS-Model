@@ -1,6 +1,6 @@
 PITestSuite = function(repetitions, max_solver_steps) {
-	this.pbps = [ "pbp12", "pbp02", "pbp04", "pbp08", "pbp11b", "pbp13", "pbp16"
-	            , "pbp18", "pbp20", "pbp22", "pbp26", "pbp31"];
+	this.pbps = [ "pbp24", "pbp12", "pbp02", "pbp04", "pbp08", "pbp11b", "pbp13"
+              , "pbp16", "pbp18", "pbp20", "pbp22", "pbp26", "pbp31"];
 	this.parameters = [{name: 'pbp', values: this.pbps}];
 	this.reps = repetitions || 1;
 	this.max_solver_steps = max_solver_steps || 1000;
@@ -30,6 +30,13 @@ PITestSuite.prototype.addParameter = function(name, values) {
 	this.parameters.push({name: name, values: values, i: 0});
 }
 
+PITestSuite.prototype.setParameter = function(name, values) {
+  var p = this.parameters.filter(function(param) { return param.name === name });
+  if (p.length === 0) throw 'unknown parameter ' + name;
+  p[0].values = values;
+  p[0].i = 0;
+}
+
 PITestSuite.prototype.run = function(start_idx) {
 	var param_settings = this.cartesianProduct(this.parameters);
   this.step_count = param_settings.length;
@@ -43,7 +50,7 @@ PITestSuite.prototype.run = function(start_idx) {
     var pbp = null;
     for (var j=0; j<params.length; j++) {
       if (params[j].name === 'pbp') pbp = params[j].value;
-      else options[params[j].name] = params[j].value;
+      else self.applyParam(options, params[j]);
     }
     if (self.before_step_callback) self.before_step_callback(i, param_settings.length, params);
     console.log('running test', i, 'of', param_settings.length, 'with', params.map(function(param) {
@@ -52,6 +59,14 @@ PITestSuite.prototype.run = function(start_idx) {
     self.runOne(pbp, options, params, step);
   }
   step();
+}
+
+PITestSuite.prototype.applyParam = function(options, param) {
+  var path = param.name.split('.')
+    , N = path.length;
+  for (var i=0; i<path.length-1; i++) options = options[path[i]];
+  if (!(path[N-1] in options)) throw "ERROR: " + param.name + " does not match any known option!";
+  options[path[N-1]] = param.value;
 }
 
 PITestSuite.prototype.runOne = function(pbp, options, params, callback) {

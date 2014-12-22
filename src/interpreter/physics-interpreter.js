@@ -2,6 +2,10 @@
 var PI = PI || {};
 
 /*
+Version 0.4.5
+- set pick_feature_fist probability to 0 by default
+- prevent "no codelet to run" steps
+
 Version 0.4.4
 - bugfix: no longer accepts hypotheses as solutions before they were tested
   on all scenes
@@ -45,8 +49,8 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_4_4 = (function(opts) {
-  var version = '0.4.4';
+PI.v0_4_5 = (function(opts) {
+  var version = '0.4.5';
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = opts || {
@@ -103,7 +107,7 @@ PI.v0_4_4 = (function(opts) {
     {
       pick_group: 0.3 // probability that a group (vs. an object) is picked as
                       // perception target when the target is picked first
-    , pick_feature_fist: 0 // probability that the feature (vs. the target) is
+    , pick_feature_fist: 1.0 // probability that the feature (vs. the target) is
                       // picked first during perception
     }
   , attention:
@@ -222,10 +226,10 @@ PI.v0_4_4 = (function(opts) {
     this.updateAttentions();
     if (this.ws.scene_pair_steps > Math.min(100, 10/this.best_expl_val)) {
       this.ws.advanceScenePair();
-    } else {
-      var codelet_info = Random.pick_weighted(this.codelet_infos, this.att_getter);
-      this.cr.insert(new codelet_info.klass(this.cr));
+      this.updateAttentions();
     }
+    var codelet_info = Random.pick_weighted(this.codelet_infos, this.att_getter);
+    this.cr.insert(new codelet_info.klass(this.cr));
   }
 
   return { createWorkspace: createWorkspace

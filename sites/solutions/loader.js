@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 1;
+var pbp_idx = 5;
 var curr_sols = [];
 var tester = null;
 var log_area = null;
@@ -271,7 +271,7 @@ function setup_solve() {
     scenes = []; for (p in problems) scenes.push(problems[p].sn);
 
     console.log("tester = new PITester('current', scenes, 25, 1000, 1, 'warn')");
-    tester = new PITester('current', scenes, 25, 1000, 1, 'warn');
+    tester = new PITester('current', scenes, 10, 1000, 1, 'warn');
     tester.start_callback = disable_drawing;
     tester.finish_callback = enable_drawing;
 
