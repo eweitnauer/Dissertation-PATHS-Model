@@ -2,6 +2,9 @@
 var PI = PI || {};
 
 /*
+Version 0.4.7
+- switched off unique and all solution modes
+
 Version 0.4.6
 - don't perceive all hypotheses automatically on each new scene to pick a group,
 instead, pick only among existing groups
@@ -55,8 +58,8 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_4_6 = (function(opts) {
-  var version = '0.4.6';
+PI.v0_4_7 = (function(opts) {
+  var version = '0.4.7';
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = opts || {
