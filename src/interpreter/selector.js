@@ -74,6 +74,43 @@ Selector.prototype.forEachFeature = function(fn) {
 	}
 }
 
+/** Returns the first group in the passed scene that contains this selector in
+ * its selectors array. Null if none. */
+Selector.prototype.getCachedResult = function(scene) {
+	for (var i=0; i<scene.groups.length; i++) {
+    var g = scene.groups[i];
+    if (g.selectors.indexOf(this) !== -1) return g;
+  }
+  return null;
+}
+
+/** Will return a cached result if it exists. If not, it will apply the selector
+ * to the scene. If there is a group in the scene that contains the same objects
+ * as selected by this selector, it will return that group, otherwise the newly
+ * created group, after adding it to the scene. */
+Selector.prototype.applyToScene = function(scene) {
+	var sel = this, group;
+	group = this.getCachedResult(scene);
+	if (group) return group;
+	// we did not apply this selector to this scene yet
+	group = this.select(GroupNode.sceneGroup(scene), scene);
+	group.selectors = [this];
+	if (!group.empty()) {
+		for (var i=0; i<scene.groups.length; i++) {
+    	if (this.arraysIdentical(scene.groups[i].objs, group.objs)) {
+      	if (scene.groups[i].selectors.some(function(ssel) { return ssel.equals(sel) })) {
+        	throw "I won't insert an existing selector";
+      	}
+      	scene.groups[i].selectors.push(sel);
+      	return scene.groups[i];
+    	}
+  	}
+  	// a new group!
+  	scene.groups.push(group);
+	}
+	return group;
+}
+
 /** Returns a new selector that has all attributes from this and the passed selector.
  * In the case of a duplicate feature, the feature of the passed selector is used. */
 Selector.prototype.mergedWith = function(other_sel) {
@@ -217,12 +254,6 @@ Selector.prototype.select = function(group_node, scene_node, test_fn) {
 	}
 	return gn;
 };
-
-Selector.prototype.applyToScene = function(scene) {
-	var group = this.select(GroupNode.sceneGroup(scene), scene);
-	group.selectors = [this];
-	return group;
-}
 
 /// Returns a human readable description of the attributes used in this selector.
 Selector.prototype.describe = function() {
@@ -389,3 +420,12 @@ Selector.RelMatcher.prototype.describe = function() {
 				 this.other_sel.describe() +
 				 (this.constant || this.time == "start" ? '' : ' at the ' + this.time);
 }
+
+Selector.prototype.arraysIdentical = function(a1, a2) {
+  if (a1.length !== a2.length) return false;
+  for (var i=0; i<a1.length; i++) {
+    if (a2.indexOf(a1[i]) === -1) return false;
+  }
+  return true;
+}
+

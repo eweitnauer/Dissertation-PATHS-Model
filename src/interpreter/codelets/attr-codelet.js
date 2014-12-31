@@ -86,14 +86,14 @@ AttrCodelet.prototype.run = function() {
     feature = this.ws.getRandomFeature();
     var node_filter = this.isNotCachedNodeFilter(feature, this.time);
     if (feature.prototype.targetType == 'group') {
-      target = this.ws.getRandomGroup(scene, { filter: node_filter });
+      target = this.ws.getExistingRandomGroup(scene, { filter: node_filter });
     } else {
       target = this.ws.getRandomObject(scene, { filter: node_filter });
     }
   }
   else { // pick obj or group first
     var pick_group = this.shouldPickGroup();
-    target = pick_group ? this.ws.getRandomGroup(scene) : this.ws.getRandomObject(scene);
+    target = pick_group ? this.ws.getExistingRandomGroup(scene) : this.ws.getRandomObject(scene);
     if (!target) return false;
     feature = this.ws.getRandomFeature({ type: pick_group ? 'group' : 'obj'
         , filter: this.isNotCachedFeatureFilter(target, this.time) });

@@ -2,6 +2,12 @@
 var PI = PI || {};
 
 /*
+Version 0.4.6
+- don't perceive all hypotheses automatically on each new scene to pick a group,
+instead, pick only among existing groups
+- selectors now automatically add their perceived groups to the scene's groups
+array (and merge with an existing group if it contains the same objects)
+
 Version 0.4.5
 - set pick_feature_first probability to 0 by default
 - prevent "no codelet to run" steps
@@ -49,8 +55,8 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_4_5 = (function(opts) {
-  var version = '0.4.5';
+PI.v0_4_6 = (function(opts) {
+  var version = '0.4.6';
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = opts || {

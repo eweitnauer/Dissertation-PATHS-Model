@@ -270,8 +270,8 @@ function setup_solve() {
     console.log("scenes = []; for (p in problems) scenes.push(problems[p].sn);");
     scenes = []; for (p in problems) scenes.push(problems[p].sn);
 
-    console.log("tester = new PITester('current', scenes, 25, 1000, 1, 'warn')");
-    tester = new PITester('current', scenes, 10, 1000, 1, 'warn');
+    console.log("tester = new PITester('current', scenes, 20, 1000, 1, 'warn')");
+    tester = new PITester('current', scenes, 20, 1000, 1, 'warn');
     tester.start_callback = disable_drawing;
     tester.finish_callback = enable_drawing;
 
