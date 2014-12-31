@@ -14,7 +14,7 @@ function init(idx) {
 function init_ff(idx) {
 	var ps = setup_testsuite();
 	ps.setParameter('pbp', ['pbp13']);
-	ps.addParameter('perception.pick_feature_fist', [0, 0.5, 1]);
+	ps.addParameter('perception.pick_feature_first', [0, 0.5, 1]);
 	ps.run(idx || 0);
 }
 

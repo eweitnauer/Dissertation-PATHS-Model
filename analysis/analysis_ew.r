@@ -62,11 +62,21 @@ bargraph.CI(x.factor=pbp,group=sch_cond,response=subject_pairs_seen,data=data_ss
 #bargraph.CI(x.factor=pbp,group=sch_cond,response=train_time,data=data_ss[data_ss$found_solution == 1,],legend=T,ylab='train time in seconds')
 par(mfrow=c(1,1));
 
+par(mfrow=c(2,1));
+bargraph.CI(x.factor=pbp,group=sim_cond_bw_cat,response=train_time,data=data[data$found_solution == 1,],legend=T,ylab='steps to solution for solved trials', main='AI')
+bargraph.CI(x.factor=pbp,group=sim_cond_bw_cat,response=subject_pairs_seen,data=data_ss[data_ss$found_solution == 1 & data_ss$subject_pairs_seen<=100,],legend=T,ylab='scene pairs seen', main='Subjects')
+
 ### all conds
 
 bargraph.CI(x.factor=pbp,group=cond,response=found_solution,ylim=c(0.0, 1.1),data=data,legend=T,ylab='correct answer rate')
-bargraph.CI(x.factor=pbp,group=cond,response=train_time,data=data,legend=T,ylab='steps to solution or fail')
+bargraph.CI(x.factor=pbp,group=cond,response=train_time,data=data,ylim=c(200,250),legend=T,ylab='steps to solution or fail')
 bargraph.CI(x.factor=pbp,group=cond,response=train_time,data=data[data$found_solution == 1,],legend=T,ylab='steps to solution for solved trials')
+
+### feature1st
+
+bargraph.CI(x.factor=pbp,group=feature1st,response=found_solution,ylim=c(0.0, 1.1),data=data,legend=T,ylab='correct answer rate', main='pick feature first')
+bargraph.CI(x.factor=pbp,group=feature1st,response=train_time,data=data,legend=T,ylab='steps to solution or fail' , main='pick feature first')
+bargraph.CI(x.factor=pbp,group=feature1st,response=train_time,data=data[data$found_solution == 1,],legend=T,ylab='steps to solution for solved trials', , main='pick feature first')
 
 ### sch_cond
 

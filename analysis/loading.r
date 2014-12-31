@@ -3,9 +3,9 @@
 # renames the following columns: mturk_id (rep), found_solution (solved), cond (pres_mode), train_time (steps)
 load_data = function() {
   #data = read.csv("pbp-computer-results.csv", header=TRUE, colClasses=c("steps"="numeric"));
-  data = read.csv("newest.csv", header=TRUE, colClasses=c("steps"="numeric"));
+  data = read.csv("data-0-4-4.csv", header=TRUE, colClasses=c("steps"="numeric"));
   data = rename(data, c("solved"="found_solution","pres_mode"="cond","steps"="train_time","rep"="mturk_id"));
-  data$found_solution = ifelse(data$found_solution == 'true', 1, 0);
+  data$found_solution = ifelse((data$found_solution == 'true') | (data$found_solution == 1), 1, 0);
   
   print("subjects total:")
   print(length(table(data$mturk_id)))
