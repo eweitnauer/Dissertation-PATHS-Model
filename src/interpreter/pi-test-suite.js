@@ -1,5 +1,5 @@
 PITestSuite = function(repetitions, max_solver_steps) {
-	this.pbps = [ "pbp24", "pbp12", "pbp02", "pbp04", "pbp08", "pbp11b", "pbp13"
+	this.pbps = [ "pbp12", "pbp02", "pbp04", "pbp08", "pbp11b", "pbp13"
               , "pbp16", "pbp18", "pbp20", "pbp22", "pbp26", "pbp31"];
 	this.parameters = [{name: 'pbp', values: this.pbps}];
 	this.reps = repetitions || 1;
@@ -223,7 +223,7 @@ PITestSuite.prototype.createDefaultOptions = function() {
     {
       pick_group: 0.3 // probability that a group (vs. an object) is picked as
                       // perception target when the target is picked first
-    , pick_feature_fist: 0.25 // probability that the feature (vs. the target) is
+    , pick_feature_fist: 0 // probability that the feature (vs. the target) is
                       // picked first during perception
     }
   , attention:
