@@ -3,7 +3,7 @@ var PI = PI || {};
 
 /*
 Version 0.4.5
-- set pick_feature_fist probability to 0 by default
+- set pick_feature_first probability to 0 by default
 - prevent "no codelet to run" steps
 
 Version 0.4.4

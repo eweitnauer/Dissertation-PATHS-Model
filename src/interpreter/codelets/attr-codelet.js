@@ -43,7 +43,7 @@ AttrCodelet.prototype.perceiveRel = function(scene, target_obj, feature, time) {
 }
 
 AttrCodelet.prototype.shouldPickFeatureFirst = function() {
-  return Math.random() < this.ws.options.perception.pick_feature_fist;
+  return Math.random() < this.ws.options.perception.pick_feature_first;
 }
 
 AttrCodelet.prototype.shouldPickGroup = function() {
