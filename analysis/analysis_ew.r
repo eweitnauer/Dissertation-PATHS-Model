@@ -24,7 +24,7 @@ data_ss = data_ss[order(data_ss$pbp),] # reorder columns according to the pbp fa
 data_all = merge(data_ai, data_ss[c("pbp", "cond", "found_solution", "train_time", "population")], all=T);
   
 # print solutions ordered by frequency per problem:
-pbp = 'pbp22';
+pbp = 'pbp13';
 sols = count(data[data$found_solution==1 & data$pbp==pbp,]$sol);
 sols[order(sols$freq),]
 
