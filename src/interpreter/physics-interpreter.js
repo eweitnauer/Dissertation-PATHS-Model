@@ -2,6 +2,14 @@
 var PI = PI || {};
 
 /*
+Version 0.5.0
+- switching to a probability-inspired attention system without annealing or clamping
+- AttentionNet.updateActivities() calculates and normalized all activities and
+is called once after each codelet run.
+- we don't cache the perception results from CheckHypothesis calls anymore (we
+need to perceive attributes in the AttrCodelet so that a hypothesis can be constructed
+from them)
+
 Version 0.4.7
 - switched off unique and all solution modes
 
@@ -58,13 +66,13 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_4_7 = (function(opts) {
-  var version = '0.4.7';
+PI.v0_5_0 = (function(opts) {
+  var version = '0.5.0';
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = opts || {
     features: [
-                { klass: StabilityAttribute,   initial_activation: high }
+                 { klass: StabilityAttribute,   initial_activation: high }
               , { klass: SingleAttribute,      initial_activation: high }
               , { klass: MovesAttribute,       initial_activation: high }
               , { klass: TouchRelationship,    initial_activation: high }
@@ -116,43 +124,29 @@ PI.v0_4_7 = (function(opts) {
     {
       pick_group: 0.3 // probability that a group (vs. an object) is picked as
                       // perception target when the target is picked first
-    , pick_feature_first: 0 // probability that the feature (vs. the target) is
+    , pick_feature_first: 0.5 // probability that the feature (vs. the target) is
                       // picked first during perception
     }
-  , attention:
+  , activity:
     { time: { start: 0.67, end: 0.33 }//{ start: 0.67, end: 0.33 }
-    , sel: {
-        initial: // initial attention for selectors based on first match
-        {
-          one_side: 0.4
-        , both_sides: 0.2
-        , fail: 0
-        }
-      , specificity: 0.1 // raise attention to selectors that match less than all objects per scene
-      , update:       // raise attention according to which scenes where matched in a scene pair
-        {
-          one_side: 0.15
-        , both_sides: 0.05
-        , fail: 0
-        }
-      , complexity_penalty_steepness: 15 // posteriori is 1-1/(1+exp(cps*(0.25-complexity/10)))
-      }
+    , hypothesis: {
+      specificity_base: 0.25 // >0, the smaller, the bigger the influence of specificity
+    }
     , feature: {
-      from_sel: 0.5 // scale that is applied when spreading attention from new selectors to features
+      hyp_base: 0.1 // >0, the smaller, the bigger the influence of hypotheses activities
     }
     , obj: {
-        initial: 0.1
-      , from_sel_scale: 0.2 // scale that is applied when spreading attention from new selectors to objects
+        hyp_base: 0.1 // >0, the smaller, the bigger the influence of hypotheses activities
       , attr_boost: { // only apply at time "start"
-          moves: 0.3
-        // , top_most: 0.1 // this & below: often will get boosted via sel.specificity, too
-        // , single: 0.1
-        // , left_most: 0.1
-        // , right_most: 0.1
+          moves: 1.2
+        , top_most: 1.1 // this & below: often will get boosted via sel.specificity, too
+        , single: 1.1
+        , left_most: 1.1
+        , right_most: 1.1
         }
       , rel_boost: { // only apply at time "start"
-          hits: [0.2, 0]
-        , collides: [0.1, 0.1]
+          hits: [1.2, 0]
+        , collides: [1.1, 1.1]
         }
       }
     }
@@ -160,7 +154,7 @@ PI.v0_4_7 = (function(opts) {
 
   var createWorkspace = function(scenes, loglevel) {
     var ws = new Workspace(scenes, options, loglevel);
-    ws.attentionNet.setComplexityPenaltySteepness(options.attention.sel.complexity_penalty_steepness);
+    // DELETE_ME ws.attentionNet.setComplexityPenaltySteepness(options.attention.sel.complexity_penalty_steepness);
     ws.coderack.behaviors.push(new MainBehavior(ws.coderack));
     return ws;
   }
@@ -177,32 +171,28 @@ PI.v0_4_7 = (function(opts) {
                          ,{klass: CheckHypothesisCodelet, attention: 0 }
                          ,{klass: CombineHypothesisCodelet, attention: 0 }];
     this.att_getter = function(ci) {
-      return ci.attention * coderack.getCodeletTypeActivity(ci.klass)
+      return ci.attention// * coderack.getCodeletTypeActivity(ci.klass)
     };
   }
 
   MainBehavior.prototype.updateAttentions = function() {
     var hyps = this.ws.attentionNet.solutions;
-    var checked_lr = 0, unchecked = 0; // max attention among respective solutions
-    var best_expl = null, best_expl_val = 0;
+    var checked_lr_max = 0, unchecked_sum = 0; // max attention among respective solutions
+    var expl_sum = 0;
     for (var i=0; i<hyps.length; i++) {
       var hyp = hyps[i];
-      if (hyp.sel.blank()) continue;
       var was_checked = hyp.wasMatchedAgainst(this.ws.scene_pair_index);
-      var val = this.ws.attentionNet.getAttentionValue(hyp);
-      if (hyp.main_side === 'both' && was_checked) checked_lr = Math.max(checked_lr, val);
-      if (!was_checked) unchecked = Math.max(unchecked, val);
+      var val = this.ws.attentionNet.getActivity(hyp);
+      if (hyp.main_side === 'both' && was_checked) checked_lr_max = Math.max(checked_lr_max, val);
+      if (!was_checked) unchecked_sum += val;
       if (was_checked && (hyp.main_side === 'left' || hyp.main_side === 'right')) {
-        if (val > best_expl_val) {
-          best_expl = hyp;
-          best_expl_val = val;
-        }
+        expl_sum += val;
       }
     }
-    this.codelet_infos[0].attention = 0.5;
-    this.codelet_infos[1].attention = 1-(1/Math.pow(2, 3*unchecked));
-    this.codelet_infos[2].attention = Math.max(0, 1-(1/Math.pow(2, 2*checked_lr)));
-    this.best_expl_val = best_expl_val;
+    this.codelet_infos[0].attention = 1;
+    this.codelet_infos[1].attention = unchecked_sum;//0.3//1-(1/Math.pow(2, 3*unchecked_sum));
+    this.codelet_infos[2].attention = checked_lr_max/2;//0.1//Math.max(0, 1-(1/Math.pow(2, 2*checked_lr_max)));
+    this.expl_sum = expl_sum;
   }
 
   MainBehavior.prototype.getTopDownAttention = function(cdl_name) {
@@ -232,7 +222,7 @@ PI.v0_4_7 = (function(opts) {
   MainBehavior.prototype.run = function() {
     if (this.cr.length > 0) return;
     this.updateAttentions();
-    if (this.ws.scene_pair_steps > Math.min(100, 10/this.best_expl_val)) {
+    if (this.ws.scene_pair_steps > Math.min(100, 1/this.expl_sum)) {
       this.ws.advanceScenePair();
       this.updateAttentions();
     }

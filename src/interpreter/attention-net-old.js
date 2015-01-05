@@ -10,78 +10,60 @@
  * using a sigmoid function. Attention values should only be changed using
  * the addToAttentionValue function.
  */
-AttentionNet = function(options) {
+AttentionNet = function() {
 	this.features = [];
 	this.solutions = [];
 	this.objects = [];
-	this.objects_by_scene = null; // internal cache, keys are scene ids
+	this.objects_by_scene = null; // internal cache
 	this.attention_values = new WeakMap();
-
-	this.specificity_base = options.activity.hypothesis.specificity_base;
-	this.feature_base = options.activity.feature.hyp_base;
-	this.object_base = options.activity.obj.hyp_base;
+	this.cps = 15; // complexity penalty steepness
 }
 
-/// Can throw "unknown element" exception.
-AttentionNet.prototype.getActivity = function(el) {
-	if (!this.attention_values.has(el)) throw "unknown element";
-	return this.attention_values.get(el);
+/// In google, search for 1/(1+exp(8*(0.5-x))) from -0.1 to 1.1
+AttentionNet.prototype.sigmoid = function(x) {
+	//return x;
+	if (x===0) return 0;
+	return 1/(1+Math.exp(8*(0.5-x)));
 }
 
-AttentionNet.prototype.updateActivities = function() {
-	var self = this;
-	this.solutions.forEach(function(sol) {
-		self.attention_values.set(sol, self.calcSolutionActivity(sol))
-	});
-	this.normalize('solutions');
-	this.features.forEach(function(feat) {
-		self.attention_values.set(feat, self.calcFeatureActivity(feat))
-	});
-	this.normalize('features');
-	this.objects.forEach(function(obj) {
-		self.attention_values.set(obj, self.calcObjectActivity(obj))
-	});
-	this.normalize('objects');
+AttentionNet.prototype.setComplexityPenaltySteepness = function(val) {
+	this.cps = val;
 }
 
-AttentionNet.prototype.calcSolutionActivity = function(sol) {
-	if (sol.main_side === 'fail') return 0;
-	return Math.pow(0.5, sol.sel.getComplexity()
-		                 + sol.uncheckedSceneCount()
-		                 + 2*sol.incompatibleMatchCount())
-		   * (sol.specificity+this.specificity_base);
-	// return Math.pow(0.5, sol.sel.getComplexity()
-	// 	                 + sol.scene_pair_count*2
-	// 	                 - sol.goodSidesCompatibleCount())
-	// 	   * (sol.specificity+this.specificity_base);
+/// google: plot 1-1/(1+exp(15*(0.25-x/10)))  from 0 to 10
+AttentionNet.prototype.getPosteriori = function(sol) {
+	if (sol instanceof Solution)
+		return 1-1/(1+Math.exp(this.cps*(0.25-sol.sel.getComplexity()/10)));
+	else return 1;
 }
 
-/// Assumes normalized solution activities.
-AttentionNet.prototype.calcFeatureActivity = function(feat) {
-	//return 1;
-	var self = this;
-	var sum = d3.sum(this.solutions, function(sol) {
-		if (!sol.sel.hasFeatureType(feat.prototype)) return 0;
-		else return self.getActivity(sol);
-	});
-	return feat.prototype.apriori * (this.feature_base+sum);
-}
-
-AttentionNet.prototype.calcObjectActivity = function(obj) {
-	//return 1;
-	var self = this;
-	var sum = d3.sum(obj.selectors, function(sel) {
-		return self.getActivity(sel.solution);
-	});
-	return this.getObjectPrior(obj) * (this.object_base+sum);
-}
-
-AttentionNet.prototype.getObjectPrior = function(obj) {
-	return 1;
+/// Clamps all attention values of the passed type ('features',
+/// 'solutions', 'objects') to the passed interval. The default
+/// for the interval is min=0 and max=1. Pass a cooldown to have it
+/// subtracted from all attention values before clamping.
+/// Attention values of 0 will not be changed at all.
+AttentionNet.prototype.clamp = function(type, min, max, cooldown) {
+	if (typeof(min) === 'undefined') min = 0;
+	if (typeof(max) === 'undefined') max = 1;
+	if (!type || type === 'all') {
+		this.clamp('features', min, max, cooldown);
+		this.clamp('solutions', min, max, cooldown);
+		this.clamp('objects', min, max, cooldown);
+		return;
+	}
+	var att, i;
+	for (i=0; i<this[type].length; i++) {
+		att = this.attention_values.get(this[type][i]);
+		if (att === 0) continue;
+		if (cooldown) att -= cooldown;
+		att = att < min ? min : att;
+		att = att > max ? max : att;
+		this.attention_values.set(this[type][i], att);
+	}
 }
 
 /// Updates all attention values, so that for 'features', 'solutions'
-/// and 'objects' the attentions add up to 1 (per scene for objects).
+/// and 'objects' the attentions add up to 1.
 /// The `type` argument is optional, if not passed, all types are
 /// normalized.
 AttentionNet.prototype.normalize = function(type) {
@@ -93,7 +75,7 @@ AttentionNet.prototype.normalize = function(type) {
 	}
 	if (type === 'objects') {
 		var objs = this.objectsByScene();
-		for (var idx in objs)	this.normalizeElements(objs[idx]);
+		for (var scene in objs)	this.normalizeElements(objs[scene]);
 	} else {
 		this.normalizeElements(this[type]);
 	}
@@ -138,6 +120,32 @@ AttentionNet.prototype.addElement = function(type, element, val) {
 	return true;
 }
 
+/// Can throw "unknown element" exception.
+AttentionNet.prototype.getAttentionValue = function(el) {
+	if (!this.attention_values.has(el)) throw "unknown element";
+	return this.sigmoid(this.attention_values.get(el)) * this.getPosteriori(el);
+}
+
+AttentionNet.prototype.getAttentionValueNoSigmoid = function(el) {
+	if (!this.attention_values.has(el)) throw "unknown element";
+	return this.attention_values.get(el) * this.getPosteriori(el);
+}
+
+/// Can throw "unknown element" exception.
+AttentionNet.prototype.setAttentionValue = function(el, val) {
+	if (!this.attention_values.has(el)) throw "unknown element";
+	return this.attention_values.set(el, val);
+}
+
+/// Can throw "unknown element" exception.
+AttentionNet.prototype.addToAttentionValue = function(el, delta, min, max) {
+	if (!this.attention_values.has(el)) throw "unknown element";
+	var val = this.attention_values.get(el)+delta;
+	if (typeof(min) === 'number' && typeof(max) === 'number')
+	  val = Math.min(Math.max(min, val), max);
+	return this.attention_values.set(el, val);
+}
+
 /// Returns true if successfully inserted. Optionally pass an attention value
 /// (default: 1.0).
 AttentionNet.prototype.addFeature = function(feature, val) {
@@ -157,24 +165,19 @@ AttentionNet.prototype.addObject = function(object, val) {
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
-/// If the objects have a summed activity of 0, any on of them is picked.
 /// Available options:
 /// filter (ObjectNode->bool)
 AttentionNet.prototype.getRandomObject = function(scene, options) {
 	options = options || {};
 	var self = this;
-	var activity_sum = 0;
 	var objs = scene.objs.filter(function(obj) {
-		if (!options.filter || options.filter(obj)) {
-			activity_sum += self.getActivity(obj);
-			return true;
-		} else return false;
+		return ( self.getAttentionValue(obj) > 0
+		     && (!options.filter || options.filter(obj)));
 	});
 	if (objs.length === 0) return null;
-	if (activity_sum > 0) return Random.pick_weighted(objs, function (obj) {
-		return self.getActivity(obj);
+	return Random.pick_weighted(objs, function (obj) {
+		return self.getAttentionValue(obj);
 	});
-	else return Random.pick(objs);
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
@@ -184,13 +187,13 @@ AttentionNet.prototype.getRandomFeature = function(options) {
 	var self = this;
 	var pool = options.pool || this.features;
 	var features = pool.filter(function(feature) {
-		return ( self.getActivity(feature) > 0
+		return ( self.getAttentionValue(feature) > 0
 			   && (!options.type || feature.prototype.targetType === options.type)
 		     && (!options.filter || options.filter(feature)));
 	});
 	if (features.length === 0) return null;
 	return Random.pick_weighted(features, function (feature) {
-		return self.getActivity(feature);
+		return self.getAttentionValue(feature);
 	});
 }
 
@@ -203,13 +206,13 @@ AttentionNet.prototype.getRandomSolution = function(options) {
 	var self = this;
 	var pool = options.pool || this.solutions;
 	var sols = pool.filter(function(sol) {
-		return (self.getActivity(sol) > 0
+		return (self.getAttentionValue(sol) > 0
 			&& (!options.no_blank || !sol.sel.blank())
 		  && (!options.type || sol.sel.getType() === options.type)
 		  && (!options.filter || options.filter(sol)));
 	});
 	if (sols.length === 0) return null;
 	return Random.pick_weighted(sols, function (sol) {
-		return self.getActivity(sol);
+		return self.getAttentionValue(sol);
 	});
 }

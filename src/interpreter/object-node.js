@@ -16,8 +16,8 @@ ObjectNode.attrs = pbpSettings.obj_attrs;
 ObjectNode.rels = pbpSettings.obj_rels;
 
 /// The ObjectNode will send 'perceived' and 'retrieved' events
-/// {percept, target, othert, time}.
-asEventListener.call(ObjectNode.prototype);
+/// {percept, target, other, time}.
+ObjectNode.events = d3.dispatch('perceived', 'retrieved');
 
 /// Returns true if there is the passed relation type with the passed activity
 /// with the passed other object node.
@@ -76,6 +76,7 @@ ObjectNode.prototype.getFromCache = function(key, opts) {
 /// otherwise the current state of the oracle is used. If the oracle is in no named state,
 /// the perceived attribute is not cached, otherwise its returned if in cache or perceived,
 /// cached and returned if not in cache.
+/// Results will not be cached if 'dont_cache' is ture in opts.
 ObjectNode.prototype.getAttr = function(key, opts) {
   var o = PBP.extend({}, opts);
   // if time was not passed, use the current state of the oracle
@@ -84,7 +85,7 @@ ObjectNode.prototype.getAttr = function(key, opts) {
   // if the attr is cached, just return it
   if ((o.time in this.times) && (key in this.times[o.time])) {
     var res = this.times[o.time][key];
-    this.dispatchEvent('retrieved', {percept: res, target: this, time: o.time});
+    ObjectNode.events.retrieved({percept: res, target: this, time: o.time});
     return res;
   }
   if (o.cache_only) return false;
@@ -92,11 +93,11 @@ ObjectNode.prototype.getAttr = function(key, opts) {
   if (o.time) this.scene_node.oracle.gotoState(o.time);
   var res = new ObjectNode.attrs[key](this.obj);
   // cache it, if the state is a known one
-  if (o.time) {
+  if (o.time && !o.dont_cache) {
     if (!this.times[o.time]) this.times[o.time] = {};
     this.times[o.time][key] = res;
   }
-  this.dispatchEvent('perceived', {percept: res, target: this, time: o.time});
+  ObjectNode.events.perceived({percept: res, target: this, time: o.time});
   return res;
 }
 
@@ -107,6 +108,7 @@ ObjectNode.prototype.getAttr = function(key, opts) {
 /// cached and returned if not in cache.
 /// If opts.get_all is set, the method will return an array of all relationships
 /// that were perceived for the object so far. Use only in combination with opts.cache_only!
+/// Results will not be cached if 'dont_cache' is ture in opts.
 ObjectNode.prototype.getRel = function(key, opts) {
   var o = PBP.extend({}, opts);
   // if time was not passed, use the current state of the oracle
@@ -118,7 +120,7 @@ ObjectNode.prototype.getRel = function(key, opts) {
     if (o.get_all) return cache;
     var res = cache.filter(function (rel) { return rel.other === o.other.obj })[0];
     if (res) {
-      this.dispatchEvent('retrieved', {percept: res, target: this, time: o.time});
+      ObjectNode.events.retrieved({percept: res, target: this, time: o.time, other: o.other});
       return res;
     }
   }
@@ -127,13 +129,12 @@ ObjectNode.prototype.getRel = function(key, opts) {
   if (o.time) this.scene_node.oracle.gotoState(o.time);
   var res = new ObjectNode.rels[key](this.obj, o.other.obj);
   // cache it, if the state is a known one
-  if (o.time) {
+  if (o.time && !o.dont_cache) {
     if (!this.times[o.time]) this.times[o.time] = {};
     if (!this.times[o.time][key]) this.times[o.time][key] = [];
     this.times[o.time][key].push(res);
   }
-  this.dispatchEvent('perceived', {percept: res, target: this, time: o.time
-                                  ,other: o.other});
+  ObjectNode.events.perceived({percept: res, target: this, time: o.time, other: o.other});
   return res;
 }
 

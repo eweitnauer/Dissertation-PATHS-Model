@@ -13,8 +13,9 @@ GroupNode = function(scene_node, objs, selectors) {
                              : [new Selector()];
 }
 
-/// The ObjectNode will send 'perceived' and 'retrieved' events {feature, target}.
-asEventListener.call(GroupNode.prototype);
+/// The GroupNode will send 'perceived' and 'retrieved' events
+/// {percept, target, other, time}.
+GroupNode.events = d3.dispatch('perceived', 'retrieved');
 
 GroupNode.prototype.empty = function() {
   return this.objs.length === 0;
@@ -68,6 +69,7 @@ GroupNode.prototype.perceive = function(time) {
 
 /// Returns the attribute for the passed time in the opts object (default is 'start').
 /// If it was not perceived yet, it is perceived now, unless 'cache_only' is true in opts.
+/// Results will not be cached if 'dont_cache' is ture in opts.
 GroupNode.prototype.getAttr = function(key, opts) {
   var o = PBP.extend({}, opts);
   // if time was not passed, use the current state of the oracle
@@ -76,7 +78,7 @@ GroupNode.prototype.getAttr = function(key, opts) {
   // if the attr is cached, just return it
   if ((o.time in this.times) && (key in this.times[o.time])) {
     var res = this.times[o.time][key];
-    this.dispatchEvent('retrieved', {percept: res, target: this, time: o.time});
+    GroupNode.events.retrieved({percept: res, target: this, time: o.time});
     return res;
   }
   if (o.cache_only) return false;
@@ -84,11 +86,11 @@ GroupNode.prototype.getAttr = function(key, opts) {
   if (o.time) this.scene_node.oracle.gotoState(o.time);
   var res = new GroupNode.attrs[key](this);
   // cache it, if the state is a known one
-  if (o.time) {
+  if (o.time && !o.dont_cache) {
     if (!this.times[o.time]) this.times[o.time] = {};
     this.times[o.time][key] = res;
   }
-  this.dispatchEvent('perceived', {percept: res, target: this, time: o.time});
+  GroupNode.events.perceived({percept: res, target: this, time: o.time});
   return res;
 }
 

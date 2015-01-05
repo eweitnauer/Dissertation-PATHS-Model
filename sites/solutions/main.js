@@ -119,7 +119,7 @@ function option_callback(d) {
     if (d.name == 'attention') {
       p.svis.colorize_values(function(on) {
         if (!on || !tester || !tester.ws) return 0;
-        return tester.ws.attentionNet.getAttentionValue(on) * 100;
+        return tester.ws.attentionNet.getActivity(on) * 100;//getAttentionValue(on) * 100;
       });
       p.svis.draw();
     } else if (d.name == 'groups') {

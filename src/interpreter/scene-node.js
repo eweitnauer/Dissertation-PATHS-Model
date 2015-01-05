@@ -19,6 +19,14 @@ SceneNode.prototype.getAllGroup = function() {
   return GroupNode.sceneGroup(this);
 }
 
+SceneNode.prototype.getGroupByNodes = function(nodes) {
+  var gs = this.groups.filter(function(group) {
+    return SceneNode.same_elements(group, nodes);
+  });
+  if (gs.length === 0) return null;
+  return gs[0];
+}
+
 SceneNode.prototype.init = function() {
   var movables = [], shapes = this.scene.shapes;
   for (var i=0; i<shapes.length; i++) {
@@ -66,6 +74,12 @@ SceneNode.prototype.perceiveCurrent = function(state_name) {
   state_name = state_name || 'current';
   this.registerObjects();
   for (var i=0; i<this.objs.length; i++) this.objs[i].perceive(state_name);
+}
+
+SceneNode.same_elements = function(as, bs) {
+  if (as.length !== bs.length) return false;
+  for (var i=0; i<as.length; i++) if (bs.indexOf(as[i]) === -1) return false;
+  return true;
 }
 
 /// Returns a human readable description of the scene.

@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 5;
+var pbp_idx = 2;
 var curr_sols = [];
 var tester = null;
 var log_area = null;
@@ -215,7 +215,7 @@ function logText(text) {
 function createTester() {
   var scenes = [];
   for (var p in problems) scenes.push(problems[p].sn);
-  tester = new PITester('current', scenes, 1, 5000, 1, 'info');
+  tester = new PITester('current', scenes, 1, 5000, 1, 'debug');
   tester.setLogCallback(logText);
   d3.select('#solver h2').text('Solver ' + tester.pi.version);
   d3.select('#solver-step').text('0');

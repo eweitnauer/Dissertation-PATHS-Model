@@ -24,7 +24,8 @@ var Workspace = function(scenes, options, log_level) {
   this.scene_pair_steps = 0;
   this.active_scene_pair = this.scene_pair_sequence[0];
 
-  this.attentionNet = new AttentionNet();
+  this.attentionNet = new AttentionNet(this.options);
+  anet = this.attentionNet;
   this.initAttentionNet();
   this.coderack = new Coderack(this);
 
@@ -56,47 +57,36 @@ Workspace.prototype.advanceScenePair = function() {
 
 Workspace.prototype.perceived_feature = function(event) {
   this.perception_count++;
+  this.log_perception('perceived', event, 3);
+}
+
+Workspace.prototype.retrieved_feature = function(event) {
+  this.retrieval_count++;
+  this.log_perception('retrieved', event, 4);
+}
+
+Workspace.prototype.log_perception = function(type, event, log_level) {
   if (event.percept.arity === 1) {
-    this.log(3, 'perceived', event.percept.key
+    this.log(log_level, type, event.percept.key
                  , '(t=' + event.time + ') on'
                  , this.getDescription(event.target) + ':'
                  , event.percept.get_activity());
-    this.log(4, event.target, event.percept);
-
-    var d_att = this.options.attention.obj.attr_boost[event.percept.key];
-    if (d_att && (event.time === 'start' || event.percept.constant) ) {
-      this.changeAttention(event.target, d_att*event.percept.get_activity());
-    }
   } else if (event.percept.arity === 2) {
-    var d_att = this.options.attention.obj.rel_boost[event.percept.key];
-    if (d_att && (event.time === 'start' || event.percept.constant)) {
-      this.changeAttention(event.target, d_att[0]*event.percept.get_activity());
-      this.changeAttention(event.other, d_att[1]*event.percept.get_activity());
-    }
-    this.log(3, 'perceived', event.percept.key
+    this.log(log_level, type, event.percept.key
              , '(t=' + event.time + ') on'
              , this.getDescription(event.target), 'and'
              , this.getDescription(event.other) + ':'
              , event.percept.get_activity());
-    this.log(4, event.target, event.other, event.percept);
   }
 }
 
-Workspace.prototype.retrieved_feature = function() {
-  this.retrieval_count++;
-}
-
+/// Pass an array of object or scene nodes to setup the perceived and retrieved
+/// listeners. If called without argument, all object nodes will be registered.
 Workspace.prototype.register_events = function() {
-  var thiz = this;
-  for (var i=0; i<this.scenes.length; i++) {
-    var sn = this.scenes[i];
-    for (var j=0; j<sn.objs.length; j++) {
-      sn.objs[j].off('perceived');
-      sn.objs[j].off('retrieved');
-      sn.objs[j].on('perceived', thiz.perceived_feature.bind(thiz));
-      sn.objs[j].on('retrieved', thiz.retrieved_feature.bind(thiz));
-    }
-  }
+  ObjectNode.events.on('perceived', this.perceived_feature.bind(this));
+  ObjectNode.events.on('retrieved', this.retrieved_feature.bind(this));
+  GroupNode.events.on('perceived', this.perceived_feature.bind(this));
+  GroupNode.events.on('retrieved', this.retrieved_feature.bind(this));
 }
 
 Workspace.prototype.initAttentionNet = function() {
@@ -107,41 +97,28 @@ Workspace.prototype.initAttentionNet = function() {
   this.blank_hypothesis = blank_sol;
 
   this.scenes.forEach(function (sn) {
-    sn.objs.forEach(function (on) { aNet.addObject(on, options.attention.obj.initial) });
+    sn.objs.forEach(function (on) { aNet.addObject(on) });
+    blank_sol.sel.applyToScene(sn); // create the all group so there is at least
+                                    // one group on which group attributes can be
+                                    // perceived
   });
 
   options.features.forEach(function (info) {
-    aNet.addFeature(info.klass, info.initial_activation);
+    info.klass.prototype.apriori = info.initial_activation;
+    aNet.addFeature(info.klass, 1/options.features.length);
   });
-}
 
-Workspace.prototype.changeAttention = function(thing, delta, min, max) {
-  var self = this;
-  if (thing instanceof Solution) {
-    var before = this.attentionNet.getAttentionValueNoSigmoid(thing);
-    this.attentionNet.addToAttentionValue(thing, delta, min || 0, max || 1);
-    var after = this.attentionNet.getAttentionValueNoSigmoid(thing);
-    this.spreadAttentionFromHypothesisToFeatures(thing, after-before);
-  } else if (thing instanceof GroupNode) {
-    var N = thing.objs.length;
-    thing.objs.forEach(function(obj) {
-      self.attentionNet.addToAttentionValue(obj.object_node, delta/N, min, max);
-    });
-  } else if (thing instanceof ObjectNode) {
-    self.attentionNet.addToAttentionValue(thing, delta, min, max);
-  } else { // should be a feature
-    self.attentionNet.addToAttentionValue(thing, delta, min, max);
-  }
+  aNet.updateActivities();
 }
 
 Workspace.prototype.getAttention = function(thing) {
-  return this.attentionNet.getAttentionValue(thing);
+  return this.attentionNet.getActivity(thing);
 }
 
 Workspace.prototype.getHypothesisInfoArray = function() {
   var self = this;
   return this.attentionNet.solutions.map(function(sol) {
-    return { val: self.attentionNet.getAttentionValue(sol)
+    return { val: self.attentionNet.getActivity(sol)
            , sol: sol.describe()
            , src: sol }
   });
@@ -151,7 +128,7 @@ Workspace.prototype.getFeatureInfoArray = function() {
   var self = this;
   return this.attentionNet.features.map(function(feature) {
     return { key: feature.prototype.key
-           , val: self.attentionNet.getAttentionValue(feature)
+           , val: self.attentionNet.getActivity(feature)
            , src: feature };
   });
 }
@@ -176,7 +153,7 @@ Workspace.prototype.log = function(level) {
 Workspace.prototype.getRandomTime = function() {
   var options = this.options;
   return Random.pick_weighted(['start', 'end'], function(el) {
-    return options.attention.time[el];
+    return options.activity.time[el];
   });
 }
 
@@ -196,14 +173,11 @@ Workspace.prototype.getRandomHypothesis = function(options) {
 }
 
 /// Returns true if the solution was new and inserted.
-Workspace.prototype.addHypothesis = function(hyp, val) {
-  if (arguments.length === 1) val = 1.0;
+Workspace.prototype.addHypothesis = function(hyp) {
   if (!this.isNewHypothesis(hyp)) return false;
-  this.attentionNet.addSolution(hyp, val);
+  this.attentionNet.addSolution(hyp);
   hyp.sel.solution = hyp;
   this.log(3, 'added solution hypothesis', hyp.describe());
-  var after = this.attentionNet.getAttentionValueNoSigmoid(hyp);
-  this.spreadAttentionFromHypothesisToFeatures(hyp, after);
   return true;
 }
 
@@ -212,35 +186,6 @@ Workspace.prototype.isNewHypothesis = function(hyp) {
     return !other.sel.equals(hyp.sel) // we ignore the solution mode
   });
 }
-
-Workspace.prototype.spreadAttentionFromHypothesisToFeatures = function(sol, val) {
-  var options = this.options;
-  var self = this;
-  if (options.attention.feature.from_sel) {
-    var N = sol.sel.featureCount();
-    sol.sel.forEachFeature(function(feature) {
-      var old_val = self.attentionNet.getAttentionValue(feature);
-      if (old_val === 0) return;
-      self.changeAttention(feature, val *options.attention.feature.from_sel / N, 0.01, 1);
-    });
-  }
-}
-
-/// Sets the attention value of the passed solution to 0 so it is
-/// never choosen again by the attention net but is still there so it
-/// won't be added again.
-Workspace.prototype.blockHypothesis = function(sol) {
-  this.log(3, 'blocking solution hypothesis', sol.describe());
-  var old_val = this.attentionNet.getAttentionValueNoSigmoid(sol);
-  this.attentionNet.setAttentionValue(sol, 0);
-  this.spreadAttentionFromHypothesisToFeatures(sol, -old_val);
-}
-
-Workspace.prototype.blockFeature = function(feature) {
-  this.log(3, 'blocking feature', feature.prototype.key);
-  this.attentionNet.setAttentionValue(feature, 0);
-}
-
 
 Workspace.prototype.addSolution = function(sol) {
   // do a safety check
@@ -258,7 +203,7 @@ Workspace.prototype.addSolution = function(sol) {
 /// selected. Options: filter (GroupNode->bool)
 Workspace.prototype.getExistingRandomGroup = function(scene, options) {
   var group_pool = scene.groups;
-  if (options && options.filter) group_pool = groups.filter(options.filter);
+  if (options && options.filter) group_pool = group_pool.filter(options.filter);
   var sel_pool = [];
   group_pool.forEach(function(group) { sel_pool = sel_pool.concat(group.selectors) });
 

@@ -6,6 +6,7 @@
 /// main_side is either 'left', 'right', 'both'
 Solution = function(selector, main_side, mode) {
 	this.sel = selector;
+	selector.solution = this;
 	this.mode = mode || 'exists';
 	this.setMainSide(main_side);
 	this.matchedAgainst = [];
@@ -13,6 +14,9 @@ Solution = function(selector, main_side, mode) {
 	this.matches = {left: 0, right: 0};
 	this.selects_all_objs = {left: 0, right: 0};
 	this.selects_single_objs = {left: 0, right: 0};
+	this.specificity = 0; // `= avg(scene_sel_ratios)`
+	this.scene_sel_ratios = []; // `=1-n_i/N_i`, where `n_i` is the number of sel. objs
+	                            // and `N_i` the total number of objs. in scene i
 	this.scene_pair_count = 8;
 //	this.selects_single_objs = true;
 }
@@ -23,6 +27,57 @@ Solution.prototype.setMainSide = function (main_side) {
   return this;
 }
 
+Solution.prototype.goodSidesCompatibleCount = function() {
+	if (this.main_side === 'fail') return 0;
+	if (this.main_side === 'left' || this.main_side === 'right')
+	  return this.checks.left + this.checks.right;
+	// main side is 'both'
+	if (this.checks.left > this.matches.left) { // right scenes all matched
+		return this.matches.right;
+	}
+	if (this.checks.right > this.matches.right) { // left scenes all matched
+		return this.matches.left;
+	}
+	// left and right scenes all matched
+	return Math.min(this.matches.left, this.matches.right);
+}
+
+/** Returns the number of checked scenes those match is incompatible with a solution. */
+Solution.prototype.incompatibleMatchCount = function() {
+	if (this.main_side === 'left' || this.main_side === 'right') return 0;
+	if (this.main_side === 'fail') return this.scene_pair_count*2;
+	// main_side is 'both'
+	if (this.checks.left > this.matches.left) { // right scenes all matched
+		return this.matches.left;
+	}
+	if (this.checks.right > this.matches.right) { // left scenes all matched
+		return this.matches.right;
+	}
+	// left and right scenes all matched
+	return Math.min(this.matches.left, this.matches.right);
+}
+
+Solution.prototype.uncheckedSceneCount = function() {
+	return this.scene_pair_count*2 - this.checks.left - this.checks.right;
+}
+
+/** Returns the number of checked scenes those match is compatible with a solution. */
+Solution.prototype.compatibleMatchCount = function() {
+	if (this.main_side === 'fail') return 0;
+	if (this.main_side === 'left' || this.main_side === 'right') {
+	  return this.checks.left + this.checks.right;
+	}
+	// main_side is 'both'
+	if (this.checks.left > this.matches.left) { // right scenes all matched
+		return this.matches.right + (this.checks.left - this.matches.left);
+	}
+	if (this.checks.right > this.matches.right) { // left scenes all matched
+		return this.matches.left + (this.checks.right - this.matches.right);
+	}
+	// left and right scenes all matched
+	return Math.max(this.matches.left, this.matches.right);
+}
+
 Solution.prototype.wasMatchedAgainst = function(scene_pair_id) {
 	return this.matchedAgainst.indexOf(scene_pair_id) !== -1;
 }
@@ -31,6 +86,17 @@ Solution.prototype.isSolution = function() {
 	if (this.matchedAgainst.length < this.scene_pair_count) return false;
 	return ( this.matches.right === 0 && this.matches.left == this.scene_pair_count
 	      || this.matches.left === 0 && this.matches.right == this.scene_pair_count);
+}
+
+Solution.prototype.updateSpecificity = function(scene, group) {
+	if (group.empty()) return;
+	var s = 1-group.objs.length/scene.objs.length;
+	this.scene_sel_ratios.push(s);
+	this.specificity = 0;
+	for (var i=0; i<this.scene_sel_ratios.length; i++) {
+		this.specificity += this.scene_sel_ratios[i];
+	}
+	this.specificity /= this.scene_sel_ratios.length;
 }
 
 /// Returns whether combining this with the passed solution could in principle
@@ -84,11 +150,13 @@ Solution.prototype.tryUniqueMode = function() {
 }
 
 Solution.prototype.checkScenePair = function(pair, pair_id) {
+  if (this.matchedAgainst.indexOf(pair_id) !== -1) throw 'already checked that scene pair id!';
   var self = this;
   var selected_groups = [];
   pair.forEach(function (scene) {
   	var res = self.check_scene(scene);
     selected_groups.push(res.group);
+    self.updateSpecificity(scene, res.group);
     if (res.group.objs.length === 1) self.selects_single_objs[scene.side]++;
     if (res.group.objs.length === scene.objs.length) self.selects_all_objs[scene.side]++;
     self.checks[scene.side]++;
@@ -156,7 +224,7 @@ Solution.prototype.applyToScene = function(scene) {
 /// solution. It returns an object { match: boolean, group: GroupNode }
 /// where group is the group of the selected nodes.
 Solution.prototype.check_scene = function(scene) {
-	var group = this.sel.applyToScene(scene);
+	var group = this.sel.applyToScene(scene, {dont_cache: true});
 	var N = group.objs.length;
 	var res = false;
 	if (this.mode == 'unique' && N == 1) res = true;

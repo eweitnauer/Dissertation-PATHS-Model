@@ -7,7 +7,10 @@
  * For group attrs, select() will return the whole group if it matches or
  * an empty group if it does not match.
  * The selector can be in unique mode, which means that result groups with more
- * than one element are returned as empty groups instead. */
+ * than one element are returned as empty groups instead.
+ *
+ * The perceptions done during the application of the selector will not be
+ * cached. */
 
  // FIXME: unique is not doing what is described above. Instead, it is only
  // used in the RelMatcher to decide whether to match all or exactly one of the
@@ -93,7 +96,10 @@ Selector.prototype.applyToScene = function(scene) {
 	group = this.getCachedResult(scene);
 	if (group) return group;
 	// we did not apply this selector to this scene yet
-	group = this.select(GroupNode.sceneGroup(scene), scene);
+	var all_group = scene.groups[0] || GroupNode.sceneGroup(scene);
+	if (all_group.objs.length !== scene.objs.length)
+	  throw "1st group in each scene should be the all-group";
+	group = this.select(all_group, scene);
 	group.selectors = [this];
 	if (!group.empty()) {
 		for (var i=0; i<scene.groups.length; i++) {
@@ -109,6 +115,14 @@ Selector.prototype.applyToScene = function(scene) {
   	scene.groups.push(group);
 	}
 	return group;
+}
+
+Selector.prototype.hasFeatureType = function(klass) {
+	var res = false;
+	this.forEachFeature(function(f) {
+		if (f.prototype === klass) res = true
+	});
+	return res;
 }
 
 /** Returns a new selector that has all attributes from this and the passed selector.
@@ -246,7 +260,14 @@ Selector.prototype.select = function(group_node, scene_node, test_fn) {
 	  	.filter(function (node) { return self.matchesObject(node, null, test_fn) })
 	  	.map(function (on) { return on.obj });
 
-		gn = new GroupNode(scene_node, nodes, selector);
+	  // check whether a group with these nodes already exists in the scene
+	  var gn2 = scene_node.getGroupByNodes(nodes);
+	  if (gn2) {
+	  	gn = gn2;
+	  	gn.selectors.push(selector);
+	  } else {
+	  	gn = new GroupNode(scene_node, nodes, selector);
+	  }
 	}
 	// then apply group-level features
 	if (type === 'mixed' || type === 'group') {
@@ -331,7 +352,7 @@ Selector.AttrMatcher.prototype.equals = function(other) {
 /// Returns true if the passed node can supply the attribute and its activation and
 /// label match.
 Selector.AttrMatcher.prototype.matches = function(node) {
-	var attr = node.getAttr(this.key, {time: this.time});
+	var attr = node.getAttr(this.key, {time: this.time, dont_cache: true});
 	if (!attr) return false;
 	//console.log(this.key,'has activity',attr.get_activity());
 	var active = attr.get_activity() >= pbpSettings.activation_threshold;
@@ -388,7 +409,7 @@ Selector.RelMatcher.prototype.matches = function(node, others) {
 
 	var test_fn = function(other) {
 		if (other === node) return false;
-		var rel = node.getRel(self.key, {other: other, time: self.time});
+		var rel = node.getRel(self.key, {other: other, time: self.time, dont_cache: true});
 		if (!rel) return false;
 	  var active = rel.get_activity() >= pbpSettings.activation_threshold;
 		return (active == self.active && rel.get_label() == self.label);
