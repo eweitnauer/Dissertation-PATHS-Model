@@ -18,6 +18,8 @@ Solution = function(selector, main_side, mode) {
 	this.scene_sel_ratios = []; // `=1-n_i/N_i`, where `n_i` is the number of sel. objs
 	                            // and `N_i` the total number of objs. in scene i
 	this.scene_pair_count = 8;
+	this.objects_seen = 0;
+	this.objects_selected = 0;
 //	this.selects_single_objs = true;
 }
 
@@ -25,6 +27,23 @@ Solution.prototype.setMainSide = function (main_side) {
 	this.main_side = main_side || 'both';
 	this.other_side = {left: 'right', right: 'left'}[this.main_side];
   return this;
+}
+
+Solution.prototype.getWeakSide = function() {
+	if (this.main_side === 'left') return 'right';
+	if (this.main_side === 'right') return 'left';
+	if (this.main_side === 'fail') return 'fail';
+	if (this.main_side === 'both') {
+		if (this.checks.left > this.matches.left) return 'left'; // only right all matched
+		if (this.checks.right > this.matches.right) return 'right'; // only left all matched
+		// all match
+		return (this.matches.left > this.matches.right) ? 'right' : 'left';
+	}
+}
+
+Solution.prototype.allMatch = function() {
+	return (this.checks.left === this.matches.left
+	 && this.checks.right === this.matches.right);
 }
 
 Solution.prototype.goodSidesCompatibleCount = function() {
@@ -156,6 +175,8 @@ Solution.prototype.checkScenePair = function(pair, pair_id) {
   pair.forEach(function (scene) {
   	var res = self.check_scene(scene);
     selected_groups.push(res.group);
+    self.objects_seen += scene.objs.length;
+    self.objects_selected += res.group.objs.length;
     self.updateSpecificity(scene, res.group);
     if (res.group.objs.length === 1) self.selects_single_objs[scene.side]++;
     if (res.group.objs.length === scene.objs.length) self.selects_all_objs[scene.side]++;

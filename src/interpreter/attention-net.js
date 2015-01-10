@@ -16,10 +16,13 @@ AttentionNet = function(options) {
 	this.objects = [];
 	this.objects_by_scene = null; // internal cache, keys are scene ids
 	this.attention_values = new WeakMap();
+	this.feature_groups = [];
 
 	this.specificity_base = options.activity.hypothesis.specificity_base;
 	this.feature_base = options.activity.feature.hyp_base;
 	this.object_base = options.activity.obj.hyp_base;
+	this.obj_attr_priors = options.activity.obj.attr_priors;
+	this.obj_rel_priors = options.activity.obj.rel_priors;
 }
 
 /// Can throw "unknown element" exception.
@@ -34,10 +37,19 @@ AttentionNet.prototype.updateActivities = function() {
 		self.attention_values.set(sol, self.calcSolutionActivity(sol))
 	});
 	this.normalize('solutions');
+
 	this.features.forEach(function(feat) {
-		self.attention_values.set(feat, self.calcFeatureActivity(feat))
+		self.attention_values.set(feat, self.calcFeatureSelfActivity(feat))
 	});
+	// uncomment the following to use feature group activity spreading
+	// this.feature_groups.forEach(function(fg) {
+	// 	self.attention_values.set(fg, self.calcFeatureGroupActivity(fg))
+	// });
+	// this.features.forEach(function(feat) {
+	// 	self.attention_values.set(feat, self.calcFeatureActivity(feat));
+	// });
 	this.normalize('features');
+
 	this.objects.forEach(function(obj) {
 		self.attention_values.set(obj, self.calcObjectActivity(obj))
 	});
@@ -46,25 +58,50 @@ AttentionNet.prototype.updateActivities = function() {
 
 AttentionNet.prototype.calcSolutionActivity = function(sol) {
 	if (sol.main_side === 'fail') return 0;
-	return Math.pow(0.5, sol.sel.getComplexity()
-		                 + sol.uncheckedSceneCount()
-		                 + 2*sol.incompatibleMatchCount())
-		   * (sol.specificity+this.specificity_base);
+	var exp = sol.uncheckedSceneCount() + sol.sel.getComplexity();
+	if (sol.main_side === 'both') {
+		exp += sol.scene_pair_count;
+		if (!sol.allMatch()) exp += sol.incompatibleMatchCount();
+	}
+	return Math.pow(2, -exp) * (sol.objects_seen ? (sol.objects_seen / sol.objects_selected) : 1);
+
+	// return Math.pow(0.5, sol.sel.getComplexity()
+	// 	                 + sol.uncheckedSceneCount()
+	// 	                 + 2*sol.incompatibleMatchCount())
+	// 	   * (sol.specificity+this.specificity_base);
+
 	// return Math.pow(0.5, sol.sel.getComplexity()
 	// 	                 + sol.scene_pair_count*2
 	// 	                 - sol.goodSidesCompatibleCount())
 	// 	   * (sol.specificity+this.specificity_base);
 }
 
-/// Assumes normalized solution activities.
-AttentionNet.prototype.calcFeatureActivity = function(feat) {
+AttentionNet.prototype.calcFeatureSelfActivity = function(feat) {
 	//return 1;
 	var self = this;
 	var sum = d3.sum(this.solutions, function(sol) {
 		if (!sol.sel.hasFeatureType(feat.prototype)) return 0;
 		else return self.getActivity(sol);
 	});
-	return feat.prototype.apriori * (this.feature_base+sum);
+	var val = feat.prototype.apriori * (this.feature_base+sum);
+	return val;
+}
+
+AttentionNet.prototype.calcFeatureActivity = function(feat) {
+	var fg = this.getOrCreateFeatureGroupByName(feat.group_name);
+	var f_act = this.getActivity(feat)
+	  , g_act = this.getActivity(fg)
+	  , res = f_act + Math.max(0, 0.5*(g_act - f_act));
+	//console.log(feat.prototype.key, 'self', f_act, 'group', g_act, 'res', res);
+	return res;
+}
+
+AttentionNet.prototype.calcFeatureGroupActivity = function(fg) {
+	var sum = 0;
+	for (var i=0; i<fg.members.length; i++) {
+	  sum += this.getActivity(fg.members[i]);
+	}
+	return sum/fg.members.length;
 }
 
 AttentionNet.prototype.calcObjectActivity = function(obj) {
@@ -77,7 +114,21 @@ AttentionNet.prototype.calcObjectActivity = function(obj) {
 }
 
 AttentionNet.prototype.getObjectPrior = function(obj) {
-	return 1;
+	var prod = 1, perception;
+	for (var attr in this.obj_attr_priors) {
+		perception = obj.getFromCache(attr, {time: 'start'});
+		if (perception && this.isActive(perception)) prod *= this.obj_attr_priors[attr];
+	}
+	// for (var rel in this.obj_rel_priors) {
+	// 	perception = obj.getFromCache(rel, {time: 'start'});
+	// 	if (perception && this.isActive(perception)) prod *= this.obj_rel_priors[rel][0];
+	// 	// we should also check for this object being the `other` object in a relationship
+	// }
+	return prod;
+}
+
+AttentionNet.prototype.isActive = function(percept) {
+  return percept.get_activity() > pbpSettings.activation_threshold;
 }
 
 /// Updates all attention values, so that for 'features', 'solutions'
@@ -138,9 +189,22 @@ AttentionNet.prototype.addElement = function(type, element, val) {
 	return true;
 }
 
+AttentionNet.prototype.getOrCreateFeatureGroupByName = function(name) {
+	var fgs = this.feature_groups.filter(function(fg) { return fg.name === name });
+	if (fgs.length === 0) {
+		var fg = { name: name, members: [] };
+		this.feature_groups.push(fg);
+		return fg;
+	}
+	return fgs[0];
+}
+
 /// Returns true if successfully inserted. Optionally pass an attention value
 /// (default: 1.0).
-AttentionNet.prototype.addFeature = function(feature, val) {
+AttentionNet.prototype.addFeature = function(feature, group_name, val) {
+	var fg = this.getOrCreateFeatureGroupByName(group_name);
+	fg.members.push(feature);
+	feature.group_name = group_name;
 	return this.addElement('feature', feature, val);
 }
 

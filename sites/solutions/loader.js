@@ -209,7 +209,7 @@ function featureClicked(feature) {
 
 function logText(text) {
   log_area.append('div').text(text);
-  log_area.node().scrollTop = log_area.node().scrollHeight;
+  //log_area.node().scrollTop = log_area.node().scrollHeight; // very slow
 }
 
 function createTester() {
@@ -271,7 +271,7 @@ function setup_solve() {
     scenes = []; for (p in problems) scenes.push(problems[p].sn);
 
     console.log("tester = new PITester('current', scenes, 20, 1000, 1, 'warn')");
-    tester = new PITester('current', scenes, 20, 1000, 1, 'warn');
+    tester = new PITester('current', scenes, 40, 1000, 1, 'warn');
     tester.start_callback = disable_drawing;
     tester.finish_callback = enable_drawing;
 

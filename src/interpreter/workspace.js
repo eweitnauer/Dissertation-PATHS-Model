@@ -105,7 +105,7 @@ Workspace.prototype.initAttentionNet = function() {
 
   options.features.forEach(function (info) {
     info.klass.prototype.apriori = info.initial_activation;
-    aNet.addFeature(info.klass, 1/options.features.length);
+    aNet.addFeature(info.klass, info.group, 1/options.features.length);
   });
 
   aNet.updateActivities();

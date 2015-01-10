@@ -2,6 +2,25 @@
 var PI = PI || {};
 
 /*
+Version 0.5.1
+- new activity formula for hypotheses
+  - [ PBP04': 20/20 185+-155
+    , PBP08 : 20/20 108 +-48
+    , PBP26 :  3/20]
+  ==> PBP08 is sometimes pretty hard since filter-type selectors are higher
+  rated now
+- fixed ratio for codelet selection (0.45,0.45,0.1)
+  - about the same
+- new scene switching formula ==> is this any better???
+  - about the same
+- object priors based on interesting features
+  - about the same, but PBP26: 7 of 20
+- feature group activity spreading
+  - about the same (even fixed uniform activity among all features is only
+    slightly worse) ==> I might need to look at problems where features need
+    to be combined!
+  - ==> disabled again
+
 Version 0.5.0
 - switching to a probability-inspired attention system without annealing or clamping
 - AttentionNet.updateActivities() calculates and normalized all activities and
@@ -9,6 +28,15 @@ is called once after each codelet run.
 - we don't cache the perception results from CheckHypothesis calls anymore (we
 need to perceive attributes in the AttrCodelet so that a hypothesis can be constructed
 from them)
+- Problems with this version
+  - almost correct LR-hypotheses are too strong compared to new L/R and
+    LR-matches all hypotheses and also make scene switching slow
+  - it is questionable why we should activate features of existing hypotheses,
+    since these will be checked for by the hypothesis anyways (see PBP08 case
+    above, though)
+  - [ PBP04': 16/20 310+-370
+    , PBP08 : 20/20 159+-168
+    , PBP26 :  7/20]
 
 Version 0.4.7
 - switched off unique and all solution modes
@@ -66,48 +94,48 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_5_0 = (function(opts) {
-  var version = '0.5.0';
+PI.v0_5_1 = (function(opts) {
+  var version = '0.5.1';
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = opts || {
     features: [
-                 { klass: StabilityAttribute,   initial_activation: high }
-              , { klass: SingleAttribute,      initial_activation: high }
-              , { klass: MovesAttribute,       initial_activation: high }
-              , { klass: TouchRelationship,    initial_activation: high }
-              , { klass: CircleAttribute,      initial_activation: mid }
-              , { klass: SquareAttribute,      initial_activation: mid }
-              , { klass: TriangleAttribute,    initial_activation: mid }
-              , { klass: RectangleAttribute,   initial_activation: mid }
-                // , { klass: ShapeAttribute,       initial_activation: high }
-              , { klass: CountAttribute,       initial_activation: mid }
-              , { klass: CloseAttribute,       initial_activation: mid }
-                // , { klass: CloseRelationship,    initial_activation: mid }
-              , { klass: SmallAttribute,       initial_activation: mid }
-                // , { klass: LargeAttribute,       initial_activation: mid }
-              , { klass: TopMostAttribute,     initial_activation: mid }
-                // , { klass: LeftMostAttribute,    initial_activation: low }
-                // , { klass: RightMostAttribute,   initial_activation: low }
-                // , { klass: FarRelationship,      initial_activation: low }
-                // , { klass: FarAttribute,         initial_activation: low }
-              , { klass: OnTopRelationship,    initial_activation: low }
-              , { klass: OnGroundAttribute,    initial_activation: low }
-              , { klass: RightRelationship,    initial_activation: low }
-              , { klass: LeftRelationship,     initial_activation: low }
-                // , { klass: AboveRelationship,    initial_activation: low }
-                // , { klass: BelowRelationship,    initial_activation: low }
-                // , { klass: BesideRelationship,   initial_activation: low }
-                // , { klass: BottomAttribute,      initial_activation: low }
-                // , { klass: TopAttribute,         initial_activation: low }
-              , { klass: TouchAttribute,       initial_activation: low }
-              , { klass: SupportsRelationship, initial_activation: low }
-              , { klass: HitsRelationship,     initial_activation: low }
-               // , { klass: GetHitsRelationship,     initial_activation: low }
-              , { klass: CollidesRelationship, initial_activation: low }
-              , { klass: LeftAttribute,        initial_activation: low }
-              , { klass: RightAttribute,       initial_activation: low }
-              , { klass: MovableUpAttribute,   initial_activation: low }
+                { klass: StabilityAttribute,   initial_activation: high, group: 'dynamics' }
+              , { klass: SingleAttribute,      initial_activation: high, group: 'distance' }
+              , { klass: MovesAttribute,       initial_activation: high, group: 'dynamics' }
+              , { klass: TouchRelationship,    initial_activation: high, group: 'distance' }
+              , { klass: CircleAttribute,      initial_activation: mid,  group: 'shape' }
+              , { klass: SquareAttribute,      initial_activation: mid,  group: 'shape' }
+              , { klass: TriangleAttribute,    initial_activation: mid,  group: 'shape' }
+              , { klass: RectangleAttribute,   initial_activation: mid,  group: 'shape' }
+                // , { klass: ShapeAttribute,       initial_activation: high, group: 'shape' }
+              , { klass: CountAttribute,       initial_activation: mid,  group: 'shape' }
+              , { klass: CloseAttribute,       initial_activation: mid,  group: 'distance' }
+                // , { klass: CloseRelationship,    initial_activation: mid,  group: 'distance' }
+              , { klass: SmallAttribute,       initial_activation: mid,  group: 'shape' }
+                // , { klass: LargeAttribute,       initial_activation: mid,  group: 'shape' }
+              , { klass: TopMostAttribute,     initial_activation: mid,  group: 'vert-pos' }
+                // , { klass: LeftMostAttribute,    initial_activation: low,  group: 'hor-pos' }
+                // , { klass: RightMostAttribute,   initial_activation: low,  group: 'hor-pos' }
+                // , { klass: FarRelationship,      initial_activation: low,  group: 'distance' }
+                // , { klass: FarAttribute,         initial_activation: low,  group: 'distance' }
+              , { klass: OnTopRelationship,    initial_activation: low,  group: 'vert-pos' }
+              , { klass: OnGroundAttribute,    initial_activation: low,  group: 'vert-pos' }
+              , { klass: RightRelationship,    initial_activation: low,  group: 'hor-pos' }
+              , { klass: LeftRelationship,     initial_activation: low,  group: 'hor-pos' }
+                // , { klass: AboveRelationship,    initial_activation: low,  group: 'vert-pos' }
+                // , { klass: BelowRelationship,    initial_activation: low,  group: 'vert-pos' }
+                // , { klass: BesideRelationship,   initial_activation: low,  group: 'hor-pos' }
+                // , { klass: BottomAttribute,      initial_activation: low,  group: 'vert-pos' }
+                // , { klass: TopAttribute,         initial_activation: low,  group: 'vert-pos' }
+              , { klass: TouchAttribute,       initial_activation: low,  group: 'distance' }
+              , { klass: SupportsRelationship, initial_activation: low,  group: 'dynamics' }
+              , { klass: HitsRelationship,     initial_activation: low,  group: 'dynamics' }
+               // , { klass: GetHitsRelationship,     initial_activation: low,  group: 'dynamics' }
+              , { klass: CollidesRelationship, initial_activation: low,  group: 'dynamics' }
+              , { klass: LeftAttribute,        initial_activation: low,  group: 'hor-pos' }
+              , { klass: RightAttribute,       initial_activation: low,  group: 'hor-pos' }
+              , { klass: MovableUpAttribute,   initial_activation: low,  group: 'dynamics' }
              ]
     // features: [ { klass: SquareAttribute,       initial_activation: mid }]
     //           , { klass: RightRelationship,     initial_activation: low }
@@ -137,16 +165,17 @@ PI.v0_5_0 = (function(opts) {
     }
     , obj: {
         hyp_base: 0.1 // >0, the smaller, the bigger the influence of hypotheses activities
-      , attr_boost: { // only apply at time "start"
-          moves: 1.2
-        , top_most: 1.1 // this & below: often will get boosted via sel.specificity, too
-        , single: 1.1
-        , left_most: 1.1
-        , right_most: 1.1
+      , attr_priors: { // only apply at time "start"
+          moves: 2
+          // should we include stability->unstable?
+        , top_most: 1.5 // this & below: often will get boosted via sel.specificity, too
+        , single: 1.5
+        , left_most: 1.25
+        , right_most: 1.25
         }
-      , rel_boost: { // only apply at time "start"
-          hits: [1.2, 0]
-        , collides: [1.1, 1.1]
+      , rel_priors: { // only apply at time "start"
+          hits: [1.5, 0]
+        , collides: [1.25, 1.25]
         }
       }
     }
@@ -189,10 +218,11 @@ PI.v0_5_0 = (function(opts) {
         expl_sum += val;
       }
     }
-    this.codelet_infos[0].attention = 1;
-    this.codelet_infos[1].attention = unchecked_sum;//0.3//1-(1/Math.pow(2, 3*unchecked_sum));
-    this.codelet_infos[2].attention = checked_lr_max/2;//0.1//Math.max(0, 1-(1/Math.pow(2, 2*checked_lr_max)));
+    this.codelet_infos[0].attention = 0.45;
+    this.codelet_infos[1].attention = 0.45;//unchecked_sum;//0.3//1-(1/Math.pow(2, 3*unchecked_sum));
+    this.codelet_infos[2].attention = 0.1;//checked_lr_max/2;//0.1//Math.max(0, 1-(1/Math.pow(2, 2*checked_lr_max)));
     this.expl_sum = expl_sum;
+    this.unchecked_sum = unchecked_sum;
   }
 
   MainBehavior.prototype.getTopDownAttention = function(cdl_name) {
@@ -222,7 +252,10 @@ PI.v0_5_0 = (function(opts) {
   MainBehavior.prototype.run = function() {
     if (this.cr.length > 0) return;
     this.updateAttentions();
-    if (this.ws.scene_pair_steps > Math.min(100, 1/this.expl_sum)) {
+    //console.log('before:', 1/this.expl_sum, 'now:', (this.expl_sum+this.unchecked_sum)/this.expl_sum);
+    //if (this.ws.scene_pair_steps > Math.min(100, 1/this.expl_sum)) {
+    var norm = this.expl_sum+this.unchecked_sum || 1;
+    if (this.ws.scene_pair_steps > Math.min(100, norm/this.expl_sum)) {
       this.ws.advanceScenePair();
       this.updateAttentions();
     }
