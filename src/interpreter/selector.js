@@ -20,6 +20,7 @@ var Selector = function(unique) {
 	this.grp_attrs = [];	  // group attributes
 	this.rels = [];         // object relationships
 	this.unique = !!unique;
+	this.solution = null;   // the solution associated with this selector
 
 	this.cached_complexity = null;
 }
@@ -33,19 +34,20 @@ Selector.prototype.getType = function() {
 }
 
 Selector.prototype.getComplexity = function() {
-	var c = 0;
-	for (var i=0; i<this.obj_attrs.length; i++) {
-	  c += this.obj_attrs[i].getComplexity();
+	if (this.cached_complexity === null) {
+		var c = 0;
+		for (var i=0; i<this.obj_attrs.length; i++) {
+		  c += this.obj_attrs[i].getComplexity();
+		}
+		for (var i=0; i<this.grp_attrs.length; i++) {
+		  c += this.grp_attrs[i].getComplexity();
+		}
+		for (var i=0; i<this.rels.length; i++) {
+		  c += this.rels[i].getComplexity();
+		}
+		this.cached_complexity = c;
 	}
-	for (var i=0; i<this.grp_attrs.length; i++) {
-	  c += this.grp_attrs[i].getComplexity();
-	}
-	for (var i=0; i<this.rels.length; i++) {
-	  c += this.rels[i].getComplexity();
-	}
-	if (this.cached_complexity === null) this.cached_complexity = c;
-	if (this.cached_complexity !== c) throw "cached complexity got stale!";
-	return c;
+	return this.cached_complexity + (this.solution.mode === 'unique' ? -1 : 0);
 }
 
 /// Returns true if the selector has no matchers and will therefore match anything.
@@ -352,7 +354,7 @@ Selector.AttrMatcher.prototype.equals = function(other) {
 /// Returns true if the passed node can supply the attribute and its activation and
 /// label match.
 Selector.AttrMatcher.prototype.matches = function(node) {
-	var attr = node.getAttr(this.key, {time: this.time, dont_cache: true});
+	var attr = node.getAttr(this.key, {time: this.time});
 	if (!attr) return false;
 	//console.log(this.key,'has activity',attr.get_activity());
 	var active = attr.get_activity() >= pbpSettings.activation_threshold;
@@ -409,7 +411,7 @@ Selector.RelMatcher.prototype.matches = function(node, others) {
 
 	var test_fn = function(other) {
 		if (other === node) return false;
-		var rel = node.getRel(self.key, {other: other, time: self.time, dont_cache: true});
+		var rel = node.getRel(self.key, {other: other, time: self.time});
 		if (!rel) return false;
 	  var active = rel.get_activity() >= pbpSettings.activation_threshold;
 		return (active == self.active && rel.get_label() == self.label);

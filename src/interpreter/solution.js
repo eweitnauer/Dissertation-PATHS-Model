@@ -11,9 +11,9 @@ Solution = function(selector, main_side, mode) {
 	this.setMainSide(main_side);
 	this.matchedAgainst = [];
 	this.checks = {left: 0, right: 0};
-	this.matches = {left: 0, right: 0};
-	this.selects_all_objs = {left: 0, right: 0};
-	this.selects_single_objs = {left: 0, right: 0};
+	this.mmatches = { exists: {left: 0, right: 0}
+	                , unique: {left: 0, right: 0}
+	                , all: {left: 0, right: 0}};
 	this.specificity = 0; // `= avg(scene_sel_ratios)`
 	this.scene_sel_ratios = []; // `=1-n_i/N_i`, where `n_i` is the number of sel. objs
 	                            // and `N_i` the total number of objs. in scene i
@@ -21,6 +21,10 @@ Solution = function(selector, main_side, mode) {
 	this.objects_seen = 0;
 	this.objects_selected = 0;
 //	this.selects_single_objs = true;
+}
+
+Solution.prototype.matches = function(side) {
+	return this.mmatches[this.mode][side];
 }
 
 Solution.prototype.setMainSide = function (main_side) {
@@ -34,16 +38,16 @@ Solution.prototype.getWeakSide = function() {
 	if (this.main_side === 'right') return 'left';
 	if (this.main_side === 'fail') return 'fail';
 	if (this.main_side === 'both') {
-		if (this.checks.left > this.matches.left) return 'left'; // only right all matched
-		if (this.checks.right > this.matches.right) return 'right'; // only left all matched
+		if (this.checks.left > this.matches('left')) return 'left'; // only right all matched
+		if (this.checks.right > this.matches('right')) return 'right'; // only left all matched
 		// all match
-		return (this.matches.left > this.matches.right) ? 'right' : 'left';
+		return (this.matches('left') > this.matches('right')) ? 'right' : 'left';
 	}
 }
 
 Solution.prototype.allMatch = function() {
-	return (this.checks.left === this.matches.left
-	 && this.checks.right === this.matches.right);
+	return (this.checks.left === this.matches('left')
+	 && this.checks.right === this.matches('right'));
 }
 
 Solution.prototype.goodSidesCompatibleCount = function() {
@@ -51,14 +55,14 @@ Solution.prototype.goodSidesCompatibleCount = function() {
 	if (this.main_side === 'left' || this.main_side === 'right')
 	  return this.checks.left + this.checks.right;
 	// main side is 'both'
-	if (this.checks.left > this.matches.left) { // right scenes all matched
-		return this.matches.right;
+	if (this.checks.left > this.matches('left')) { // right scenes all matched
+		return this.matches('right');
 	}
-	if (this.checks.right > this.matches.right) { // left scenes all matched
-		return this.matches.left;
+	if (this.checks.right > this.matches('right')) { // left scenes all matched
+		return this.matches('left');
 	}
 	// left and right scenes all matched
-	return Math.min(this.matches.left, this.matches.right);
+	return Math.min(this.matches('left'), this.matches('right'));
 }
 
 /** Returns the number of checked scenes those match is incompatible with a solution. */
@@ -66,14 +70,14 @@ Solution.prototype.incompatibleMatchCount = function() {
 	if (this.main_side === 'left' || this.main_side === 'right') return 0;
 	if (this.main_side === 'fail') return this.scene_pair_count*2;
 	// main_side is 'both'
-	if (this.checks.left > this.matches.left) { // right scenes all matched
-		return this.matches.left;
+	if (this.checks.left > this.matches('left')) { // right scenes all matched
+		return this.matches('left');
 	}
-	if (this.checks.right > this.matches.right) { // left scenes all matched
-		return this.matches.right;
+	if (this.checks.right > this.matches('right')) { // left scenes all matched
+		return this.matches('right');
 	}
 	// left and right scenes all matched
-	return Math.min(this.matches.left, this.matches.right);
+	return Math.min(this.matches('left'), this.matches('right'));
 }
 
 Solution.prototype.uncheckedSceneCount = function() {
@@ -87,14 +91,14 @@ Solution.prototype.compatibleMatchCount = function() {
 	  return this.checks.left + this.checks.right;
 	}
 	// main_side is 'both'
-	if (this.checks.left > this.matches.left) { // right scenes all matched
-		return this.matches.right + (this.checks.left - this.matches.left);
+	if (this.checks.left > this.matches('left')) { // right scenes all matched
+		return this.matches('right') + (this.checks.left - this.matches('left'));
 	}
-	if (this.checks.right > this.matches.right) { // left scenes all matched
-		return this.matches.left + (this.checks.right - this.matches.right);
+	if (this.checks.right > this.matches('right')) { // left scenes all matched
+		return this.matches('left') + (this.checks.right - this.matches('right'));
 	}
 	// left and right scenes all matched
-	return Math.max(this.matches.left, this.matches.right);
+	return Math.max(this.matches('left'), this.matches('right'));
 }
 
 Solution.prototype.wasMatchedAgainst = function(scene_pair_id) {
@@ -103,8 +107,8 @@ Solution.prototype.wasMatchedAgainst = function(scene_pair_id) {
 
 Solution.prototype.isSolution = function() {
 	if (this.matchedAgainst.length < this.scene_pair_count) return false;
-	return ( this.matches.right === 0 && this.matches.left == this.scene_pair_count
-	      || this.matches.left === 0 && this.matches.right == this.scene_pair_count);
+	return ( this.matches('right') === 0 && this.matches('left') == this.scene_pair_count
+	      || this.matches('left') === 0 && this.matches('right') == this.scene_pair_count);
 }
 
 Solution.prototype.updateSpecificity = function(scene, group) {
@@ -121,10 +125,10 @@ Solution.prototype.updateSpecificity = function(scene, group) {
 /// Returns whether combining this with the passed solution could in principle
 /// be a solution.
 Solution.prototype.compatibleWith = function(other) {
-	if ( this.matches.left   < this.checks.left
-	  && other.matches.right < other.checks.right) return false;
-	if ( this.matches.right < this.checks.right
-	  && other.matches.left < other.checks.left) return false;
+	if ( this.matches('left')   < this.checks.left
+	  && other.matches('right') < other.checks.right) return false;
+	if ( this.matches('right') < this.checks.right
+	  && other.matches('left') < other.checks.left) return false;
 	return true;
 }
 
@@ -134,37 +138,32 @@ Solution.prototype.selectsSingleObjects = function() {
 }
 
 Solution.prototype.selectsAllObjects = function() {
-	return this.selects_all_objs.left === this.checks.left &&
-	       this.selects_all_objs.right === this.checks.right;
+	return this.mmatches.all.left === this.checks.left &&
+	       this.mmatches.all.right === this.checks.right;
 }
 
-Solution.prototype.tryAllMode = function() {
-  if (this.mode === 'all') return false;
-  var main, other;
-  if ( this.selects_all_objs.left === this.checks.left
-    && this.selects_all_objs.right === 0) { main = 'left'; other = 'right' }
-  if ( this.selects_all_objs.right === this.checks.right
-    && this.selects_all_objs.left === 0) { main = 'right'; other = 'left' }
-  if (!main) return false;
-	this.mode = 'all';
-  this.setMainSide(main);
-	this.matches[main] = this.checks[main];
-  this.matches[other] = 0;
-  return true;
+Solution.prototype.selectsAllObjectsInAllScenes = function() {
+	return (this.selectsAllObjects() && this.uncheckedSceneCount() === 0
+		&& this.matches('left') === this.matches('right'));
 }
 
-Solution.prototype.tryUniqueMode = function() {
-  if (this.mode === 'unique') return false;
-  var main, other;
-  if ( this.selects_single_objs.left === this.checks.left
-    && this.selects_single_objs.right === 0) { main = 'left'; other = 'right' }
-  if ( this.selects_single_objs.right === this.checks.right
-    && this.selects_single_objs.left === 0) { main = 'right'; other = 'left' }
-  if (!main) return false;
-	this.mode = 'unique';
-	this.setMainSide(main);
-	this.matches[main] = this.checks[main];
-  this.matches[other] = 0;
+Solution.prototype.tryMode = function(mode, type) {
+	if (mode === 'unique' && this.sel.blank()) return false;
+	var matches = this.mmatches[mode];
+	if (type === 'one-sided') {
+		if (matches.left === 0 && matches.right === this.checks.right)
+		  this.setMainSide('right');
+  	else if (matches.right === 0 && matches.left === this.checks.left)
+  	  this.setMainSide('left');
+  	else return false;
+	} else if (type === 'two-sided') {
+		if (matches.left > 0 && matches.right === this.checks.right)
+		  this.setMainSide('both');
+    else if (matches.right > 0 && matches.left === this.checks.left)
+      this.setMainSide('both');
+    else return false;
+	} else throw "unknown mode";
+	this.mode = mode;
   return true;
 }
 
@@ -178,21 +177,20 @@ Solution.prototype.checkScenePair = function(pair, pair_id) {
     self.objects_seen += scene.objs.length;
     self.objects_selected += res.group.objs.length;
     self.updateSpecificity(scene, res.group);
-    if (res.group.objs.length === 1) self.selects_single_objs[scene.side]++;
-    if (res.group.objs.length === scene.objs.length) self.selects_all_objs[scene.side]++;
     self.checks[scene.side]++;
-    if (res.match) self.matches[scene.side]++;
+    if (res.match_count) {
+    	self.mmatches.exists[scene.side]++;
+    	if (res.match_count === 1) self.mmatches.unique[scene.side]++;
+    	if (res.match_count === scene.objs.length) self.mmatches.all[scene.side]++;
+    }
   });
   this.matchedAgainst.push(pair_id);
 
-  if (this.matches.left === 0 && this.matches.right === this.checks.right) this.setMainSide('right');
-  else if (this.matches.right === 0 && this.matches.left === this.checks.left) this.setMainSide('left');
-  /// uncomment to allow unique and all mode
-  //else if (this.tryAllMode()) {}
-  //else if (this.tryUniqueMode()) {}
-  else if (this.matches.left > 0 && this.matches.right === this.checks.right) this.setMainSide('both');
-  else if (this.matches.right > 0 && this.matches.left === this.checks.left) this.setMainSide('both');
-  else this.setMainSide('fail');
+  if (//!this.tryMode('unique', 'one-sided') && // leads to solutions that are too complex
+  	  !this.tryMode('exists', 'one-sided') &&
+  	  !this.tryMode('all', 'one-sided') &&
+  	  !this.tryMode('unique', 'two-sided') &&
+  	  !this.tryMode('exists', 'two-sided')) this.setMainSide('fail');
 
   return selected_groups;
 }
@@ -245,7 +243,7 @@ Solution.prototype.applyToScene = function(scene) {
 /// solution. It returns an object { match: boolean, group: GroupNode }
 /// where group is the group of the selected nodes.
 Solution.prototype.check_scene = function(scene) {
-	var group = this.sel.applyToScene(scene, {dont_cache: true});
+	var group = this.sel.applyToScene(scene);
 	var N = group.objs.length;
 	var res = false;
 	if (this.mode == 'unique' && N == 1) res = true;
@@ -253,7 +251,7 @@ Solution.prototype.check_scene = function(scene) {
 	else if (this.mode === 'all' && N > 0 &&
 	    scene.objs.length === N) res = true;
 	scene.fits_solution = res;
-	return { match: res, group: group };
+	return { match: res, group: group, match_count: N };
 }
 
 /// Returns a human readable description of the solution.

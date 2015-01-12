@@ -61,11 +61,13 @@ Workspace.prototype.perceived_feature = function(event) {
 }
 
 Workspace.prototype.retrieved_feature = function(event) {
+  if (event.only_checking) return;
   this.retrieval_count++;
   this.log_perception('retrieved', event, 4);
 }
 
 Workspace.prototype.log_perception = function(type, event, log_level) {
+  var type = (event.deliberate ? 'deliberately ' : '') + type;
   if (event.percept.arity === 1) {
     this.log(log_level, type, event.percept.key
                  , '(t=' + event.time + ') on'

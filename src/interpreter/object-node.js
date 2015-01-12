@@ -66,9 +66,17 @@ ObjectNode.prototype.get = function(key, opts) {
   else throw "unknown feature '" + key + "'";
 }
 
-ObjectNode.prototype.getFromCache = function(key, opts) {
+/// Only return cached perceptions that are marked as deliberate.
+ObjectNode.prototype.getDeliberateOnly = function(key, opts) {
   opts = opts || {};
-  opts.cache_only = true;
+  opts.deliberate_only = true;
+  return this.get(key, opts);
+}
+
+/// Only return cached perceptions that are marked as deliberate.
+ObjectNode.prototype.getDeliberately = function(key, opts) {
+  opts = opts || {};
+  opts.set_deliberate = true;
   return this.get(key, opts);
 }
 
@@ -85,10 +93,14 @@ ObjectNode.prototype.getAttr = function(key, opts) {
   // if the attr is cached, just return it
   if ((o.time in this.times) && (key in this.times[o.time])) {
     var res = this.times[o.time][key];
-    ObjectNode.events.retrieved({percept: res, target: this, time: o.time});
+    if (o.deliberate_only && !res.deliberate) return false;
+    if (o.set_deliberate) res.deliberate = true;
+    ObjectNode.events.retrieved({ percept: res, target: this, time: o.time
+                                , deliberate: o.set_deliberate
+                                , only_checking : o.deliberate_only || o.cache_only });
     return res;
   }
-  if (o.cache_only) return false;
+  if (o.cache_only || o.deliberate_only) return false;
   // otherwise, goto the state and perceive it
   if (o.time) this.scene_node.oracle.gotoState(o.time);
   var res = new ObjectNode.attrs[key](this.obj);
@@ -97,7 +109,9 @@ ObjectNode.prototype.getAttr = function(key, opts) {
     if (!this.times[o.time]) this.times[o.time] = {};
     this.times[o.time][key] = res;
   }
-  ObjectNode.events.perceived({percept: res, target: this, time: o.time});
+  if (o.set_deliberate) res.deliberate = true;
+  ObjectNode.events.perceived({percept: res, target: this, time: o.time
+                              , deliberate: o.set_deliberate});
   return res;
 }
 
@@ -117,14 +131,20 @@ ObjectNode.prototype.getRel = function(key, opts) {
   // if the rel is cached, return it
   if ((o.time in this.times) && (key in this.times[o.time])) {
     var cache = this.times[o.time][key];
-    if (o.get_all) return cache;
+    if (o.get_all) return (o.deliberate_only
+                          ? cache.filter(function(perc) { return perc.deliberate; })
+                          : cache);
     var res = cache.filter(function (rel) { return rel.other === o.other.obj })[0];
     if (res) {
-      ObjectNode.events.retrieved({percept: res, target: this, time: o.time, other: o.other});
+      if (o.deliberate_only && !res.deliberate) return false;
+      if (o.set_deliberate) res.deliberate = true;
+      ObjectNode.events.retrieved({ percept: res, target: this, time: o.time
+                                  , deliberate: o.set_deliberate, other: o.other
+                                  , only_checking : o.deliberate_only || o.cache_only });
       return res;
     }
   }
-  if (o.cache_only) return o.get_all ? [] : false;
+  if (o.cache_only || o.deliberate_only) return o.get_all ? [] : false;
   // otherwise, goto the state and perceive it
   if (o.time) this.scene_node.oracle.gotoState(o.time);
   var res = new ObjectNode.rels[key](this.obj, o.other.obj);
@@ -134,7 +154,9 @@ ObjectNode.prototype.getRel = function(key, opts) {
     if (!this.times[o.time][key]) this.times[o.time][key] = [];
     this.times[o.time][key].push(res);
   }
-  ObjectNode.events.perceived({percept: res, target: this, time: o.time, other: o.other});
+  if (o.set_deliberate) res.deliberate = true;
+  ObjectNode.events.perceived({ percept: res, target: this, time: o.time
+                              , deliberate: o.set_deliberate, other: o.other});
   return res;
 }
 
@@ -188,7 +210,8 @@ ObjectNode.prototype.describeState = function(time, prefix) {
     var attr = this.times[time][a];
     if (!attr) continue;
     var active = attr.get_activity() >= 0.5;
-    out.push((active ? '' : '!') + attr.get_label());
+    var res = (active ? '' : '!') + attr.get_label();
+    out.push(attr.deliberate ? res : '('+res+')');
   }
   for (var r in ObjectNode.rels) {
     var rels = this.times[time][r];
@@ -196,7 +219,8 @@ ObjectNode.prototype.describeState = function(time, prefix) {
     for (var i=0; i<rels.length; i++) {
       if (!rels[i]) continue;
       var active = rels[i].get_activity() >= 0.5;
-      out.push((active ? '' : '!') + rels[i].get_label() + ' ' + rels[i].other.id);
+      var res = (active ? '' : '!') + rels[i].get_label() + rels[i].other.id;
+      out.push(rels[i].deliberate ? res : '('+res+')');
     }
   }
   return prefix + time + ": " + out.join(', ');

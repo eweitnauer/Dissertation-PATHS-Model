@@ -58,6 +58,7 @@ AttentionNet.prototype.updateActivities = function() {
 
 AttentionNet.prototype.calcSolutionActivity = function(sol) {
 	if (sol.main_side === 'fail') return 0;
+	if (!sol.sel.blank() && sol.selectsAllObjectsInAllScenes()) return 0;
 	var exp = sol.uncheckedSceneCount() + sol.sel.getComplexity();
 	if (sol.main_side === 'both') {
 		exp += sol.scene_pair_count;
@@ -116,11 +117,11 @@ AttentionNet.prototype.calcObjectActivity = function(obj) {
 AttentionNet.prototype.getObjectPrior = function(obj) {
 	var prod = 1, perception;
 	for (var attr in this.obj_attr_priors) {
-		perception = obj.getFromCache(attr, {time: 'start'});
+		perception = obj.getDeliberateOnly(attr, {time: 'start'});
 		if (perception && this.isActive(perception)) prod *= this.obj_attr_priors[attr];
 	}
 	// for (var rel in this.obj_rel_priors) {
-	// 	perception = obj.getFromCache(rel, {time: 'start'});
+	// 	perception = obj.getDeliberateOnly(rel, {time: 'start'});
 	// 	if (perception && this.isActive(perception)) prod *= this.obj_rel_priors[rel][0];
 	// 	// we should also check for this object being the `other` object in a relationship
 	// }

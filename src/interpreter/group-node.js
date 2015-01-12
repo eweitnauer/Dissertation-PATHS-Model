@@ -78,10 +78,13 @@ GroupNode.prototype.getAttr = function(key, opts) {
   // if the attr is cached, just return it
   if ((o.time in this.times) && (key in this.times[o.time])) {
     var res = this.times[o.time][key];
-    GroupNode.events.retrieved({percept: res, target: this, time: o.time});
+    if (o.deliberate_only && !res.deliberate) return false;
+    if (o.set_deliberate) res.deliberate = true;
+    GroupNode.events.retrieved({ percept: res, target: this, time: o.time
+                               , deliberate: o.set_deliberate });
     return res;
   }
-  if (o.cache_only) return false;
+  if (o.cache_only || o.deliberate_only) return false;
   // otherwise, goto the state and perceive it
   if (o.time) this.scene_node.oracle.gotoState(o.time);
   var res = new GroupNode.attrs[key](this);
@@ -90,13 +93,22 @@ GroupNode.prototype.getAttr = function(key, opts) {
     if (!this.times[o.time]) this.times[o.time] = {};
     this.times[o.time][key] = res;
   }
-  GroupNode.events.perceived({percept: res, target: this, time: o.time});
+  if (o.set_deliberate) res.deliberate = true;
+  GroupNode.events.perceived({ percept: res, target: this, time: o.time
+                             , deliberate: o.set_deliberate
+                             , only_checking : o.deliberate_only || o.cache_only });
   return res;
 }
 
-GroupNode.prototype.getFromCache = function(key, opts) {
+GroupNode.prototype.getDeliberately = function(key, opts) {
   opts = opts || {};
-  opts.cache_only = true;
+  opts.set_deliberate = true;
+  return this.getAttr(key, opts);
+}
+
+GroupNode.prototype.getDeliberateOnly = function(key, opts) {
+  opts = opts || {};
+  opts.deliberate_only = true;
   return this.getAttr(key, opts);
 }
 

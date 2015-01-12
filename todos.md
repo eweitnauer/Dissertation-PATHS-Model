@@ -1,3 +1,17 @@
+## Current
+
+**Question:** While finding a single! circle in every scene is noteworthy and a good clue for a selector, it is not noteworthy to find a single left-most object in every scene. How should we model that? Maybe we'll simply not use any *-most features at all.
+
+**Question:** Maybe shapes and sizes should add less than 1 to complexity. Its just that humans like descriptions like the square is left of the circle instead of there is an object left to the circle. Wait a second... we could make that "any" object thing something that is rather complex, at least inside a relationship!
+
+**Question:** Actively simplify selectors?
+Or: When combining hypotheses, only allow to add a single feature from the second hypothesis to the first. Pick a feature that is not contained in the fist hypothesis of course.
+Or: Keep searching for a simpler solution after finding one.
+
+**Question:** The SolutionMergingCodelet can't modify the other_selector of a relationship anymore. One way to do it might be to swap the other_selector of a relationship instead of merging it.
+
+## Old
+
 Question: We have three types of things: objects (O), selectors (S) and features (F). We spread activation from S ==> O and from S ==> F. Should we also spread activation for O <==> F and O,F ==> S? One reason to want F ==> S is that this way manually boosting the attention to a feature will also boost attention to that selector. It would also be good to keep the basic selectors like (square) more active later in the game.
 Alternatively, we could build combined selectors based directly on the feature activation.
 We could generally try to split activation into a frequency-based base value that gets added to a context-based value. Here is how this would look:
@@ -37,12 +51,7 @@ Question: Should we strongly prefer single-object selectors when combining solut
 
 Idea: Instead of just merging hypotheses, we could go more into the Genetic Algorithm direction and actually recombine them, or even try dropping parts of the selector, so we have a way to simplify things.
 
-Won't do: The SolutionMergingCodelet can't modify the other_selector of a relationship anymore. One way to do it might be to swap the other_selector of a relationship instead of merging it.
-
-Won't do: Allow perceiving a object attribute on an existing group! Make sure the combined selector is constructed in the next step.
+Won't do: Allow perceiving an object attribute on an existing group! Make sure the combined selector is constructed in the next step.
 ==> What we wanted to achieve with this is now covered by the CombineHypothesisCodelet.
 
 Won't do: Abstraction levels for functions.
-
-Question: Actively simplify selectors? Or better: When combining hypotheses, only allow to add a single feature from the second hypothesis to the first. Pick a feature that is not contained in the fist hypothesis or course.
-How big a problem is this really?

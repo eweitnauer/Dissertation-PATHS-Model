@@ -2,6 +2,17 @@
 var PI = PI || {};
 
 /*
+
+Version 0.5.2
+- Perceptions can now be done deliberatively (in which case they lead to
+hypotheses). If they are not done deliberatively, they are still cached, but
+can be perceived deliberatively later. This way an feature checked through a
+hypotheses (not deliberatively) is still available for constructing hypotheses
+later.
+- first unique, exists and all modes are checked for a potential solution,
+the unique and exists are checked again for matching both sides
+
+
 Version 0.5.1
 - new activity formula for hypotheses
   - [ PBP04': 20/20 185+-155
@@ -94,8 +105,8 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_5_1 = (function(opts) {
-  var version = '0.5.1';
+PI.v0_5_2 = (function(opts) {
+  var version = '0.5.2';
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = opts || {
@@ -108,30 +119,30 @@ PI.v0_5_1 = (function(opts) {
               , { klass: SquareAttribute,      initial_activation: mid,  group: 'shape' }
               , { klass: TriangleAttribute,    initial_activation: mid,  group: 'shape' }
               , { klass: RectangleAttribute,   initial_activation: mid,  group: 'shape' }
-                // , { klass: ShapeAttribute,       initial_activation: high, group: 'shape' }
-              , { klass: CountAttribute,       initial_activation: mid,  group: 'shape' }
+                //, { klass: ShapeAttribute,       initial_activation: high, group: 'shape' }
+              , { klass: CountAttribute,       initial_activation: 10000,  group: 'shape' }
               , { klass: CloseAttribute,       initial_activation: mid,  group: 'distance' }
-                // , { klass: CloseRelationship,    initial_activation: mid,  group: 'distance' }
+                , { klass: CloseRelationship,    initial_activation: mid,  group: 'distance' }
               , { klass: SmallAttribute,       initial_activation: mid,  group: 'shape' }
-                // , { klass: LargeAttribute,       initial_activation: mid,  group: 'shape' }
+                , { klass: LargeAttribute,       initial_activation: mid,  group: 'shape' }
               , { klass: TopMostAttribute,     initial_activation: mid,  group: 'vert-pos' }
                 // , { klass: LeftMostAttribute,    initial_activation: low,  group: 'hor-pos' }
                 // , { klass: RightMostAttribute,   initial_activation: low,  group: 'hor-pos' }
-                // , { klass: FarRelationship,      initial_activation: low,  group: 'distance' }
-                // , { klass: FarAttribute,         initial_activation: low,  group: 'distance' }
+                , { klass: FarRelationship,      initial_activation: low,  group: 'distance' }
+                , { klass: FarAttribute,         initial_activation: low,  group: 'distance' }
               , { klass: OnTopRelationship,    initial_activation: low,  group: 'vert-pos' }
               , { klass: OnGroundAttribute,    initial_activation: low,  group: 'vert-pos' }
               , { klass: RightRelationship,    initial_activation: low,  group: 'hor-pos' }
               , { klass: LeftRelationship,     initial_activation: low,  group: 'hor-pos' }
-                // , { klass: AboveRelationship,    initial_activation: low,  group: 'vert-pos' }
-                // , { klass: BelowRelationship,    initial_activation: low,  group: 'vert-pos' }
-                // , { klass: BesideRelationship,   initial_activation: low,  group: 'hor-pos' }
-                // , { klass: BottomAttribute,      initial_activation: low,  group: 'vert-pos' }
-                // , { klass: TopAttribute,         initial_activation: low,  group: 'vert-pos' }
+                , { klass: AboveRelationship,    initial_activation: low,  group: 'vert-pos' }
+                , { klass: BelowRelationship,    initial_activation: low,  group: 'vert-pos' }
+                , { klass: BesideRelationship,   initial_activation: low,  group: 'hor-pos' }
+                , { klass: BottomAttribute,      initial_activation: low,  group: 'vert-pos' }
+                , { klass: TopAttribute,         initial_activation: low,  group: 'vert-pos' }
               , { klass: TouchAttribute,       initial_activation: low,  group: 'distance' }
               , { klass: SupportsRelationship, initial_activation: low,  group: 'dynamics' }
               , { klass: HitsRelationship,     initial_activation: low,  group: 'dynamics' }
-               // , { klass: GetHitsRelationship,     initial_activation: low,  group: 'dynamics' }
+               , { klass: GetsHitRelationship,     initial_activation: low,  group: 'dynamics' }
               , { klass: CollidesRelationship, initial_activation: low,  group: 'dynamics' }
               , { klass: LeftAttribute,        initial_activation: low,  group: 'hor-pos' }
               , { klass: RightAttribute,       initial_activation: low,  group: 'hor-pos' }

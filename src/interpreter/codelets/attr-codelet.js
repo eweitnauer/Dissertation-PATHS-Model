@@ -26,7 +26,7 @@ AttrCodelet.prototype.isActive = function(percept) {
 }
 
 AttrCodelet.prototype.perceiveAttr = function(target, feature, time) {
-  return target.get(feature.prototype.key, {time: time});
+  return target.getDeliberately(feature.prototype.key, {time: time});
 }
 
 AttrCodelet.prototype.perceiveRel = function(scene, target_obj, feature, time) {
@@ -36,10 +36,10 @@ AttrCodelet.prototype.perceiveRel = function(scene, target_obj, feature, time) {
   }
   var key = feature.prototype.key;
   var other = this.ws.getRandomObject(scene, {filter: function(obj) {
-    return obj !== target_obj && !target_obj.getFromCache(key, { other: obj, time: time });
+    return obj !== target_obj && !target_obj.getDeliberateOnly(key, { other: obj, time: time });
   }});
   if (!other) return;
-  return target_obj.get(key, {other: other, time: time});
+  return target_obj.getDeliberately(key, {other: other, time: time});
 }
 
 AttrCodelet.prototype.shouldPickFeatureFirst = function() {
@@ -55,10 +55,10 @@ AttrCodelet.prototype.isNotCachedFeatureFilter = function(node, time) {
   return function(feature) {
     var t = (feature.prototype.constant ? 'start' : time);
     if (feature.prototype.arity === 1)
-      return !node.getFromCache(feature.prototype.key, {time: t})
+      return !node.getDeliberateOnly(feature.prototype.key, {time: t})
     // we have a relationship, check whether all relationships of given type
     // between node and all the other objects in the scene have been perceived
-    return ( node.getFromCache(feature.prototype.key, { get_all: true, time: t }).length
+    return ( node.getDeliberateOnly(feature.prototype.key, { get_all: true, time: t }).length
            < N-1);
   }
 }
@@ -68,12 +68,12 @@ AttrCodelet.prototype.isNotCachedNodeFilter = function(feature, time) {
   time = (feature.prototype.constant ? 'start' : time);
   if (feature.prototype.arity === 1)
     return function(node) {
-      return !node.getFromCache(key, { time: time })
+      return !node.getDeliberateOnly(key, { time: time })
     }
   // we have a relationship, check whether all relationships of given type
   // between node and all the other objects in the scene have been perceived
   return function(node) {
-    return ( node.getFromCache(key, { get_all: true, time: time }).length
+    return ( node.getDeliberateOnly(key, { get_all: true, time: time }).length
            < node.scene_node.objs.length-1);
   }
 }
