@@ -88,21 +88,29 @@ var SVGSceneParser = (function() {
     frame.is_frame = true;
     shapes = shapes.filter(function(o) { return !o.is_frame});
 
-    var paths = root.getElementsByTagName('path');
-    for (var i=0; i<paths.length; i++) {
-      var path_node = paths[i];
-      // circles are saved as paths in inkscape, so the path_node is either a circle or
-      // a real path
-      var shape = Circle.fromSVGPath(path_node, false) ||
-                Polygon.fromSVGPath(path_node, 1, false);
+    var path_nodes = root.getElementsByTagName('path')
+      , circle_nodes = root.getElementsByTagName('circle');
+    var els = Array.prototype.slice.call(path_nodes)
+            .concat(Array.prototype.slice.call(circle_nodes));
+    for (var i=0; i<els.length; i++) {
+      var el = els[i], shape;
+      if (el.tagName === 'circle') shape = Circle.fromSVGCircle(el);
+      // sometimes, circles are saved as paths in inkscape
+      else shape = Circle.fromSVGPath(el, false) ||
+                   Polygon.fromSVGPath(el, 1, false);
       if (shape instanceof Polygon) {
         shape.merge_vertices({min_dist: 1, min_vertex_count: 2});
       }
-      shape.svg_transform = path_node.getCTM();
-      shape.style = readStyle(path_node);
+      shape.svg_transform = el.getCTM();
+      shape.style = readStyle(el);
       scale_stroke_width(shape, extract_scaling(shape.svg_transform));
       shapes.push(shape);
     }
+
+    // var circles = root.getElementsByTagName('circle');
+    // for (var i=0; i<circles.length; i++) {
+    //   var circle_node = circles[i];
+    //   var shape = Circle.fromSVGPath(path_node, false)
 
     // set `movable` property for all object that have no black stroke color
     shapes.forEach(function(s) {
