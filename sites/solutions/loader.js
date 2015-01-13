@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 2;
+var pbp_idx = 14;
 var curr_sols = [];
 var tester = null;
 var log_area = null;
@@ -367,6 +367,8 @@ var pbps = [
   {name: 'pbp26',  files: default_files, solution: ["circle moves right", "circle moves left"]},
   {name: 'pbp30',  files: default_files, solution: ["less stable situation", "stable situation"]},
   {name: 'pbp31',  files: default_files, solution: ["circle can be picked up directly", "circle cannot be picked up directly"]},
+  {name: 'pbp35',  files: default_files, solution: ["triangle moves", "triangle does not move"]},
+  {name: 'pbp36',  files: default_files, solution: ["small objects hits large object", "small object does not hit large object"]},
   {name: 'pbp23',  files: default_files, solution: ["collision", "no collision"]},
   {name: 'pbp32',  files: default_files, solution: ["objects rotate a lot", "objects rotate little or no at all"]},
   {name: 'pbp27',  files: default_files, solution: ["(potential) chain reaction","no chain reaction"]},

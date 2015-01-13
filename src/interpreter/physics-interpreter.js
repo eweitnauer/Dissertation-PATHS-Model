@@ -11,7 +11,10 @@ hypotheses (not deliberatively) is still available for constructing hypotheses
 later.
 - first unique, exists and all modes are checked for a potential solution,
 the unique and exists are checked again for matching both sides
-
+- one less parameter: when choosing an object or group first, which of those
+type is chosen is determined by the activities of all group vs. obj features
+- added two new problems:
+  - PBP36: 2/20, PBP35: 3/20
 
 Version 0.5.1
 - new activity formula for hypotheses
@@ -120,7 +123,7 @@ PI.v0_5_2 = (function(opts) {
               , { klass: TriangleAttribute,    initial_activation: mid,  group: 'shape' }
               , { klass: RectangleAttribute,   initial_activation: mid,  group: 'shape' }
                 //, { klass: ShapeAttribute,       initial_activation: high, group: 'shape' }
-              , { klass: CountAttribute,       initial_activation: 10000,  group: 'shape' }
+              , { klass: CountAttribute,       initial_activation: mid,  group: 'shape' }
               , { klass: CloseAttribute,       initial_activation: mid,  group: 'distance' }
                 , { klass: CloseRelationship,    initial_activation: mid,  group: 'distance' }
               , { klass: SmallAttribute,       initial_activation: mid,  group: 'shape' }

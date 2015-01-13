@@ -92,7 +92,11 @@ AttrCodelet.prototype.run = function() {
     }
   }
   else { // pick obj or group first
-    var pick_group = this.shouldPickGroup();
+    // use next to line to base group vs. obj feature decision on global param
+    // var pick_group = this.shouldPickGroup();
+    /// use next two lines to base group vs. obj feature decision on feature activities
+    feature = this.ws.getRandomFeature();
+    var pick_group = feature.prototype.targetType === 'group';
     target = pick_group ? this.ws.getExistingRandomGroup(scene) : this.ws.getRandomObject(scene);
     if (!target) return false;
     feature = this.ws.getRandomFeature({ type: pick_group ? 'group' : 'obj'

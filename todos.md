@@ -8,7 +8,8 @@
 Or: When combining hypotheses, only allow to add a single feature from the second hypothesis to the first. Pick a feature that is not contained in the fist hypothesis of course.
 Or: Keep searching for a simpler solution after finding one.
 
-**Question:** The SolutionMergingCodelet can't modify the other_selector of a relationship anymore. One way to do it might be to swap the other_selector of a relationship instead of merging it.
+**Question:** If the selector of the other object in a relationship is chosen poorly at first, there is currently no way to change that. (The SolutionMergingCodelet can't modify the other_selector of a relationship anymore. One way to do it might be to swap the other_selector of a relationship instead of merging it.)
+
 
 ## Old
 

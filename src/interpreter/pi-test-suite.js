@@ -1,6 +1,7 @@
 PITestSuite = function(repetitions, max_solver_steps) {
-	this.pbps = [ "pbp12", "pbp02", "pbp04", "pbp08", "pbp11b", "pbp13"
-              , "pbp16", "pbp18", "pbp20", "pbp22", "pbp26", "pbp31"];
+	this.pbps = [ "pbp02", "pbp04", "pbp08", "pbp11b", "pbp12", "pbp13"
+              , "pbp16", "pbp18", "pbp20", "pbp22", "pbp26", "pbp31"
+              , "pbp35", "pbp36" ];
 	this.parameters = [{name: 'pbp', values: this.pbps}];
 	this.reps = repetitions || 1;
 	this.max_solver_steps = max_solver_steps || 1000;
