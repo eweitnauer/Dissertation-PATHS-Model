@@ -2,7 +2,7 @@ var pixels_per_unit = 50
   , div, p, t;
 
 function init(idx) {
-	var ps = setup_testsuite();
+	var ps = setup_testsuite(100, 2500);
 	ps.addParameter('pres_mode',
 		['interleaved-sim-sim', 'interleaved-sim-dis'
 		,'interleaved-dis-sim', 'interleaved-dis-dis'
@@ -12,16 +12,21 @@ function init(idx) {
 }
 
 function init_ff(idx) {
-	var ps = setup_testsuite();
-	ps.setParameter('pbp', ['pbp13']);
+	var ps = setup_testsuite(75, 2000);
+	//ps.setParameter('pbp', ['pbp13']);
+	ps.addParameter('pres_mode',
+		['interleaved-sim-sim', 'interleaved-sim-dis'
+		,'interleaved-dis-sim', 'interleaved-dis-dis'
+	    ,'blocked-sim-sim', 'blocked-sim-dis'
+		,'blocked-dis-sim', 'blocked-dis-dis']);
 	ps.addParameter('perception.pick_feature_fist', [0, 0.5, 1]);
 	ps.run(idx || 0);
 }
 
-function setup_testsuite() {
+function setup_testsuite(reps, max_steps) {
 	console.log('initializing...');
 	div = d3.select('div#log');
-	var ps = new PITestSuite(100, 2500);
+	var ps = new PITestSuite(reps, max_steps);
 	ps.setLogServer('http://localhost:3000', 'pi');
 	ps.before_step_callback = show_step;
 	ps.after_step_callback = show_res;
