@@ -98,8 +98,9 @@ Solution.prototype.checkScenePair = function(pair, pair_id) {
 
   if (this.matches.left === 0 && this.matches.right === this.checks.right) this.setMainSide('right');
   else if (this.matches.right === 0 && this.matches.left === this.checks.left) this.setMainSide('left');
-  else if (this.tryAllMode()) {}
-  else if (this.tryUniqueMode()) {}
+  /// uncomment to allow unique and all mode
+  //else if (this.tryAllMode()) {}
+  //else if (this.tryUniqueMode()) {}
   else if (this.matches.left > 0 && this.matches.right === this.checks.right) this.setMainSide('both');
   else if (this.matches.right > 0 && this.matches.left === this.checks.left) this.setMainSide('both');
   else this.setMainSide('fail');

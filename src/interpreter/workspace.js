@@ -253,60 +253,37 @@ Workspace.prototype.addSolution = function(sol) {
   this.log(3, 'adding solution:', sol.describe());
 }
 
-Workspace.prototype.getGroupBySelector = function(sel, scene) {
-  for (var i=0; i<scene.groups.length; i++) {
-    var g = scene.groups[i];
-    if (g.selectors.indexOf(sel) !== -1) return g;
-  }
-  return null;
-}
-
-Workspace.prototype.arraysIdentical = function(a1, a2) {
-  if (a1.length !== a2.length) return false;
-  for (var i=0; i<a1.length; i++) {
-    if (a2.indexOf(a1[i]) === -1) return false;
-  }
-  return true;
-}
-
-/// Will not create an empty group (from a non-matching selector) but return
-/// null is this case.
-Workspace.prototype.getOrCreateGroupBySelector = function(sel, scene) {
-  if (!scene) throw "missing scene argument";
-  var group = this.getGroupBySelector(sel, scene);
-  if (group) return group;
-  // no group has this selector associated, look if there is a group with the
-  // same objects in it as the selector would select
-  group = sel.applyToScene(scene);
-  if (group.empty()) return null;
-  for (var i=0; i<scene.groups.length; i++) {
-    if (this.arraysIdentical(scene.groups[i].objs, group.objs)) {
-      if (scene.groups[i].selectors.some(function(ssel) { return ssel.equals(sel) })) {
-        throw "I won't insert an existing selector";
-      }
-      scene.groups[i].selectors.push(sel);
-      return scene.groups[i];
-    }
-  }
-  // a new group!
-  scene.groups.push(group);
-  return group;
-};
-
 /// Selects a random group from the passed scene based on the attention values
-/// of the respective group selectors. Returns null if no group could be selected.
-/// Options: not_empty (bool), filter (GroupNode->bool)
-Workspace.prototype.getRandomGroup = function(scene, options) {
+/// of the respective group's selectors. Returns null if no group could be
+/// selected. Options: filter (GroupNode->bool)
+Workspace.prototype.getExistingRandomGroup = function(scene, options) {
+  var group_pool = scene.groups;
+  if (options && options.filter) group_pool = groups.filter(options.filter);
+  var sel_pool = [];
+  group_pool.forEach(function(group) { sel_pool = sel_pool.concat(group.selectors) });
+
+  var hyp = this.getRandomHypothesis({filter: function(hyp) {
+    return sel_pool.indexOf(hyp.sel) !== -1;
+  }});
+  var res = null;
+  if (hyp) res = hyp.sel.getCachedResult(scene);
+  return res;
+}
+
+/** Selects a group based on a randomly chosen hypothesis.
+ * SIDE EFFECTS: Will perceive all existing hypotheses on the passed scene,
+ * creating the respective groups if they don't exist in the scene, yet. */
+Workspace.prototype.getAnyRandomGroup = function(scene, options) {
   options = options || {};
   var aNet = this.attentionNet;
   var self = this;
   // get groups through selectors
   var hyp = this.getRandomHypothesis({filter: function(hyp) {
-    var group = self.getOrCreateGroupBySelector(hyp.sel, scene);
+    var group = hyp.sel.applyToScene(scene);
     return (group && (!options.filter || options.filter(group)));
   }});
   if (!hyp) return null;
-  return this.getGroupBySelector(hyp.sel, scene);
+  return hyp.sel.getCachedResult(scene);
 }
 
 Workspace.prototype.getRandomScene = function() {

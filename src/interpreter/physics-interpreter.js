@@ -2,8 +2,17 @@
 var PI = PI || {};
 
 /*
+Version 0.4.7
+- switched off unique and all solution modes
+
+Version 0.4.6
+- don't perceive all hypotheses automatically on each new scene to pick a group,
+instead, pick only among existing groups
+- selectors now automatically add their perceived groups to the scene's groups
+array (and merge with an existing group if it contains the same objects)
+
 Version 0.4.5
-- set pick_feature_fist probability to 0 by default
+- set pick_feature_first probability to 0 by default
 - prevent "no codelet to run" steps
 
 Version 0.4.4
@@ -49,8 +58,8 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_4_5 = (function(opts) {
-  var version = '0.4.5';
+PI.v0_4_7 = (function(opts) {
+  var version = '0.4.7';
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = opts || {
@@ -107,7 +116,7 @@ PI.v0_4_5 = (function(opts) {
     {
       pick_group: 0.3 // probability that a group (vs. an object) is picked as
                       // perception target when the target is picked first
-    , pick_feature_fist: 1.0 // probability that the feature (vs. the target) is
+    , pick_feature_first: 0 // probability that the feature (vs. the target) is
                       // picked first during perception
     }
   , attention:
@@ -129,15 +138,14 @@ PI.v0_4_5 = (function(opts) {
       , complexity_penalty_steepness: 15 // posteriori is 1-1/(1+exp(cps*(0.25-complexity/10)))
       }
     , feature: {
-        initial: 0.1
-      , from_sel: 0.5 // scale that is applied when spreading attention from new selectors to features
+      from_sel: 0.5 // scale that is applied when spreading attention from new selectors to features
     }
     , obj: {
         initial: 0.1
       , from_sel_scale: 0.2 // scale that is applied when spreading attention from new selectors to objects
       , attr_boost: { // only apply at time "start"
           moves: 0.3
-        // , top_most: 0.1 // this & below: often will get boosted via sel.single, too
+        // , top_most: 0.1 // this & below: often will get boosted via sel.specificity, too
         // , single: 0.1
         // , left_most: 0.1
         // , right_most: 0.1
