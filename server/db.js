@@ -10,7 +10,7 @@ var connect = function(callback) {
 	MongoClient.connect(url, function(err, _db) {
 		db = _db;
 	  assert.equal(null, err);
-	  console.log("database connection setup correctly");
+	  // console.log("database connection setup correctly");
 	  callback();
 	});
 }

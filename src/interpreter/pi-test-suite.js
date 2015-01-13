@@ -110,7 +110,11 @@ PITestSuite.prototype.logResult = function(opts, params, stats) {
             , step_count: this.step_count
             , test_id: this.id
             , options: opts };
-  params.forEach(function(param) { res[param.name] = param.value });
+  var dot = /\./g;
+  params.forEach(function(param) {
+    var name = param.name.replace(dot, '->'); // we can't use dots in mogodb names
+    res[name] = param.value
+  });
   for (var trial_idx in stats.trials) {
     var data = {};
     PBP.extend(data, res);

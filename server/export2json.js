@@ -11,26 +11,30 @@ function on_connect() {
 }
 
 function getField(d, path) {
-	var keys = path.split('.');
+  var keys = path.split('.');
 	while (keys.length) d = d[keys.shift()];
-	return d;
+  if (path === 'solved') return d ? 1 : 0;
+  return d;
 }
 
-var cols = [ 'step_idx', 'step_count', ['pbp', 'params.0.value']
-           , ['pres_mode', 'params.1.value'], 'stats.pi_version', 'stats.runs'
-           , 'stats.solved', 'stats.steps.avg', 'stats.steps.std_dev'
-           , 'stats.steps.min', 'stats.steps.max'
-           //, 'stats.perception_count', 'stats.retrieval_count'
-           //'stats.solutions'
-           ];
+var cols = [ 'test_id', 'step_idx', 'step_count', 'pbp'
+           , 'pres_mode', ['feature1st', 'perception->pick_feature_fist']
+           , 'rep', 'reps', 'solved', 'steps', 'perception_count'
+           , 'retrieval_count', 'sol', 'timestamp' ];
 function writeData(data) {
-	stringifier = stringify();
+  db.close();
+  stringifier = stringify();
 	stringifier.pipe(process.stdout);//fs.createWriteStream('out.csv'));
+  writeHeader(stringifier);
   for (var i=0; i<data.length; i++) {
-  	var row = cols.map(function(col) {
-  		return JSON.stringify(getField(data[i], (typeof(col)==='string' ? col : col[1])));
+    var row = cols.map(function(col) {
+  		return getField(data[i], (typeof(col)==='string' ? col : col[1]));
   	});
   	stringifier.write(row);
   }
   stringifier.end();
+}
+function writeHeader(stringifier) {
+  var row = cols.map(function(col) { return typeof(col) === 'string' ? col : col[0]});
+  stringifier.write(row);
 }
