@@ -13,7 +13,7 @@ Version 0.5.3
 - selects-all-scenes selectors get only increased probability if based on
   base level features (like: "circle", but not "stable object")
 - after all the changes above: PBP26 solved 2/20
-- make negations in solutions more expensive: add 2^neg_count to the complexity
+- made negations in solutions more expensive: add 2^neg_count to the complexity
   if there are any negations
 
 Version 0.5.2
