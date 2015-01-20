@@ -5,6 +5,7 @@ LargeAttribute.prototype.key = 'large';
 LargeAttribute.prototype.targetType = 'obj';
 LargeAttribute.prototype.arity = 1;
 LargeAttribute.prototype.constant = true;
+LargeAttribute.prototype.base_level = true;
 
 // google: "plot from -10 to 1000, 1/(1+exp(4*(2-x/100)))"
 LargeAttribute.membership = function(area) {

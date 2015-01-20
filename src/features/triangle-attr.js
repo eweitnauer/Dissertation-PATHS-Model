@@ -5,6 +5,7 @@ TriangleAttribute.prototype.key = 'triangle';
 TriangleAttribute.prototype.targetType = 'obj';
 TriangleAttribute.prototype.arity = 1;
 TriangleAttribute.prototype.constant = true;
+TriangleAttribute.prototype.base_level = true;
 
 /// Returns an TriangleAttribute instance, which is the perception of the passed
 /// object's shape. Possible shapes are circle, triangle, rectangle, square and

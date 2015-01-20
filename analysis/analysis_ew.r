@@ -24,7 +24,7 @@ data_ss = data_ss[order(data_ss$pbp),] # reorder columns according to the pbp fa
 data_all = merge(data_ai, data_ss[c("pbp", "cond", "found_solution", "train_time", "population")], all=T);
   
 # print solutions ordered by frequency per problem:
-pbp = 'pbp13';
+pbp = 'pbp18';
 sols = count(data[data$found_solution==1 & data$pbp==pbp,]$sol);
 sols[order(sols$freq),]
 
@@ -111,19 +111,24 @@ bargraph.CI(x.factor=pbp,group=sim_cond_bw_cat,response=train_time,data=data,yli
 
 bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=found_solution,ylim=c(0.0, 1.1),data=data,legend=T,ylab='correct answer rate')
 bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=train_time,data=data,legend=T,ylab='steps to solution or fail')
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=train_time,data=data[data$found_solution==1,],legend=T,ylab='steps to solution for solved trials')
 
 ### sch_cond
 
-bargraph.CI(x.factor=sch_cond,response=found_solution,ylim=c(0.6, 0.8),data=data,legend=T,ylab='correct answer rate')
-bargraph.CI(x.factor=sch_cond,response=train_time,ylim=c(800,1100),data=data,legend=T,ylab='correct answer rate')
+bargraph.CI(x.factor=sch_cond,response=found_solution,data=data,legend=T,ylab='correct answer rate')
+bargraph.CI(x.factor=sch_cond,response=train_time,data=data,legend=T,ylab='steps to solution or fail')
+bargraph.CI(x.factor=sch_cond,response=train_time,data=data[data$found_solution==1,],legend=T,ylab='steps to solution for solved trials')
 
 ### sim_cond_wi_cat, sim_cond_bw_cat
 
 bargraph.CI(x.factor=sim_cond_wi_cat,response=found_solution,ylim=c(0.6, 0.8),data=data,legend=T,ylab='correct answer rate', main='w/i similarity')
 bargraph.CI(x.factor=sim_cond_wi_cat,response=train_time,data=data,ylim=c(800,1100),legend=T,ylab='steps to solution or fail', main='w/i similarity')
+bargraph.CI(x.factor=sim_cond_wi_cat,response=train_time,data=data[data$found_solution==1,],legend=T,ylab='steps to solution for solved trials', main='w/i similarity')
+bargraph.CI(x.factor=sch_cond,response=found_solution,group=sim_cond_wi_cat,data=data,legend=T,ylab='correct answer rate', main='w/i similarity')
 
 bargraph.CI(x.factor=sim_cond_bw_cat,response=found_solution,ylim=c(0.6, 0.8),data=data,legend=T,ylab='correct answer rate', main='b/w similarity')
 bargraph.CI(x.factor=sim_cond_bw_cat,response=train_time,data=data,ylim=c(800,1100),legend=T,ylab='steps to solution or fail', main='b/w similarity')
+bargraph.CI(x.factor=sch_cond,response=found_solution,group=sim_cond_bw_cat,data=data,legend=T,ylab='correct answer rate', main='b/w similarity')
 
 
 ezANOVA(data=data,dv=found_solution,wid=mturk_id,within=.(sch_cond,sim_cond_wi_cat,sim_cond_bw_cat))

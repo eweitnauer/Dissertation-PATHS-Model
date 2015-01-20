@@ -5,6 +5,7 @@ RectangleAttribute.prototype.key = 'rect';
 RectangleAttribute.prototype.targetType = 'obj';
 RectangleAttribute.prototype.arity = 1;
 RectangleAttribute.prototype.constant = true;
+RectangleAttribute.prototype.base_level = true;
 
 /// Returns an RectangleAttribute instance, which is the perception of the passed
 /// object's shape. Possible shapes are circle, triangle, rectangle, square and

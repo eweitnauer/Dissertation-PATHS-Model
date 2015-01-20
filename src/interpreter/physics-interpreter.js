@@ -3,6 +3,19 @@ var PI = PI || {};
 
 /*
 
+Version 0.5.3
+- disable specificity advantage ==> PBP 26 solved 1/20
+                         before ==>        solved 4/20
+- changed feature priors: now base level features have high, dynamic features
+  have medium and everything else has low priors.
+- blank selector now has complexity 1 and base level features (shapes & sizes)
+  only add complexity of 0.5
+- selects-all-scenes selectors get only increased probability if based on
+  base level features (like: "circle", but not "stable object")
+- after all the changes above: PBP26 solved 2/20
+- make negations in solutions more expensive: add 2^neg_count to the complexity
+  if there are any negations
+
 Version 0.5.2
 - Perceptions can now be done deliberatively (in which case they lead to
 hypotheses). If they are not done deliberatively, they are still cached, but
@@ -12,7 +25,7 @@ later.
 - first unique, exists and all modes are checked for a potential solution,
 the unique and exists are checked again for matching both sides
 - one less parameter: when choosing an object or group first, which of those
-type is chosen is determined by the activities of all group vs. obj features
+types is chosen is determined by the activities of all group vs. obj features
 - added two new problems:
   - PBP36: 2/20, PBP35: 3/20
 
@@ -108,27 +121,27 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_5_2 = (function(opts) {
-  var version = '0.5.2';
+PI.v0_5_3 = (function(opts) {
+  var version = '0.5.3';
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = opts || {
     features: [
-                { klass: StabilityAttribute,   initial_activation: high, group: 'dynamics' }
-              , { klass: SingleAttribute,      initial_activation: high, group: 'distance' }
-              , { klass: MovesAttribute,       initial_activation: high, group: 'dynamics' }
-              , { klass: TouchRelationship,    initial_activation: high, group: 'distance' }
-              , { klass: CircleAttribute,      initial_activation: mid,  group: 'shape' }
-              , { klass: SquareAttribute,      initial_activation: mid,  group: 'shape' }
-              , { klass: TriangleAttribute,    initial_activation: mid,  group: 'shape' }
-              , { klass: RectangleAttribute,   initial_activation: mid,  group: 'shape' }
+                { klass: CircleAttribute,      initial_activation: high,  group: 'shape' }
+              , { klass: SquareAttribute,      initial_activation: high,  group: 'shape' }
+              , { klass: TriangleAttribute,    initial_activation: high,  group: 'shape' }
+              , { klass: RectangleAttribute,   initial_activation: high,  group: 'shape' }
+              , { klass: SmallAttribute,       initial_activation: high,  group: 'shape' }
+              , { klass: LargeAttribute,       initial_activation: high,  group: 'shape' }
                 //, { klass: ShapeAttribute,       initial_activation: high, group: 'shape' }
-              , { klass: CountAttribute,       initial_activation: mid,  group: 'shape' }
-              , { klass: CloseAttribute,       initial_activation: mid,  group: 'distance' }
-                , { klass: CloseRelationship,    initial_activation: mid,  group: 'distance' }
-              , { klass: SmallAttribute,       initial_activation: mid,  group: 'shape' }
-                , { klass: LargeAttribute,       initial_activation: mid,  group: 'shape' }
-              , { klass: TopMostAttribute,     initial_activation: mid,  group: 'vert-pos' }
+              , { klass: MovesAttribute,       initial_activation: mid, group: 'dynamics' }
+              , { klass: StabilityAttribute,   initial_activation: mid, group: 'dynamics' }
+              , { klass: SingleAttribute,      initial_activation: low, group: 'distance' }
+              , { klass: TouchRelationship,    initial_activation: low, group: 'distance' }
+              , { klass: CountAttribute,       initial_activation: low,  group: 'shape' }
+              , { klass: CloseAttribute,       initial_activation: low,  group: 'distance' }
+              , { klass: CloseRelationship,    initial_activation: low,  group: 'distance' }
+              , { klass: TopMostAttribute,     initial_activation: low,  group: 'vert-pos' }
                 // , { klass: LeftMostAttribute,    initial_activation: low,  group: 'hor-pos' }
                 // , { klass: RightMostAttribute,   initial_activation: low,  group: 'hor-pos' }
                 , { klass: FarRelationship,      initial_activation: low,  group: 'distance' }

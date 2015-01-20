@@ -5,6 +5,7 @@ SquareAttribute.prototype.key = 'square';
 SquareAttribute.prototype.targetType = 'obj';
 SquareAttribute.prototype.arity = 1;
 SquareAttribute.prototype.constant = true;
+SquareAttribute.prototype.base_level = true;
 
 /// Returns an SquareAttribute instance, which is the perception of the passed
 /// object's shape. Possible shapes are circle, triangle, rectangle, square and

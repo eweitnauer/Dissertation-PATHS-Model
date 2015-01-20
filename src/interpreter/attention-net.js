@@ -62,9 +62,11 @@ AttentionNet.prototype.calcSolutionActivity = function(sol) {
 	var exp = sol.uncheckedSceneCount() + sol.sel.getComplexity();
 	if (sol.main_side === 'both') {
 		exp += sol.scene_pair_count;
-		if (!sol.allMatch()) exp += sol.incompatibleMatchCount();
+		if (!sol.allMatch() || !sol.sel.base_level_only())
+		  exp += sol.incompatibleMatchCount();
 	}
-	return Math.pow(2, -exp) * (sol.objects_seen ? (sol.objects_seen / sol.objects_selected) : 1);
+	//var many_objs_penalty = (sol.objects_seen ? (sol.objects_seen / sol.objects_selected) : 1);
+	return Math.pow(2, -exp);
 
 	// return Math.pow(0.5, sol.sel.getComplexity()
 	// 	                 + sol.uncheckedSceneCount()

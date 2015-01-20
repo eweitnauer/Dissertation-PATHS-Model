@@ -5,6 +5,7 @@ CircleAttribute.prototype.key = 'circle';
 CircleAttribute.prototype.targetType = 'obj';
 CircleAttribute.prototype.arity = 1;
 CircleAttribute.prototype.constant = true;
+CircleAttribute.prototype.base_level = true;
 
 /// Returns an CircleAttribute instance, which is the perception of the passed
 /// object's shape. Possible shapes are circle, triangle, rectangle, square and

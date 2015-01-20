@@ -45,6 +45,9 @@ Selector.prototype.getComplexity = function() {
 		for (var i=0; i<this.rels.length; i++) {
 		  c += this.rels[i].getComplexity();
 		}
+		if (this.blank()) c = 1;
+		var neg_count = this.countNegations();
+		if (neg_count > 0) c += Math.pow(2, neg_count);
 		this.cached_complexity = c;
 	}
 	return this.cached_complexity + (this.solution.mode === 'unique' ? -1 : 0);
@@ -55,6 +58,12 @@ Selector.prototype.blank = function() {
 	return (this.obj_attrs.length === 0
 	     && this.grp_attrs.length === 0
 	     && this.rels.length === 0)
+}
+
+/// Returns true if the selector only has base-level features.
+Selector.prototype.base_level_only = function() {
+	if (this.grp_attrs.length > 0 || this.rels.length > 0) return false;
+	return this.obj_attrs.every(function(attr) { return attr.base_level && attr.active });
 }
 
 Selector.prototype.hasRelationships = function() {
@@ -77,6 +86,19 @@ Selector.prototype.forEachFeature = function(fn) {
 		fn(pbpSettings.obj_rels[this.rels[i].key]);
 		this.rels[i].other_sel.forEachFeature(fn);
 	}
+}
+
+Selector.prototype.forEachMatcher = function(fn) {
+	var i;
+	for (i=0; i<this.obj_attrs.length; i++) fn(this.obj_attrs[i]);
+	for (i=0; i<this.grp_attrs.length; i++) fn(this.grp_attrs[i]);
+	for (i=0; i<this.rels.length; i++) fn(this.rels[i]);
+}
+
+Selector.prototype.countNegations = function() {
+	var c = 0;
+	this.forEachMatcher(function(m) { c += m.countNegations() });
+	return c;
 }
 
 /** Returns the first group in the passed scene that contains this selector in
@@ -317,9 +339,11 @@ Selector.AttrMatcher = function(key, label, active, time, type) {
 	if (key in pbpSettings.obj_attrs) {
 		this.type = "object";
 		this.constant = pbpSettings.obj_attrs[key].prototype.constant;
+		this.base_level = pbpSettings.obj_attrs[key].prototype.base_level;
 	} else {
 		this.type = "group";
 		this.constant = pbpSettings.group_attrs[key].prototype.constant;
+		this.base_level = pbpSettings.group_attrs[key].prototype.base_level;
 	}
 	this.time = time || 'start';
 }
@@ -339,10 +363,13 @@ Selector.AttrMatcher.fromAttribute = function(attr, time) {
 }
 
 Selector.AttrMatcher.prototype.getComplexity = function() {
-	var c = 1;
+	var c = this.base_level ? 0.5 : 1;
 	if (this.time !== 'start') c++;
-	if (!this.active) c += 2;
 	return c;
+}
+
+Selector.AttrMatcher.prototype.countNegations = function() {
+	return this.active ? 0 : 1;
 }
 
 /// Returns true if the other AttrMatcher is the same as this one.
@@ -386,9 +413,12 @@ Selector.RelMatcher.prototype.clone = function() {
 Selector.RelMatcher.prototype.getComplexity = function() {
 	var c = 1;
 	if (this.time !== 'start') c++;
-	if (!this.active) c += 2;
 	c += this.other_sel.getComplexity();
 	return c;
+}
+
+Selector.RelMatcher.prototype.countNegations = function() {
+	return (this.active ? 0 : 1) + this.other_sel.countNegations();
 }
 
 /// Returns true if the other RelMatcher is the same as this one.

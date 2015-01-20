@@ -5,6 +5,7 @@ SmallAttribute.prototype.key = 'small';
 SmallAttribute.prototype.targetType = 'obj';
 SmallAttribute.prototype.arity = 1;
 SmallAttribute.prototype.constant = true;
+SmallAttribute.prototype.base_level = true;
 
 // google: "plot from -10 to 1000, 1-1/(1+exp(4*(1.8-x/100)))"
 SmallAttribute.membership = function(area) {
