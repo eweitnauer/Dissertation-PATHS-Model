@@ -3,6 +3,9 @@ var PI = PI || {};
 
 /*
 
+Version 0.5.4
+- randomized order of PBP rows
+
 Version 0.5.3
 - disable specificity advantage ==> PBP 26 solved 1/20
                          before ==>        solved 4/20
@@ -121,8 +124,8 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_5_3 = (function(opts) {
-  var version = '0.5.3';
+PI.v0_5_4 = (function(opts) {
+  var version = '0.5.4';
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = opts || {
@@ -174,6 +177,7 @@ PI.v0_5_3 = (function(opts) {
     // features: [ { klass: SquareAttribute,   initial_activation: low }
     //           , { klass: TriangleAttribute, initial_activation: low } ]
   , pres_mode: 'interleaved-sim-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
+  , randomize_row_order: true
   , pres_time: 100 // every x steps, switch to the next scene pair
   , perception:
     {

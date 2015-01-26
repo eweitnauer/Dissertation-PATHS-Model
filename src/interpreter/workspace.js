@@ -19,7 +19,7 @@ var Workspace = function(scenes, options, log_level) {
 
   this.events = d3.dispatch('switched_scenes');
 
-  this.scene_pair_sequence = this.generateSceneSequence();
+  this.scene_pair_sequence = this.generateSceneSequence(options.randomize_row_order);
   this.scene_pair_index = 0;
   this.scene_pair_steps = 0;
   this.active_scene_pair = this.scene_pair_sequence[0];
@@ -32,7 +32,7 @@ var Workspace = function(scenes, options, log_level) {
   this.logCallback = null;
 }
 
-Workspace.prototype.generateSceneSequence = function() {
+Workspace.prototype.generateSceneSequence = function(randomize_row_order) {
   var seqs8 = { 'interleaved-sim-sim': ['A1B1', 'A2B2', 'A3B3', 'A4B4', 'A5B5', 'A6B6', 'A7B7', 'A8B8']  // wip: 8 bwp: 4 | wic: 8 bwc: 4
               , 'interleaved-sim-dis': ['A1B1', 'A3B3', 'A5B5', 'A7B7', 'A2B2', 'A4B4', 'A6B6', 'A8B8']  // wip: 8 bwp: 0 | wic: 0 bwc: 8
               , 'interleaved-dis-sim': ['A1B3', 'A2B4', 'A3B5', 'A4B6', 'A5B7', 'A6B8', 'A7B1', 'A8B2']  // wip: 0 bwp: 4 | wic: 4 bwc: 0
@@ -42,6 +42,18 @@ Workspace.prototype.generateSceneSequence = function() {
               , 'blocked-dis-sim': ['A1A3', 'B1B3', 'A2A4', 'B2B4', 'A5A7', 'B5B7', 'A6A8', 'B6B8']      // wip: 0 bwp: 6 | wic: 0 bwc: 6
               , 'blocked-dis-dis': ['A1A5', 'B3B7', 'A6A2', 'B8B4', 'A7A3', 'B5B1', 'A4A8', 'B2B6']};    // wip: 0 bwp: 2 | wic: 0 bwc: 2
   var lsn = this.left_scenes, rsn = this.right_scenes;
+  if (randomize_row_order) {
+    var row_map = Random.permutation(4);
+    var lsn_rnd = [], rsn_rnd = [];
+    for (var i=0; i<row_map.length; i++) {
+      var idx = row_map[i];
+      lsn_rnd.push(lsn[2*idx], lsn[2*idx+1]);
+      rsn_rnd.push(rsn[2*idx], rsn[2*idx+1]);
+    }
+    lsn = lsn_rnd;
+    rsn = rsn_rnd;
+  }
+
   return seqs8[this.options.pres_mode].map(function(str) {
     return [(str[0] === 'A' ? lsn : rsn)[+str[1]-1]
            ,(str[2] === 'A' ? lsn : rsn)[+str[3]-1]];
