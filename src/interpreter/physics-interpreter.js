@@ -3,6 +3,10 @@ var PI = PI || {};
 
 /*
 
+Version 0.5.5
+- removed left-most and right-most object prior
+- don't use single as attribute anymore, it is never used by humans
+
 Version 0.5.4
 - randomized order of PBP rows
 
@@ -124,8 +128,8 @@ PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
 
-PI.v0_5_4 = (function(opts) {
-  var version = '0.5.4';
+PI.v0_5_5 = (function(opts) {
+  var version = '0.5.5';
   var low = 0.1, mid = 0.2, high = 0.3;
 
   var options = opts || {
@@ -139,7 +143,7 @@ PI.v0_5_4 = (function(opts) {
                 //, { klass: ShapeAttribute,       initial_activation: high, group: 'shape' }
               , { klass: MovesAttribute,       initial_activation: mid, group: 'dynamics' }
               , { klass: StabilityAttribute,   initial_activation: mid, group: 'dynamics' }
-              , { klass: SingleAttribute,      initial_activation: low, group: 'distance' }
+              // , { klass: SingleAttribute,      initial_activation: low, group: 'distance' }
               , { klass: TouchRelationship,    initial_activation: low, group: 'distance' }
               , { klass: CountAttribute,       initial_activation: low,  group: 'shape' }
               , { klass: CloseAttribute,       initial_activation: low,  group: 'distance' }
@@ -181,16 +185,11 @@ PI.v0_5_4 = (function(opts) {
   , pres_time: 100 // every x steps, switch to the next scene pair
   , perception:
     {
-      pick_group: 0.3 // probability that a group (vs. an object) is picked as
-                      // perception target when the target is picked first
-    , pick_feature_first: 0.5 // probability that the feature (vs. the target) is
-                      // picked first during perception
+      pick_feature_first: 0.5 // probability that the feature (vs. the target) is
+                              // picked first during perception
     }
   , activity:
-    { time: { start: 0.67, end: 0.33 }//{ start: 0.67, end: 0.33 }
-    , hypothesis: {
-      specificity_base: 0.25 // >0, the smaller, the bigger the influence of specificity
-    }
+    { time: { start: 0.67, end: 0.33 }
     , feature: {
       hyp_base: 0.1 // >0, the smaller, the bigger the influence of hypotheses activities
     }
@@ -200,14 +199,14 @@ PI.v0_5_4 = (function(opts) {
           moves: 2
           // should we include stability->unstable?
         , top_most: 1.5 // this & below: often will get boosted via sel.specificity, too
-        , single: 1.5
-        , left_most: 1.25
-        , right_most: 1.25
+        // , single: 1.5
+        //, left_most: 1.25
+        //, right_most: 1.25
         }
-      , rel_priors: { // only apply at time "start"
-          hits: [1.5, 0]
-        , collides: [1.25, 1.25]
-        }
+      // , rel_priors: { // only apply at time "start"
+      //     hits: [1.5, 0]
+      //   , collides: [1.25, 1.25]
+      //   }
       }
     }
   };

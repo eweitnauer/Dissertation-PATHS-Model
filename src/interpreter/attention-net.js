@@ -18,11 +18,9 @@ AttentionNet = function(options) {
 	this.attention_values = new WeakMap();
 	this.feature_groups = [];
 
-	this.specificity_base = options.activity.hypothesis.specificity_base;
 	this.feature_base = options.activity.feature.hyp_base;
 	this.object_base = options.activity.obj.hyp_base;
 	this.obj_attr_priors = options.activity.obj.attr_priors;
-	this.obj_rel_priors = options.activity.obj.rel_priors;
 }
 
 /// Can throw "unknown element" exception.
@@ -65,18 +63,7 @@ AttentionNet.prototype.calcSolutionActivity = function(sol) {
 		if (!sol.allMatch() || !sol.sel.base_level_only())
 		  exp += sol.incompatibleMatchCount();
 	}
-	//var many_objs_penalty = (sol.objects_seen ? (sol.objects_seen / sol.objects_selected) : 1);
 	return Math.pow(2, -exp);
-
-	// return Math.pow(0.5, sol.sel.getComplexity()
-	// 	                 + sol.uncheckedSceneCount()
-	// 	                 + 2*sol.incompatibleMatchCount())
-	// 	   * (sol.specificity+this.specificity_base);
-
-	// return Math.pow(0.5, sol.sel.getComplexity()
-	// 	                 + sol.scene_pair_count*2
-	// 	                 - sol.goodSidesCompatibleCount())
-	// 	   * (sol.specificity+this.specificity_base);
 }
 
 AttentionNet.prototype.calcFeatureSelfActivity = function(feat) {
@@ -122,7 +109,6 @@ AttentionNet.prototype.getObjectPrior = function(obj) {
 		perception = obj.getDeliberateOnly(attr, {time: 'start'});
 		if (perception && this.isActive(perception)) prod *= this.obj_attr_priors[attr];
 	}
-	// for (var rel in this.obj_rel_priors) {
 	// 	perception = obj.getDeliberateOnly(rel, {time: 'start'});
 	// 	if (perception && this.isActive(perception)) prod *= this.obj_rel_priors[rel][0];
 	// 	// we should also check for this object being the `other` object in a relationship

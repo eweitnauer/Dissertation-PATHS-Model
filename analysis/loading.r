@@ -8,7 +8,7 @@ load_data = function() {
   data$found_solution = ifelse((data$found_solution == 'true') | (data$found_solution == 1), 1, 0);
   
   # for now, don't use problems PBP35 and PBP36
-  pbps = c('pbp02', 'pbp04', 'pbp08', 'pbp11b', 'pbp12', 'pbp13', 'pbp16', 'pbp18', 'pbp20', 'pbp22', 'pbp26', 'pbp31', 'pbp35');
+  pbps = c('pbp02', 'pbp04', 'pbp08', 'pbp11b', 'pbp12', 'pbp13', 'pbp16', 'pbp18', 'pbp20', 'pbp22', 'pbp26', 'pbp31');#, 'pbp35', 'pbp36');
   data = data[data$pbp %in% pbps,]
   
   print("subjects total:")

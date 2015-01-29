@@ -1,5 +1,5 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 12;
+var pbp_idx = 5;
 var curr_sols = [];
 var tester = null;
 var log_area = null;
