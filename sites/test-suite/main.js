@@ -1,14 +1,14 @@
 var pixels_per_unit = 50
   , div, p, t;
 
-function init(idx) {
-	var ps = setup_testsuite(1, 2500);
+function init(from, to) {
+	var ps = setup_testsuite(100, 2500);
 	ps.addParameter('pres_mode',
 		['interleaved-sim-sim', 'interleaved-sim-dis'
 		,'interleaved-dis-sim', 'interleaved-dis-dis'
 	  ,'blocked-sim-sim', 'blocked-sim-dis'
 		,'blocked-dis-sim', 'blocked-dis-dis']);
-	ps.run(idx || 0);
+	ps.run(from || 0, to || Infinity);
 }
 
 function init_ff(idx) {

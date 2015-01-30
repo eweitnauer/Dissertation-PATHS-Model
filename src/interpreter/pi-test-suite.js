@@ -38,12 +38,15 @@ PITestSuite.prototype.setParameter = function(name, values) {
   p[0].i = 0;
 }
 
-PITestSuite.prototype.run = function(start_idx) {
+PITestSuite.prototype.run = function(start_idx, end_idx) {
 	var param_settings = this.cartesianProduct(this.parameters);
   this.step_count = param_settings.length;
   var i = start_idx || 0, self = this;
   function step() {
-    if (i >= param_settings.length) return;
+    if (i >= param_settings.length || i >= end_idx) {
+      setTimeout(function() {console.log("ALL DONE!")}, 100);
+      return;
+    }
     var params = param_settings[i++];
     self.curr_idx = i;
     var options = pi_default_options();
@@ -53,7 +56,7 @@ PITestSuite.prototype.run = function(start_idx) {
       else self.applyParam(options, params[j]);
     }
     if (self.before_step_callback) self.before_step_callback(i, param_settings.length, params);
-    console.log('running test', i, 'of', param_settings.length, 'with', params.map(function(param) {
+    console.log('running test', i, 'of', Math.min(param_settings.length, end_idx), 'with', params.map(function(param) {
       return param.name+': '+param.value;
     }).join(', '));
     self.runOne(pbp, options, params, step);
