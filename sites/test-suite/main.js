@@ -2,7 +2,7 @@ var pixels_per_unit = 50
   , div, p, t;
 
 function init(idx) {
-	var ps = setup_testsuite(100, 2500);
+	var ps = setup_testsuite(1, 2500);
 	ps.addParameter('pres_mode',
 		['interleaved-sim-sim', 'interleaved-sim-dis'
 		,'interleaved-dis-sim', 'interleaved-dis-dis'
@@ -27,7 +27,7 @@ function setup_testsuite(reps, max_steps) {
 	console.log('initializing...');
 	div = d3.select('div#log');
 	var ps = new PITestSuite(reps, max_steps);
-	ps.setLogServer('http://localhost:3000', 'pi');
+	ps.setLogServer('http://localhost:3000', 'pi_'+pi_version.replace(/\./g, '_'));
 	ps.before_step_callback = show_step;
 	ps.after_step_callback = show_res;
 	ps.progress_callback = show_progress;

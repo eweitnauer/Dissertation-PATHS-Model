@@ -42,12 +42,11 @@ PITestSuite.prototype.run = function(start_idx) {
 	var param_settings = this.cartesianProduct(this.parameters);
   this.step_count = param_settings.length;
   var i = start_idx || 0, self = this;
-  // this.logDefaultOptions();
   function step() {
     if (i >= param_settings.length) return;
     var params = param_settings[i++];
     self.curr_idx = i;
-    var options = self.createDefaultOptions();
+    var options = pi_default_options();
     var pbp = null;
     for (var j=0; j<params.length; j++) {
       if (params[j].name === 'pbp') pbp = params[j].value;
@@ -86,19 +85,6 @@ PITestSuite.prototype.runOne = function(pbp, options, params, callback) {
   tester.after_rep_callback = this.progress_callback;
   tester.run();
 }
-
-// PITestSuite.prototype.logDefaultOptions = function() {
-//   var opts = this.createDefaultOptions();
-//   opts.features = opts.features.map(function(fi) {
-//     return { key: fi.klass.prototype.key
-//            , targetType: fi.klass.prototype.targetType
-//            , initial_activation: fi.initial_activation }
-//   });
-//   var data = { test_id: this.id
-//              , options: opts };
-//   if (this.data_logger) this.data_logger.log(data, 'pi_settings');
-// }
-
 
 PITestSuite.prototype.logResult = function(opts, params, stats) {
   opts.features = opts.features.map(function(fi) {
@@ -179,95 +165,4 @@ PITestSuite.prototype.loadScenes = function(pbp) {
   	scenes.push(sn);
   }
   return scenes;
-}
-
-PITestSuite.prototype.createDefaultOptions = function() {
-  var low = 0.1, mid = 0.2, high = 0.3;
-	return {
-    features: [
-                { klass: StabilityAttribute,   initial_activation: high }
-              , { klass: SingleAttribute,      initial_activation: high }
-              , { klass: MovesAttribute,       initial_activation: high }
-              , { klass: TouchRelationship,    initial_activation: high }
-              , { klass: CircleAttribute,      initial_activation: mid }
-              , { klass: SquareAttribute,      initial_activation: mid }
-              , { klass: TriangleAttribute,    initial_activation: mid }
-              , { klass: RectangleAttribute,   initial_activation: mid }
-                // , { klass: ShapeAttribute,       initial_activation: high }
-              , { klass: CountAttribute,       initial_activation: mid }
-              , { klass: CloseAttribute,       initial_activation: mid }
-                // , { klass: CloseRelationship,    initial_activation: mid }
-              , { klass: SmallAttribute,       initial_activation: mid }
-                // , { klass: LargeAttribute,       initial_activation: mid }
-              , { klass: TopMostAttribute,     initial_activation: mid }
-                // , { klass: LeftMostAttribute,    initial_activation: low }
-                // , { klass: RightMostAttribute,   initial_activation: low }
-                // , { klass: FarRelationship,      initial_activation: low }
-                // , { klass: FarAttribute,         initial_activation: low }
-              , { klass: OnTopRelationship,    initial_activation: low }
-              , { klass: OnGroundAttribute,    initial_activation: low }
-              , { klass: RightRelationship,    initial_activation: low }
-              , { klass: LeftRelationship,     initial_activation: low }
-                // , { klass: AboveRelationship,    initial_activation: low }
-                // , { klass: BelowRelationship,    initial_activation: low }
-                // , { klass: BesideRelationship,   initial_activation: low }
-                // , { klass: BottomAttribute,      initial_activation: low }
-                // , { klass: TopAttribute,         initial_activation: low }
-              , { klass: TouchAttribute,       initial_activation: low }
-              , { klass: SupportsRelationship, initial_activation: low }
-              , { klass: HitsRelationship,     initial_activation: low }
-               // , { klass: GetHitsRelationship,     initial_activation: low }
-              , { klass: CollidesRelationship, initial_activation: low }
-              , { klass: LeftAttribute,        initial_activation: low }
-              , { klass: RightAttribute,       initial_activation: low }
-              , { klass: MovableUpAttribute,   initial_activation: low }
-             ]
-  , pres_mode: 'interleaved-sim-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
-  , pres_time: 100 // every x steps, switch to the next scene pair
-  , perception:
-    {
-      pick_group: 0.3 // probability that a group (vs. an object) is picked as
-                      // perception target when the target is picked first
-    , pick_feature_first: 0 // probability that the feature (vs. the target) is
-                      // picked first during perception
-    }
-  , attention:
-    { time: { start: 0.67, end: 0.33 }//{ start: 0.67, end: 0.33 }
-    , sel: {
-        initial: // initial attention for selectors based on first match
-        {
-          one_side: 0.4
-        , both_sides: 0.2
-        , fail: 0
-        }
-      , specificity: 0.1 // raise attention to selectors that match less than all objects per scene
-      , update:       // raise attention according to which scenes where matched in a scene pair
-        {
-          one_side: 0.15
-        , both_sides: 0.05
-        , fail: 0
-        }
-      , complexity_penalty_steepness: 15 // posteriori is 1-1/(1+exp(cps*(0.25-complexity/10)))
-      }
-    , feature: {
-        initial: 0.1
-      , from_sel: 0.5 // scale that is applied when spreading attention from new selectors to features
-    }
-    , obj: {
-        initial: 0.1
-      , from_sel_scale: 0.2 // scale that is applied when spreading attention from new selectors to objects
-      , attr_boost: { // only apply at time "start"
-          moves: 0.3
-        // , top_most: 0.1 // this & below: often will get boosted via sel.single, too
-        // , single: 0.1
-        // , left_most: 0.1
-        // , right_most: 0.1
-        }
-      , rel_boost: { // only apply at time "start"
-          hits: [0.2, 0]
-        , collides: [0.1, 0.1]
-        }
-      }
-    }
-  };
 }

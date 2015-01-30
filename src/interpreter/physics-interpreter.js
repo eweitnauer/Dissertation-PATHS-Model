@@ -2,7 +2,6 @@
 var PI = PI || {};
 
 /*
-
 Version 0.5.5
 - removed left-most and right-most object prior
 - don't use single as attribute anymore, it is never used by humans
@@ -127,13 +126,12 @@ PBP 22: [HitsRelationship, CollidesRelationship]
 PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
-
-PI.v0_5_5 = (function(opts) {
-  var version = '0.5.5';
+var pi_version = '0.5.5';
+var pi_default_options = function() {
   var low = 0.1, mid = 0.2, high = 0.3;
-
-  var options = opts || {
-    features: [
+  return {
+    version: pi_version
+  , features: [
                 { klass: CircleAttribute,      initial_activation: high,  group: 'shape' }
               , { klass: SquareAttribute,      initial_activation: high,  group: 'shape' }
               , { klass: TriangleAttribute,    initial_activation: high,  group: 'shape' }
@@ -171,15 +169,6 @@ PI.v0_5_5 = (function(opts) {
               , { klass: RightAttribute,       initial_activation: low,  group: 'hor-pos' }
               , { klass: MovableUpAttribute,   initial_activation: low,  group: 'dynamics' }
              ]
-    // features: [ { klass: SquareAttribute,       initial_activation: mid }]
-    //           , { klass: RightRelationship,     initial_activation: low }
-    //           , { klass: CircleAttribute,       initial_activation: mid }]
-
-               // , { klass: SupportsRelationship, initial_activation: low }
-               // , { klass: CountAttribute,       initial_activation: mid }
-               // , { klass: CloseAttribute,       initial_activation: mid } ]
-    // features: [ { klass: SquareAttribute,   initial_activation: low }
-    //           , { klass: TriangleAttribute, initial_activation: low } ]
   , pres_mode: 'interleaved-sim-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
   , randomize_row_order: true
   , pres_time: 100 // every x steps, switch to the next scene pair
@@ -203,17 +192,18 @@ PI.v0_5_5 = (function(opts) {
         //, left_most: 1.25
         //, right_most: 1.25
         }
-      // , rel_priors: { // only apply at time "start"
-      //     hits: [1.5, 0]
-      //   , collides: [1.25, 1.25]
-      //   }
       }
     }
   };
+}
+
+PI.v0_5_5 = (function(opts) {
+  var version = pi_version;
+
+  var options = opts || pi_default_options();
 
   var createWorkspace = function(scenes, loglevel) {
     var ws = new Workspace(scenes, options, loglevel);
-    // DELETE_ME ws.attentionNet.setComplexityPenaltySteepness(options.attention.sel.complexity_penalty_steepness);
     ws.coderack.behaviors.push(new MainBehavior(ws.coderack));
     return ws;
   }
