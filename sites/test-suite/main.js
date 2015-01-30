@@ -56,7 +56,7 @@ function show_step(i, N, params) {
 
 function show_progress(solved, i, N) {
 	console.log((solved ? 'OK' : 'FAIL') + ' in ' + ((Date.now()-t)/1000).toFixed(1) + ' sec');
-	//t = Date.now();
+	t = Date.now();
 	//p.append('span').text(solved ? '✓' : '✗').style('color', solved ? 'green' : 'red');
 }
 
