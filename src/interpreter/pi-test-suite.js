@@ -21,7 +21,7 @@ PITestSuite.prototype.setLogServer = function(url, table_name) {
     d3.xhr(url+'/'+(table||table_name))
       .header("Content-Type", "application/json")
       .post(JSON.stringify(data), function(error, data) {
-        console.log('log server results: ', error, data);
+        if (error) console.log('log server error: ', error);
         if (error && self.log_error_callback) self.log_error_callback(error);
     })
   }}

@@ -6,7 +6,7 @@ tell application "iTerm"
         activate current session
         launch session "Default Session"
         tell the last session
-        	write text "cd code/erik_diss"
+            write text "cd '$(PWD)'"
             write text "python -m SimpleHTTPServer"
         end tell
     end tell
@@ -21,7 +21,8 @@ tell application "iTerm"
         activate current session
         launch session "Default Session"
         tell the last session
-        	write text "cd code/erik_diss/server"
+        	write text "cd '$(PWD)'"
+            write text "cd server"
             write text "node server.js"
         end tell
     end tell
@@ -36,7 +37,8 @@ tell application "iTerm"
         activate current session
         launch session "Default Session"
         tell the last session
-        	write text "cd code/erik_diss/sites/test-suite"
+        	write text "cd '$(PWD)'"
+            write text "cd sites/test-suite"
             write text "phantomjs phantom-runner.js"
         end tell
     end tell
