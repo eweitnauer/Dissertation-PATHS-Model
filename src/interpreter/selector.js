@@ -22,6 +22,8 @@ var Selector = function(unique) {
 	this.unique = !!unique;
 	this.solution = null;   // the solution associated with this selector
 
+	this.cached_results = []; // array of groups that are resulted from applying this selector
+	this.merged_with = []; // list of other selectors that were already merged with this one
 	this.cached_complexity = null;
 }
 
@@ -104,11 +106,16 @@ Selector.prototype.countNegations = function() {
 /** Returns the first group in the passed scene that contains this selector in
  * its selectors array. Null if none. */
 Selector.prototype.getCachedResult = function(scene) {
-	for (var i=0; i<scene.groups.length; i++) {
-    var g = scene.groups[i];
-    if (g.selectors.indexOf(this) !== -1) return g;
-  }
-  return null;
+	for (var i=0; i<this.cached_results.length; i++) {
+		var g = this.cached_results[i];
+		if (g.scene_node === scene) return g;
+	}
+	return null;
+	// for (var i=0; i<scene.groups.length; i++) {
+  //    var g = scene.groups[i];
+  //    if (g.selectors.indexOf(this) !== -1) return g;
+  //  }
+  //return null;
 }
 
 /** Will return a cached result if it exists. If not, it will apply the selector
@@ -127,16 +134,19 @@ Selector.prototype.applyToScene = function(scene) {
 	group.selectors = [this];
 	if (!group.empty()) {
 		for (var i=0; i<scene.groups.length; i++) {
-    	if (this.arraysIdentical(scene.groups[i].objs, group.objs)) {
-      	if (scene.groups[i].selectors.some(function(ssel) { return ssel.equals(sel) })) {
+			var g = scene.groups[i];
+    	if (this.arraysIdentical(g.objs, group.objs)) {
+      	if (g.selectors.some(function(ssel) { return ssel.equals(sel) })) {
         	throw "I won't insert an existing selector";
       	}
-      	scene.groups[i].selectors.push(sel);
-      	return scene.groups[i];
+      	g.selectors.push(sel);
+      	sel.cached_results.push(g);
+      	return g;
     	}
   	}
   	// a new group!
   	scene.groups.push(group);
+  	sel.cached_results.push(group);
 	}
 	return group;
 }

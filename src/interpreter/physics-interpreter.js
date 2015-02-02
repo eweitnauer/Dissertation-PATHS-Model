@@ -2,6 +2,18 @@
 var PI = PI || {};
 
 /*
+
+Version 0.5.6
+- normalize influence of hypothesis on object by number of selected objects
+- set addend to object's activation to 0 so now the object activation is set
+  completely by the hypothesis activations (the "any object" hypothesis makes
+  sure we'll consider all objects)
+- when an existing hypothesis is reconsidered after perceiving a new feature,
+  it is checked on the current scene pair if it wasn't already
+- when combining hypotheses, pick a second one that was not already combined
+  with the first one before
+- changed ratio for codelet selection to (0.6,0.3,0.1)
+
 Version 0.5.5
 - removed left-most and right-most object prior
 - don't use single as attribute anymore, it is never used by humans
@@ -126,7 +138,7 @@ PBP 22: [HitsRelationship, CollidesRelationship]
 PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
-var pi_version = '0.5.5';
+var pi_version = '0.5.6';
 var pi_default_options = function() {
   var low = 0.1, mid = 0.2, high = 0.3;
   return {
@@ -172,6 +184,12 @@ var pi_default_options = function() {
   , pres_mode: 'interleaved-sim-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
   , randomize_row_order: true
   , pres_time: 100 // every x steps, switch to the next scene pair
+  , action_priors:
+    {
+      perceive: 0.6
+    , check_hyp: 0.3
+    , combine_hyp: 0.1
+    }
   , perception:
     {
       pick_feature_first: 0.5 // probability that the feature (vs. the target) is
@@ -180,10 +198,10 @@ var pi_default_options = function() {
   , activity:
     { time: { start: 0.67, end: 0.33 }
     , feature: {
-      hyp_base: 0.1 // >0, the smaller, the bigger the influence of hypotheses activities
+      hyp_base: 0.1 // >=0, the smaller, the bigger the influence of hypotheses activities
     }
     , obj: {
-        hyp_base: 0.1 // >0, the smaller, the bigger the influence of hypotheses activities
+        hyp_base: 0 // >=0, the smaller, the bigger the influence of hypotheses activities
       , attr_priors: { // only apply at time "start"
           moves: 2
           // should we include stability->unstable?
@@ -197,7 +215,7 @@ var pi_default_options = function() {
   };
 }
 
-PI.v0_5_5 = (function(opts) {
+PI[pi_version.replace(/\./g, '_')] = (function(opts) {
   var version = pi_version;
 
   var options = opts || pi_default_options();
@@ -216,9 +234,9 @@ PI.v0_5_5 = (function(opts) {
     this.cr = coderack;
     this.ws = coderack.ws;
     this.name = 'MainBehavior';
-    this.codelet_infos = [{klass: AttrCodelet, attention: 0.5 }
-                         ,{klass: CheckHypothesisCodelet, attention: 0 }
-                         ,{klass: CombineHypothesisCodelet, attention: 0 }];
+    this.codelet_infos = [{klass: AttrCodelet, attention: options.action_priors.perceive }
+                         ,{klass: CheckHypothesisCodelet, attention: options.action_priors.check_hyp }
+                         ,{klass: CombineHypothesisCodelet, attention: options.action_priors.combine_hyp }];
     this.att_getter = function(ci) {
       return ci.attention// * coderack.getCodeletTypeActivity(ci.klass)
     };
@@ -238,9 +256,9 @@ PI.v0_5_5 = (function(opts) {
         expl_sum += val;
       }
     }
-    this.codelet_infos[0].attention = 0.45;
-    this.codelet_infos[1].attention = 0.45;//unchecked_sum;//0.3//1-(1/Math.pow(2, 3*unchecked_sum));
-    this.codelet_infos[2].attention = 0.1;//checked_lr_max/2;//0.1//Math.max(0, 1-(1/Math.pow(2, 2*checked_lr_max)));
+    // this.codelet_infos[0].attention = 0.6;
+    // this.codelet_infos[1].attention = 0.3;//unchecked_sum;//0.3//1-(1/Math.pow(2, 3*unchecked_sum));
+    // this.codelet_infos[2].attention = 0.1;//checked_lr_max/2;//0.1//Math.max(0, 1-(1/Math.pow(2, 2*checked_lr_max)));
     this.expl_sum = expl_sum;
     this.unchecked_sum = unchecked_sum;
   }

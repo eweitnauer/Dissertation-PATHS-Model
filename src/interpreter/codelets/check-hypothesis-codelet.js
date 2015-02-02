@@ -37,7 +37,7 @@ CheckHypothesisCodelet.prototype.run = function() {
     });
   }
   if (!hyp) return false;
-  this.ws.log(4, 'checking hyp "'+ hyp.describe()+'"');
+  this.ws.log(1, 'checking hyp "'+ hyp.describe()+'"');
 
   var scenes = this.ws.getActiveScenePair();
   var selected_groups = hyp.checkScenePair(scenes, this.ws.scene_pair_index);

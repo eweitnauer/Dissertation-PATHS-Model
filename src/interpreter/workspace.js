@@ -201,6 +201,14 @@ Workspace.prototype.isNewHypothesis = function(hyp) {
   });
 }
 
+Workspace.prototype.getEquivalentHypothesis = function(hyp) {
+  for (var i=0; i<this.attentionNet.solutions.length; i++) {
+    var existing = this.attentionNet.solutions[i];
+    if (existing.sel.equals(hyp.sel)) return existing;
+  }
+  return null;
+}
+
 Workspace.prototype.addSolution = function(sol) {
   // do a safety check
   if (!sol.check(this.left_scenes.slice(0,8), this.right_scenes.slice(0,8))) {

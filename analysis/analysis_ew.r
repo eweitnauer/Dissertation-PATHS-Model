@@ -35,7 +35,7 @@ data_ss4 = data_ss4[order(data_ss4$pbp),] # reorder columns according to the pbp
 data_all = merge(data_ai, data_ss[c("pbp", "cond", "found_solution", "train_time", "population")], all=T);
   
 # print solutions ordered by frequency per problem:
-pbp = 'pbp22';
+pbp = 'pbp18';
 sols = count(data[data$found_solution==1 & data$pbp==pbp,]$sol);
 sols[order(sols$freq),]
 
@@ -43,6 +43,7 @@ sols[order(sols$freq),]
 ####### VISUALIZE PER PROBLEM
 
 bargraph.CI(x.factor=pbp,response=found_solution,ylim=c(0.0, 1.1),data=data_ai,legend=T,ylab='correct answer rate',main='AI');
+bargraph.CI(x.factor=pbp,response=train_time,data=data_ai,legend=T,ylab='steps to solution of fail', main='AI');
 bargraph.CI(x.factor=pbp,response=train_time,data=data_ai[data_ai$found_solution == 1,],legend=T,ylab='steps to solution for solved trials', main='AI')
 
 bargraph.CI(x.factor=pbp,response=found_solution,ylim=c(0.0, 1.1),data=data_ss,legend=T,ylab='correct answer rate', main='Subjects');
@@ -178,17 +179,22 @@ ezANOVA(data=data[data$found_solution==1,],dv=train_time,wid=mturk_id,within=.(s
 
 ### schedule, use?
 
-bargraph.CI(x.factor=sch_cond,response=train_time,data=data_ai[data_ai$found_solution == 1,],legend=T,ylab='correct answer rate')
+bargraph.CI(x.factor=sch_cond,response=train_time,data=data_ai[data_ai$found_solution == 1,],legend=T,ylab='train time')
+#bargraph.CI(x.factor=sch_cond,response=train_time,data=data_ai,legend=T,ylab='train time')
+#bargraph.CI(x.factor=sch_cond,response=found_solution,data=data_ai,legend=T,ylab='train time', ylim=c(0.7,0.9))
 bargraph.CI(x.factor=sch_cond,response=found_solution,data=data_ss,legend=T,ylab='subjects acc')
 
 ### difficulty, use?
 
 bargraph.CI(x.factor=pbp,response=train_time,data=data_ai[data_ai$found_solution == 1,],legend=T,ylab='steps to solution for solved trials', main='AI')
+#bargraph.CI(x.factor=pbp,response=train_time,data=data_ai,legend=T,ylab='steps to solution or fail', main='AI')
+#bargraph.CI(x.factor=pbp,response=found_solution,ylim=c(0.0, 1.1),data=data_ai,legend=T,ylab='correct answer rate', main='AI')
 bargraph.CI(x.factor=pbp,response=found_solution,ylim=c(0.0, 1.1),data=data_ss,legend=T,ylab='correct answer rate', main='Subjects');
 
 ### difficulty & schedule, don't use
 
 bargraph.CI(x.factor=pbp,group=sch_cond,response=train_time,data=data[data$found_solution == 1,],legend=T,ylab='steps to solution for solved trials')
+#bargraph.CI(x.factor=pbp,group=sch_cond,response=train_time,data=data,legend=T,ylab='steps to solution or fail')
 bargraph.CI(x.factor=pbp,group=sch_cond,response=found_solution,ylim=c(0.0, 1.1),data=data_ss,legend=T,ylab='correct answer rate')
 
 ### all conditions, don't use

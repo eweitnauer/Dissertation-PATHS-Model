@@ -1,5 +1,10 @@
 ## Current
 
+**planned version 0.5.7**
+- reintroduce a dynamic mechanism for the probability ratios for chosing the
+next action ==> do less hypotheses checks
+==> We want to avoid checking a lot of low-priority hypotheses from earlier scenes. It would be better to have them rediscovered through perception!! We could absolutely do that now. When perceiving a feature that leads to a hypothesis that is already existing but wasn't checked on the current scene pair, check it!
+
 **Question:** While finding a single! circle in every scene is noteworthy and a good clue for a selector, it is not noteworthy to find a single left-most object in every scene. How should we model that? Maybe we'll simply not use any *-most features at all.
 
 **Question:** Maybe shapes and sizes should add less than 1 to complexity. Its just that humans like descriptions like the square is left of the circle instead of there is an object left to the circle. Wait a second... we could make that "any" object thing something that is rather complex, at least inside a relationship!

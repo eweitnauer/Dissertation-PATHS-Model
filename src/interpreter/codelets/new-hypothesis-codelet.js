@@ -73,8 +73,13 @@ NewHypothesisCodelet.prototype.run = function() {
   }
   if (!hyp) return false;
 
-  if (this.ws.addHypothesis(hyp, 0)) { // initial att. will be set by CheckHypCodelet
+  var existing_hyp = this.ws.getEquivalentHypothesis(hyp);
+  if (!existing_hyp) {
+    this.ws.addHypothesis(hyp, 0); // initial att. will be set by CheckHypCodelet
     this.coderack.insert(new CheckHypothesisCodelet(this.coderack, hyp));
     return true;
-  } else return false;
+  } else if (!existing_hyp.wasMatchedAgainst(this.ws.scene_pair_index)) {
+    this.coderack.insert(new CheckHypothesisCodelet(this.coderack, existing_hyp));
+  }
+  return false;
 }

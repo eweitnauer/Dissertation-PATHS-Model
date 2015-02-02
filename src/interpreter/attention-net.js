@@ -98,7 +98,8 @@ AttentionNet.prototype.calcObjectActivity = function(obj) {
 	//return 1;
 	var self = this;
 	var sum = d3.sum(obj.selectors, function(sel) {
-		return self.getActivity(sel.solution);
+		var sel_group = sel.getCachedResult(obj.scene_node);
+		return self.getActivity(sel.solution) / sel_group.objs.length;
 	});
 	return this.getObjectPrior(obj) * (this.object_base+sum);
 }
@@ -140,12 +141,18 @@ AttentionNet.prototype.normalize = function(type) {
 }
 
 /// Scales the attention values of the passed elements so they sum up to 1.
+/// If the sum of attention values is 0, all values are set to 1/N.
 AttentionNet.prototype.normalizeElements = function(els) {
 	var sum = 0, i;
 	for (i=0; i<els.length; i++) sum += this.attention_values.get(els[i]);
-	if (sum === 0) return;
-	for (i=0; i<els.length; i++) {
-		this.attention_values.set(els[i], this.attention_values.get(els[i])/sum);
+	if (sum === 0) {
+		for (i=0; i<els.length; i++) {
+			this.attention_values.set(els[i], 1/els.length);
+		}
+	} else {
+		for (i=0; i<els.length; i++) {
+			this.attention_values.set(els[i], this.attention_values.get(els[i])/sum);
+		}
 	}
 }
 

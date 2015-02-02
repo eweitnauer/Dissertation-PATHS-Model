@@ -1,11 +1,25 @@
-## 0. introduction to the domain of PBPs
-  - reference & take inspiration from my original PBP paper
+## Introduction
 
-Each scene in a PBP can be interpreted in many different ways. The task of solving a PBP, which entails identifying a category that contains all scenes from one side only, can also be seen as the task of finding a single interpretation that is common to all scenes. The PI algorithm is therefore about creating interpretations, and focusing the search on promising ones.
+* we look at category learning in a rule-based domain that has an open-ended feature space and contains exemplars with rich inner structure
+* we are interested in the processes of perception and category learning as they go on at the same time
+* concepts in our domain are disjunctions of attributes and relationships that themselves contain a disjunction of attributes
+* there is a cost to perceiving a feature on an object
+* the basic idea is to constrain the huge number of possible descriptions of one example by the how other examples are described
+
+* In previous publications, we described the performance of human participants on PBPs and specifically looked at the influence of scene similarity in within-category or between-category comparisons.
+
+* We now developed a computational model of the concept learning process and will explain its design. We replicated the conditions for our previous study on human subjects and applied our model in those same conditions on a subset of the originally presented PBPs. We compare the results of the model to the human results and discuss implications and further directions.
+
+## 0. introduction to the domain of PBPs
+
+In the experiments, we use Physical Bongard Problems (PBPs), which were recently introduced by Weitnauer and Ritter (2012), as our problem domain. Each PBP consists of two sets of 2D physical scenes representing two concepts that must be identified. The scenes of the first concept are on the left side, the scenes of the second concept are on the right. Figure 1 shows two example problems. What makes PBPs particularly interesting as a domain for concept learn- ing is their open-ended feature space. People do not know in advance which features a solution might be based on (or indeed what the features are), and while some of the prob- lems rely on features that are readily available such as shape or stability, others rely on relationships between the objects or require the construction of features as a difficult part of the solution (e.g., the time an object is airborne or the direction a particular object in the scene is moving in). This intricate situation in which both features and concepts have to be iden- tified at the same time is quite common in real life and people deal with it impressively well.
+
+Each scene in a PBP can be interpreted in many different ways. The task of solving a PBP, which entails identifying a category that contains all scenes from one side only, can also be seen as the task of finding a single interpretation that is common to all scenes. The PI algorithm is creating interpretations based on perceptions, and then aims to focus the search on the most promising interpretations.
 
 ## Main Design Decisions
 
-Bounded rationality. The general design and restrictions of the model are based on what we know about humans. Then, given the resulting capabilities, the program should make the best possible decision at each point in time.
+<!-- Bounded rationality. The general design and restrictions of the model are based on what we know about humans. Then, given the resulting capabilities, the program should make the best possible decision at each point in time. <== we are not actually doing this yet. Just describe our heuristics!
+ -->
 
 1. Modelling the hypothesis space as structured scene descriptions that either match a subset of objects in a scene or not. These descriptions are disjunctions of object attributes, group attributes and object relationships.
 2. Based on the observation that it is typically much simpler to check a solution by applying the category description to each scene than coming up with a solution, the algorithm focusses on creating many potentially correct interpretations and filtering the bad ones by applying them to the scenes. 
@@ -66,7 +80,23 @@ The probability that any particular feature or object plays a role in a solution
 
 ## Results
 
-We ran the algorithm on 14 different PBPs, which were all solvebale by the algorithm in principle. Each PBP consists of 16 scenes that are devided into four groups of four scenes, such that scenes within a group are in average more similar to each other than scenes  between groups. During learning, the scenes were shown two at a time to the algorithm in a one of eight different orders. TEXT & PICS FROM PREVIOUS PAPER.
+We ran the algorithm on 14 different PBPs, which were all solvebale by the algorithm in principle. Each PBP consists of 16 scenes that are devided into four groups of four scenes, such that scenes within a group are in average more similar to each other than scenes  between groups. During learning, the scenes were shown two at a time to the algorithm in a one of eight different orders.
+
+% In this experiment, we analyze the effects of within-category and between-category comparisons of similar and dissimilar PBP scenes. Participants are presented with a sequence of screens, where on each screen exactly two of the PBP scenes are visible while all other scenes are covered. Their task is to derive the concept the scenes on the left belong to and the concept the scenes on the right belong to. We vary the order in which the scenes are shown and which scenes are shown together. This allows us to a) manipulate the \emph{within similarity}, which is the average similarity of scenes from one category that are shown together, b) manipulate the \emph{between similarity}, which is the average similarity of scenes from different categories that are shown together, and finally c) promote either within- or between-category comparisons by showing the scenes using one of two \emph{presentation schedules}.
+
+% In the first presentation schedule, the \emph{blocking} schedule, scenes that are shown simultaneously are taken from the same category (AA-BB-AA-BB-AA-BB-AA-BB). In the second, the \emph{interleaved} schedule, simultaneously show scenes are taken from different categories (AB-AB-AB-AB-AB-AB-AB-AB). See Figure~\ref{fig:time_lapse} for a graphical explanation. In this design, the blocked condition facilitates within-category comparisons, while between-category comparisons can still be made across successive scene pairs, but involve higher memory demands. Analogously, the interleaved condition enhances between-category comparisons but still allows for within-category comparison across successive scene pairs.
+
+% We are using 22 PBPs, each with 20 scenes organized in five groups of four similar scenes. Scenes across different groups are relatively dissimilar to each other. We use 16 scenes from four of the five groups as training scenes, which allowed for the highest contrast in the similarity of close scenes between the different conditions (see Figure~\ref{fig:exp2-pbp-layout}). The remaining four scenes of each problem were used as test scenes together with two randomly selected training scenes.
+
+% \subsection{Design}
+
+% We used a 2 $\times$ 2 $\times$ 2 factorial design. The study condition \emph{presentation schedule}$\,\in\,$\{\emph{blocked}, \emph{interleaved}\} $\times$ \emph{within-category similarity}$\,\in\,$\{\emph{similar}, \emph{dissimilar}\} $\times$ \emph{between-category similarity}$\,\in\,$\{\emph{similar}, \emph{dissimilar}\} was randomly chosen for each problem in a within-subject manner and was balanced for each subject.
+
+% \subsection{Procedure}
+
+% The participants were first presented with a short introduction to the domain of PBPs and how they work, together with a solved example problem. They then had to solve a series of 22 PBPs presented in an order which was designed to minimize context effects between consecutive problems. For each problem, the participants were presented a sequence of scene pairs through which they could cycle in their own pace and as often as they wanted. This is essential to enable reinterpreting old scenes in the light of a new solution hypothesis \cite{finks1989reinterpreting}. Which scenes were paired was determined by the presentation schedule and the two similarity conditions, see Figures~\ref{fig:exp2-pbp-layout} and~\ref{fig:time_lapse} for details. When the participants had seen all scenes at least once, a button appeared on the screen that gave them the option to finish the training for the current problem whenever they liked. The button took them to a page where they had to classify six test scenes, one at a time, as belonging to the left or the right category. The participants were then prompted to type in a free text description of what defined both concepts. After submitting their solution and before continuing with the next problem, they were shown the current problem with all scenes at once and its correct solution. The original experiment is available online at \url{http://goo.gl/0TrVtB}
+
+
 For each of those eight conditions, the algorithm was run 100 times.
 
 Figure with results.
@@ -109,3 +139,6 @@ PAM ... physical/probabilistic analogy maker
 SAM ... scene analogy maker
 PSI ... physical/probabilistic scene interpreter
 BARF ... bayesian analogical rule finder
+OSCL ... open-ended structured concept learner
+OCI ... open-ended concept interpreter
+SC[O]L ... structured concept learner
