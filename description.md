@@ -142,3 +142,16 @@ BARF ... bayesian analogical rule finder
 OSCL ... open-ended structured concept learner
 OCI ... open-ended concept interpreter
 SC[O]L ... structured concept learner
+
+Perceptions
+
+A analogy
+C concept
+L learner, learning
+I interpreter
+R representations; rule-based; reasoning
+O open-ended
+S structured
+M mining
+P physical / probabilistic
+PB pseudo baysian

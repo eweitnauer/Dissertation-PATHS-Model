@@ -33,6 +33,10 @@ var Workspace = function(scenes, options, log_level) {
 }
 
 Workspace.prototype.generateSceneSequence = function(randomize_row_order) {
+  // CAUTION: the 1st and 2nd sim/dis values refer to the w/i and b/w *pair*
+  // similarity. It is almost identical to the w/i and b/w *category* similarity,
+  // with the only difference that interleaved-sim-dis and interleaved-dis-sim
+  // are swapped.
   var seqs8 = { 'interleaved-sim-sim': ['A1B1', 'A2B2', 'A3B3', 'A4B4', 'A5B5', 'A6B6', 'A7B7', 'A8B8']  // wip: 8 bwp: 4 | wic: 8 bwc: 4
               , 'interleaved-sim-dis': ['A1B1', 'A3B3', 'A5B5', 'A7B7', 'A2B2', 'A4B4', 'A6B6', 'A8B8']  // wip: 8 bwp: 0 | wic: 0 bwc: 8
               , 'interleaved-dis-sim': ['A1B3', 'A2B4', 'A3B5', 'A4B6', 'A5B7', 'A6B8', 'A7B1', 'A8B2']  // wip: 0 bwp: 4 | wic: 4 bwc: 0
