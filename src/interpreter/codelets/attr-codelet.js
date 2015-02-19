@@ -11,7 +11,7 @@ var AttrCodelet = function(coderack) {
   this.time = this.ws.getRandomTime();
 }
 
-AttrCodelet.prototype.name = 'AttrC';
+AttrCodelet.prototype.name = 'perceive';
 
 AttrCodelet.prototype.describe = function() {
   return 'AttrCodelet';

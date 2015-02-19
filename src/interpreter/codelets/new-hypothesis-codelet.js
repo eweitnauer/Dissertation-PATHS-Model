@@ -13,7 +13,7 @@ var NewHypothesisCodelet = function(coderack, percept_or_hyp, time) {
   this.time = time;
 }
 
-NewHypothesisCodelet.prototype.name = 'NewHypC';
+NewHypothesisCodelet.prototype.name = 'create hyp';
 
 NewHypothesisCodelet.prototype.describe = function() {
   if (this.hypothesis) return 'NewHypothesisCodelet(' + this.hypothesis.describe() + ')';

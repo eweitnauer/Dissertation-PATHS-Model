@@ -5,7 +5,7 @@ var CheckHypothesisCodelet = function(coderack, hyp) {
   this.hypothesis = hyp;
 }
 
-CheckHypothesisCodelet.prototype.name = 'CheckHypC';
+CheckHypothesisCodelet.prototype.name = 'check hyp';
 
 CheckHypothesisCodelet.prototype.describe = function() {
   return 'CheckHypothesisCodelet';

@@ -244,7 +244,7 @@ PITester.prototype.updateFeatureList = function(div_el, click_callback) {
 	divs.exit().remove();
 }
 
-PITester.prototype.updateCodeletStats = function(div_el) {
+PITester.prototype.updateCodeletStats = function(div_el, simple) {
 	var stats = this.ws ? d3.values(this.ws.coderack.cdl_stats) : [];
 	var behavior = this.ws.coderack.behaviors[0];
 
@@ -252,16 +252,16 @@ PITester.prototype.updateCodeletStats = function(div_el) {
 	  .selectAll('.stat')
 	  .data(stats);
 
-	// var enter = ps.enter().append('p').classed('stat', true);
-	// ps.text(function(d) { return d.name + ': ' + d.success + ' ; ' + d.failure
-	//                            + ' ['
-	//                            + behavior.getBottomUpAttention(d.name).toFixed(2) + '*'
-	//                            + behavior.getTopDownAttention(d.name).toFixed(2) + ' = '
-	//                            + behavior.getCombinedAttention(d.name).toFixed(2) + ']' });
 	var enter = ps.enter().append('span').classed('stat', true);
-	ps.text(function(d) { return d.name + ': ' + d.success + '/' + (d.success+d.failure)
+	if (simple) {
+		ps.text(function(d) {
+			var prob = behavior.getCombinedAttention(d.name);
+			return d.name + (prob ? ' [' + prob.toFixed(2) + ']: ' : ': ') + (d.success+d.failure);
+		});
+	} else {
+		ps.text(function(d) { return d.name + ': ' + d.success + '/' + (d.success+d.failure)
                                + ' [' + behavior.getCombinedAttention(d.name).toFixed(2) + ']    '});
-
+	}
 	ps.exit().remove();
 }
 

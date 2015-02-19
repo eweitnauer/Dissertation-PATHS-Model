@@ -5,7 +5,7 @@ var CombineHypothesisCodelet = function(coderack) {
   this.ws = this.coderack.ws;
 }
 
-CombineHypothesisCodelet.prototype.name = 'CombHypC';
+CombineHypothesisCodelet.prototype.name = 'combine hyp';
 
 CombineHypothesisCodelet.prototype.describe = function() {
   return 'CombineHypothesisCodelet';
