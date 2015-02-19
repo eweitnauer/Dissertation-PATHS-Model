@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>PBP Solutions</title>
+    <meta charset="utf-8" />
+    <script src="../../libs/d3/d3.min.js"></script>
+    <script src="../../libs/geom.js/geom.min.js"></script>
+	  <script src="../../libs/box2dweb/Box2D.js"></script>
+    <script src="../../pbp-model.js"></script>
+    <link href="main.css" rel="stylesheet">
+    <script src="main.js"></script>
+  </head>
+  <body onload="init();">
+    <div id="vis" class="box">
+        <img id="btnPrev" onclick="prev()" src="left.png"/>
+        <h2 id="pbp-num">PBP</h2>
+        <img id="btnNext" onclick="next()" src="right.png"/>
+        <div id="svgs"></div>
+    </div>
+    <div id="right-side">
+        <div id="solver" class="box info">
+            <h2>PBP Interpreter</h2>
+            <button id="solver-reset-btn">reset</button>
+            <button id="solver-run-btn">run</button>
+            <button id="solver-step-btn">step</button>
+            <span>step: <span id="solver-step">?</span></span><br/>
+            <div id="codelet-stats"></div>
+            <div id="debug-text"></div>
+        </div>
+        <div id="features" class="box info">
+            <h2>Features</h2>
+        </div>
+        <div id="selectors" class="box info">
+            <h2>Hypotheses</h2>
+            <table id="selector-table"></table>
+        </div>
+        <div id="solutions" class="box info">
+            <h2>Solutions</h2>
+            <ol></ol>
+        </div>
+    </div>
+  </body>
+</html>

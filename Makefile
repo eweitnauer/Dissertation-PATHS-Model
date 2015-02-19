@@ -3,14 +3,6 @@ all: pbp-model.js
 #.INTERMEDIATE pbp-model.js: libs/box2dweb/Box2D.js
 
 .INTERMEDIATE pbp-model.js: \
-	libs/geom.js/point.js \
-	libs/geom.js/circle.js \
-	libs/geom.js/polygon.js \
-	libs/geom.js/convex_decomposition.js \
-	libs/geom.js/vector.js \
-	libs/geom.js/matrix.js \
-	libs/geom.js/spatial_relation_analyzer.js \
-	libs/box2dweb/Box2D.js \
 	libs/svg2physics/svg-scene-parser.js \
 	libs/svg2physics/box2d-adapter.js \
 	libs/svg2physics/box2d-extensions.js \
@@ -77,11 +69,12 @@ all: pbp-model.js
 
 pbp-model.js: Makefile
 	@rm -f $@
-	@echo "var d3 = require('d3')" > $@;
-	@echo 'module.exports = (function() {' >> $@
+	#@echo "var d3 = require('d3')" > $@;
+	#@echo 'module.exports = (function() {' >> $@
 	cat $(filter %.js,$^) >> $@
-	@echo "\n return init; })();" >> $@
+	#@echo "\n return init; })();" >> $@
 	@chmod a-w $@
+
 
 clean:
 	rm -f pbp-model.js
