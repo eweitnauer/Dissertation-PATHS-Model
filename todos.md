@@ -1,5 +1,7 @@
 ## Current
 
+**Enhancement:** after finding the solution for one side, search for a solution that fits the other side, heavily biasing for the previously used features (and related ones)
+
 **planned version 0.5.7**
 - reintroduce a dynamic mechanism for the probability ratios for chosing the
 next action ==> do less hypotheses checks

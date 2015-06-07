@@ -75,6 +75,10 @@ pbp-model.js: Makefile
 	#@echo "\n return init; })();" >> $@
 	@chmod a-w $@
 
+install: pbp-model.js
+	# rm -f sites/public/geom.min.js sites/public/pbp-model.js sites/public/d3.min.js sites/public/Box2D.min.js
+	# cp libs/d3/d3.min.js libs/geom.js/geom.min.js libs/box2dweb/Box2D.min.js pbp-model.js sites/public/
+	rsync -r -a -v -L -e "ssh" --delete ./sites/public/* root@graspablemath.com:/srv/www/graspablemath.com/docs/pbp-model
 
 clean:
 	rm -f pbp-model.js

@@ -50,9 +50,8 @@ NewHypothesisCodelet.prototype.mergeBaseSelector = function(hyp) {
   var g = this.percept.group;
   if (g.objs.length < g.scene_node.objs.length) {
     this.ws.log(4, 'perceived group feature based on selector result');
-    var base_hyp = this.ws.getRandomHypothesis({ filter: function(sol) {
-      return g.selectors.indexOf(sol.sel) !== -1;
-    }});
+    var sols = g.selectors.map(function(sel) { return sel.solution });
+    var base_hyp = this.ws.getRandomHypothesis({ pool: sols });
     hyp.sel = hyp.sel.mergedWith(base_hyp.sel);
   }
 }

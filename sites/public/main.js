@@ -7,13 +7,12 @@ var tester = null;
 var log_area = null;
 
 function loadScenes(name, files) {
-  var path = "../../libs/pbp-svgs/svgs/" + name;
+  var path = "svgs/" + name;
 
   var heading = name.indexOf('pbp') === 0 ? 'PBP '+name.substring(3) : name;
   document.getElementById('pbp-num').innerText = heading;
 
   d3.selectAll("svg").remove();
-  d3.selectAll("canvas").remove();
   create_html_elements(files);
   var adapter = new Box2DAdapter();
   problems = {};
@@ -52,8 +51,8 @@ function loadScenes(name, files) {
       return tester.ws.attentionNet.getActivity(on) * 100;
     });
     svis.draw();
-    problems[files[i]] = {sn: sn, svis: svis};//, sim: sim};
-  }
+    problems[files[i]] = {sn: sn, svis: svis};
+  };
 }
 
 function create_html_elements(files) {
