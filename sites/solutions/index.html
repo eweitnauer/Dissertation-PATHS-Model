@@ -20,7 +20,8 @@
     <script src="../../src/visualization/box2d-simulator.js"></script>
     <script src="../../src/visualization/scene-visualizer.js"></script>
     <script src="../../src/visualization/scene-interactor.js"></script>
-    <script src="../../src/features/stability-attr.js"></script>
+    <script src="../../src/features/stable-attr.js"></script>
+    <script src="../../src/features/unstable-attr.js"></script>
     <script src="../../src/features/movable-up-attr.js"></script>
     <script src="../../src/features/shape-attr.js"></script>
     <script src="../../src/features/circle-attr.js"></script>
@@ -63,6 +64,7 @@
     <script src="../../src/interpreter/selector.js"></script>
     <script src="../../src/interpreter/solution.js"></script>
     <script src="../../src/interpreter/attention-net.js"></script>
+    <script src="../../src/interpreter/activity-ranges.js"></script>
     <script src="../../src/interpreter/scene-node.js"></script>
     <script src="../../src/interpreter/random.js"></script>
     <script src="../../src/interpreter/workspace.js"></script>
@@ -96,6 +98,12 @@
         <img id="btnPrev" onclick="prev()" src="left.png"/>
         <h2 id="pbp-num">PBP</h2>
         <img id="btnNext" onclick="next()" src="right.png"/>
+        <div id='time-control'>
+          <span>set time to:</span>
+          <a href='#' id='jump-to-zero'>0</a>
+          <a href='#' id='jump-to-start'>start</a>
+          <a href='#' id='jump-to-end'>end</a>
+        </div>
         <div id="svgs"></div>
     </div>
     <div id="right-side">

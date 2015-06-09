@@ -23,6 +23,15 @@ b2Body.prototype.IsCircle = function() {
   return this.m_fixtureList.m_shape instanceof b2CircleShape && this.m_fixtureList.m_next == null;
 }
 
+b2Body.prototype.GetAABB = function() {
+  var aabb = null;
+  for (var fix = this.m_fixtureList; fix; fix = fix.m_next) {
+    if (!aabb) aabb = b2AABB.Combine(fix.m_aabb, fix.m_aabb);
+    else aabb.Combine(aabb, fix.m_aabb);
+  }
+  return aabb;
+}
+
 /// Returns the minimal distance between this and the passed body.
 b2Body.prototype.distance = function(other) {
   var dist_fn = function(shape1, transform1, shape2, transform2) {

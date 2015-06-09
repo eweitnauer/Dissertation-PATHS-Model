@@ -74,11 +74,11 @@ SupportsRelationship.prototype.checkSupports = function(A, B, oracle) {
   // is B near A and stable, but unstable without A?
   var near = A.getRel('close', {other: B}).get_activity() > close_threshold;
   if (near) {
-    var B_stable = B.getAttr('stability').get_label() == 'stable';
+    var B_stable = B.getAttr('stable').get_activity() >= 0.5;
     if (B_stable) {
       var B_stable_without_A = oracle.analyzeFuture(0, before, function() {
-        var stable_attr = new StabilityAttribute(B.obj);
-        return stable_attr.get_label() == 'stable';
+        var stable_attr = new StableAttribute(B.obj);
+        return stable_attr.get_activity() >= 0.5;
       });
       if (!B_stable_without_A) return 'stabilizes';
     }

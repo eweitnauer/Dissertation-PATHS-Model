@@ -22,6 +22,8 @@ var Selector = function(unique) {
 	this.unique = !!unique;
 	this.solution = null;   // the solution associated with this selector
 
+	this.thresholds = { /*'unstable.object': 0.3*/ };   // can be used to map features (e.g. 'close.object') to custom thresholds
+
 	this.cached_results = []; // array of groups that are resulted from applying this selector
 	this.merged_with = []; // list of other selectors that were already merged with this one
 	this.cached_complexity = null;
@@ -265,14 +267,21 @@ Selector.prototype.equals = function(other) {
 /// and only if the function returns true, the node is used. The relationships
 /// of the selector are not used in this case.
 Selector.prototype.matchesObject = function(object, others, test_fn) {
-	return this.obj_attrs.every(function (attr) { return attr.matches(object) }) &&
-				 (test_fn ? test_fn(object)
-				 	        : this.rels.every(function (rel) { return rel.matches(object, others) }));
+	var self = this;
+	return this.obj_attrs.every(function (attr) {
+		return attr.matches(object, self.thresholds[attr.key+'.object'])
+	}) &&
+    (test_fn ? test_fn(object) : this.rels.every(function (rel) {
+    return rel.matches(object, others, self.thresholds[rel.key+'.object'])
+  }));
 };
 
 /// Returns true if the passed group node matches the selector's group attributes.
 Selector.prototype.matchesGroup = function(group) {
-	return this.grp_attrs.every(function (attr) { return attr.matches(group) });
+	var self = this;
+	return this.grp_attrs.every(function (attr) {
+	  return attr.matches(group, self.thresholds[attr.key+'.group'])
+	});
 };
 
 /// Returns a group node. If a test_fn is passed, it is called for each object
@@ -312,10 +321,13 @@ Selector.prototype.select = function(group_node, scene_node, test_fn) {
 
 /// Returns a human readable description of the attributes used in this selector.
 Selector.prototype.describe = function() {
+	var threshs = this.thresholds;
+	var descr = function(feature) { return feature.describe(threshs[feature.key+'.'+feature.type]) }
+
 	if (this.blank()) return (this.unique ? '[the object]' : '(any object)');
-	var attrs = this.obj_attrs.map(function (attr) { return attr.describe() }).join(" and ");
-	var grp_attrs = this.grp_attrs.map(function (attr) { return attr.describe() });
-	var rels = this.rels.map(function (rel) { return rel.describe() });
+	var attrs = this.obj_attrs.map(descr).join(" and ");
+	var grp_attrs = this.grp_attrs.map(descr);
+	var rels = this.rels.map(descr);
 	rels = rels.concat(grp_attrs).join(" and ");
 
 	if (this.unique) return '[the ' + attrs + ' object' + (rels === '' ? '' : ' that is ' + rels) + ']';
@@ -390,16 +402,17 @@ Selector.AttrMatcher.prototype.equals = function(other) {
 
 /// Returns true if the passed node can supply the attribute and its activation and
 /// label match.
-Selector.AttrMatcher.prototype.matches = function(node) {
+Selector.AttrMatcher.prototype.matches = function(node, threshold) {
 	var attr = node.getAttr(this.key, {time: this.time});
 	if (!attr) return false;
 	//console.log(this.key,'has activity',attr.get_activity());
-	var active = attr.get_activity() >= pbpSettings.activation_threshold;
+	var active = attr.get_activity() >= (threshold || pbpSettings.activation_threshold);
 	return (active == this.active && attr.get_label() == this.label);
 }
 
-Selector.AttrMatcher.prototype.describe = function() {
+Selector.AttrMatcher.prototype.describe = function(threshold) {
 	return (this.active ? '' : 'not ') + this.label +
+				 (threshold ? '['+threshold.toFixed(2)+']' : '') +
 				 (this.constant || this.time == "start" ? '' : ' at the ' + this.time);
 }
 
@@ -442,7 +455,7 @@ Selector.RelMatcher.prototype.equals = function(other) {
 /// if the passed 'node' can supply the relationship to any of the selected nodes and
 /// the activation and label match.
 /// If others is not passed, all nodes in the scene except the 'node' are used.
-Selector.RelMatcher.prototype.matches = function(node, others) {
+Selector.RelMatcher.prototype.matches = function(node, others, threshold) {
 	if (this.other_sel.rels.length > 0) throw "the other-selector of"
 	// select all other nodes in the scene as 'others', if they were not passed
 	others = others || node.scene_node.objs.filter(function (on) { return on !== node });
@@ -453,7 +466,7 @@ Selector.RelMatcher.prototype.matches = function(node, others) {
 		if (other === node) return false;
 		var rel = node.getRel(self.key, {other: other, time: self.time});
 		if (!rel) return false;
-	  var active = rel.get_activity() >= pbpSettings.activation_threshold;
+	  var active = rel.get_activity() >= (threshold || pbpSettings.activation_threshold);
 		return (active == self.active && rel.get_label() == self.label);
 	}
 
@@ -478,8 +491,9 @@ Selector.RelMatcher.fromRelationship = function(other, rel, time) {
 	 ,time);
 }
 
-Selector.RelMatcher.prototype.describe = function() {
-	return (this.active ? '' : 'not ') + this.label + " " +
+Selector.RelMatcher.prototype.describe = function(threshold) {
+	return (this.active ? '' : 'not ') + this.label +
+				 (threshold ? '['+threshold.toFixed(2)+']' : '') + " " +
 				 this.other_sel.describe() +
 				 (this.constant || this.time == "start" ? '' : ' at the ' + this.time);
 }

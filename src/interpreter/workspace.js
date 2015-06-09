@@ -71,6 +71,11 @@ Workspace.prototype.advanceScenePair = function() {
   this.events.switched_scenes();
 }
 
+Workspace.prototype.forEachScene = function(fn) {
+  for (var i=0; i<this.left_scenes.length; i++) fn(this.left_scenes[i]);
+  for (var i=0; i<this.right_scenes.length; i++) fn(this.right_scenes[i]);
+}
+
 Workspace.prototype.perceived_feature = function(event) {
   this.perception_count++;
   this.log_perception('perceived', event, 3);

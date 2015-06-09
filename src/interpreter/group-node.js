@@ -92,6 +92,7 @@ GroupNode.prototype.getAttr = function(key, opts) {
   if (o.time && !o.dont_cache) {
     if (!this.times[o.time]) this.times[o.time] = {};
     this.times[o.time][key] = res;
+    ActivityRanges.update(res, o.time);
   }
   if (o.set_deliberate) res.deliberate = true;
   GroupNode.events.perceived({ percept: res, target: this, time: o.time

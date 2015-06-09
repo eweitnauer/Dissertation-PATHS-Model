@@ -11,7 +11,8 @@ all: pbp-model.js
 	src/visualization/box2d-simulator.js \
 	src/visualization/scene-visualizer.js \
 	src/visualization/scene-interactor.js \
-	src/features/stability-attr.js \
+	src/features/stable-attr.js \
+	src/features/unstable-attr.js \
 	src/features/movable-up-attr.js \
 	src/features/shape-attr.js \
 	src/features/circle-attr.js \

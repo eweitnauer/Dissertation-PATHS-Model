@@ -108,7 +108,7 @@ AttrCodelet.prototype.run = function() {
   var percept = (feature.prototype.arity == 1
                 ? this.perceiveAttr(target, feature, time)
                 : this.perceiveRel(scene, target, feature, time));
-  if (percept) {
+  if (percept && percept.get_activity() >= pbpSettings.activation_threshold) {
     this.spawnNewSelCodelet(percept, time);
     return true;
   } else return false;

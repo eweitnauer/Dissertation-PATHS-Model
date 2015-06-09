@@ -3,6 +3,14 @@ var PI = PI || {};
 
 /*
 
+Version 0.6.0
+- split stability function into stable and unstable features
+- added mechanism for adaptive thresholds:
+  - scenes keep track of min&max perceived activity per feature and time
+  - selectors have a set of adjusted thresholds (per feature)
+  - solutions can adjust thresholds to fix a 'both' or 'fail' match result
+- improved the top-most feature, it now uses the top-most point instead of center point
+
 Version 0.5.6
 - normalize influence of hypothesis on object by number of selected objects
 - set addend to object's activation to 0 so now the object activation is set
@@ -138,7 +146,7 @@ PBP 22: [HitsRelationship, CollidesRelationship]
 PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
-var pi_version = '0.5.6';
+var pi_version = '0.6.0';
 var pi_default_options = function() {
   var low = 0.1, mid = 0.2, high = 0.3;
   return {
@@ -152,8 +160,9 @@ var pi_default_options = function() {
               , { klass: LargeAttribute,       initial_activation: high,  group: 'shape' }
                 //, { klass: ShapeAttribute,       initial_activation: high, group: 'shape' }
               , { klass: MovesAttribute,       initial_activation: mid, group: 'dynamics' }
-              , { klass: StabilityAttribute,   initial_activation: mid, group: 'dynamics' }
-              // , { klass: SingleAttribute,      initial_activation: low, group: 'distance' }
+              ,  { klass: UnstableAttribute,    initial_activation: mid, group: 'dynamics' }
+              , { klass: StableAttribute,      initial_activation: mid, group: 'dynamics' }
+              , { klass: SingleAttribute,      initial_activation: low, group: 'distance' }
               , { klass: TouchRelationship,    initial_activation: low, group: 'distance' }
               , { klass: CountAttribute,       initial_activation: low,  group: 'shape' }
               , { klass: CloseAttribute,       initial_activation: low,  group: 'distance' }
@@ -175,7 +184,7 @@ var pi_default_options = function() {
               , { klass: TouchAttribute,       initial_activation: low,  group: 'distance' }
               , { klass: SupportsRelationship, initial_activation: low,  group: 'dynamics' }
               , { klass: HitsRelationship,     initial_activation: low,  group: 'dynamics' }
-               , { klass: GetsHitRelationship,     initial_activation: low,  group: 'dynamics' }
+              , { klass: GetsHitRelationship,     initial_activation: low,  group: 'dynamics' }
               , { klass: CollidesRelationship, initial_activation: low,  group: 'dynamics' }
               , { klass: LeftAttribute,        initial_activation: low,  group: 'hor-pos' }
               , { klass: RightAttribute,       initial_activation: low,  group: 'hor-pos' }

@@ -101,6 +101,10 @@ Solution.prototype.compatibleMatchCount = function() {
 	return Math.max(this.matches('left'), this.matches('right'));
 }
 
+Solution.prototype.isPotentialSolution = function() {
+	return this.main_side === 'left' || this.main_side === 'right';
+}
+
 Solution.prototype.wasMatchedAgainst = function(scene_pair_id) {
 	return this.matchedAgainst.indexOf(scene_pair_id) !== -1;
 }
@@ -186,13 +190,56 @@ Solution.prototype.checkScenePair = function(pair, pair_id) {
   });
   this.matchedAgainst.push(pair_id);
 
-  if (//!this.tryMode('unique', 'one-sided') && // leads to solutions that are too complex
-  	  !this.tryMode('exists', 'one-sided') &&
+  if (!this.tryMode('exists', 'one-sided') &&
   	  !this.tryMode('all', 'one-sided') &&
   	  !this.tryMode('unique', 'two-sided') &&
   	  !this.tryMode('exists', 'two-sided')) this.setMainSide('fail');
 
   return selected_groups;
+}
+
+/// Attempts to turn a 'both' or 'fail' solution into a one-sided solution by
+/// adjusting one of the thresholds of the solution's selector. Returns true if
+/// such an adjustment was made.
+Solution.prototype.adjustThresholds = function(main_side, left_scenes, right_scenes) {
+	var ranges = { left: ActivityRanges.calcStats(this.sel, left_scenes)
+							 , right: ActivityRanges.calcStats(this.sel, right_scenes)};
+	var other_side = (main_side === 'left' ? 'right' : 'left');
+	var thresh;
+
+	for (var key in ranges.left) {
+		console.log(key);
+		var main = ranges[main_side][key]
+		  , other = ranges[other_side][key];
+
+		// check for 'exists' solution
+		if (other.maxmax < main.minmax) thresh = (other.maxmax + main.minmax)/2;
+
+		// check for 'all' solution
+		if (other.maxmin < main.minmin) thresh = (other.maxmin + main.minmin)/2;
+
+		if (thresh && 0.15 <= thresh && 0.85 >= thresh) {
+			var key_no_time = key.substr(key.indexOf('.')+1); // start.stable.object ==> stable.object
+			this.sel.thresholds[key_no_time] = thresh;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/// Call this whenever the underlying selector is changed.
+Solution.prototype.reset = function() {
+	this.matchedAgainst = [];
+	this.checks = {left: 0, right: 0};
+	this.mmatches = { exists: {left: 0, right: 0}
+	                , unique: {left: 0, right: 0}
+	                , all: {left: 0, right: 0}};
+	this.specificity = 0;
+	this.scene_sel_ratios = [];
+	this.scene_pair_count = 8;
+	this.objects_seen = 0;
+	this.objects_selected = 0;
 }
 
 Solution.prototype.check = function(scenes_l, scenes_r) {

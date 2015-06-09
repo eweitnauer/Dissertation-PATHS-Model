@@ -229,3 +229,14 @@ button#show-hide {
 	margin-right: 10em;
 	display: inline-block;
 }
+
+div#time-control {
+	text-align: right;
+	margin-bottom: 4px;
+	font-size: small;
+}
+
+div#time-control a {
+	color: rgb(133, 161, 200);
+	text-decoration: none;
+}

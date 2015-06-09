@@ -108,6 +108,7 @@ ObjectNode.prototype.getAttr = function(key, opts) {
   if (o.time && !o.dont_cache) {
     if (!this.times[o.time]) this.times[o.time] = {};
     this.times[o.time][key] = res;
+    ActivityRanges.update(res, o.time);
   }
   if (o.set_deliberate) res.deliberate = true;
   ObjectNode.events.perceived({percept: res, target: this, time: o.time
@@ -153,6 +154,7 @@ ObjectNode.prototype.getRel = function(key, opts) {
     if (!this.times[o.time]) this.times[o.time] = {};
     if (!this.times[o.time][key]) this.times[o.time][key] = [];
     this.times[o.time][key].push(res);
+    ActivityRanges.update(res, o.time);
   }
   if (o.set_deliberate) res.deliberate = true;
   ObjectNode.events.perceived({ percept: res, target: this, time: o.time
@@ -210,8 +212,9 @@ ObjectNode.prototype.describeState = function(time, prefix) {
     var attr = this.times[time][a];
     if (!attr) continue;
     var active = attr.get_activity() >= 0.5;
-    var res = (active ? '' : '!') + attr.get_label();
-    out.push(attr.deliberate ? res : '('+res+')');
+    //var res = (active ? '' : '!') + attr.get_label();
+    var res = attr.get_label() + '[' + attr.get_activity().toFixed(2) + ']';
+    out.push(attr.deliberate ? res.toUpperCase() : res);
   }
   for (var r in ObjectNode.rels) {
     var rels = this.times[time][r];

@@ -1,7 +1,7 @@
 var pbpSettings = (function() {
 	res = {
-    max_dist: 0.06 // maximal distance of an objects to a spatial group to belong to it /* TODO: use this everywhere */
-   ,activation_threshold: 0.5 /* TODO: use this everywhere */
+    max_dist: 0.06 // maximal distance of an objects to a spatial group to belong to it
+   ,activation_threshold: 0.5
    ,obj_attrs: {}
    ,obj_rels: {}
    ,group_attrs: {}
@@ -21,7 +21,8 @@ var pbpSettings = (function() {
 	 RectangleAttribute,
 	 TriangleAttribute,
 	 ShapeAttribute,
-	 StabilityAttribute,
+	 StableAttribute,
+	 UnstableAttribute,
 	 SmallAttribute,
 	 LargeAttribute,
 	 MovesAttribute,

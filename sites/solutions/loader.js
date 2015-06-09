@@ -1,5 +1,6 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
-var pbp_idx = 15;
+init_pbp_data();
+var pbp_idx = getPBPFromURL() || 16;
 var curr_sols = [];
 var tester = null;
 var log_area = null;
@@ -332,10 +333,18 @@ function curr_as_start() {
       o.times.start = {};
       o.times.end = {};
     });
-    p.sim.pause();
+    p.svis.pause();
     p.sn.oracle.useCurrAsInitialState();
+    p.sn.oracle.gotoState('start');
   });
 
+}
+
+function set_time(time) {
+  d3.values(problems).forEach(function (p) {
+    p.svis.pause();
+    p.sn.oracle.gotoState(time);
+  });
 }
 
 function init() {
@@ -343,41 +352,63 @@ function init() {
   setup_options();
   setup_solve();
   d3.select('#curr-as-start').on('click', curr_as_start);
+  d3.select('#jump-to-zero').on('click', set_time.bind(null, '0'));
+  d3.select('#jump-to-start').on('click', set_time.bind(null, 'start'));
+  d3.select('#jump-to-end').on('click', set_time.bind(null, 'end'));
   loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
   log_area = d3.select('#debug-text');
   createTester();
 }
 
-var default_files = ['1-1', '1-2', '1-3', '1-4'
-                    ,'2-1', '2-2', '2-3', '2-4'
-                    ,'3-1', '3-2', '3-3', '3-4'
-                    ,'4-1', '4-2', '4-3', '4-4'
-                    ,'5-1', '5-2', '5-3', '5-4'];
-var pbps = [
-  {name: 'pbp02',  files: default_files, solution: ["one object", "two objects"]},
-  {name: 'pbp04',  files: default_files, solution: ["squares", "circles"]},
-  {name: 'pbp08',  files: default_files, solution: ["unstable situation", "stable situation"]},
-  {name: 'pbp11b', files: default_files, solution: ["objects close to each other", "objects far from each other"]},
-  {name: 'pbp12',  files: default_files, solution: ["small object falls off", "small object stays on top"]},
-  {name: 'pbp13',  files: default_files, solution: ["objects form a tower", "objects form an arc"]},
-  {name: 'pbp16',  files: default_files, solution: ["the circle is left of the square", "the square is left of the circle"]},
-  {name: 'pbp18',  files: default_files, solution: ["object touch eventually", "objects don't touch eventually"]},
-  {name: 'pbp20',  files: default_files, solution: ["the square supports other objects", "the square does not support other objects"]},
-  {name: 'pbp22',  files: default_files, solution: ["objects collide with each other", "objects don't collide with each other"]},
-  {name: 'pbp26',  files: default_files, solution: ["circle moves right", "circle moves left"]},
-  {name: 'pbp30',  files: default_files, solution: ["less stable situation", "stable situation"]},
-  {name: 'pbp31',  files: default_files, solution: ["circle can be picked up directly", "circle cannot be picked up directly"]},
-  {name: 'pbp35',  files: default_files, solution: ["triangle moves", "triangle does not move"]},
-  {name: 'pbp36',  files: default_files, solution: ["small objects hits large object", "small object does not hit large object"]},
-  {name: 'pbp23',  files: default_files, solution: ["collision", "no collision"]},
-  {name: 'pbp32',  files: default_files, solution: ["objects rotate a lot", "objects rotate little or no at all"]},
-  {name: 'pbp27',  files: default_files, solution: ["(potential) chain reaction","no chain reaction"]},
-  {name: 'pbp24',  files: default_files, solution: ["several possible outcomes", "one possible outcome"]},
-  {name: 'pbp21',  files: default_files, solution: ["strong collision", "weak or no collision"]},
-  {name: 'pbp09',  files: default_files, solution: ["objects move in opposite directions", "objects move in same direction"]},
-  {name: 'pbp33',  files: default_files, solution: ["construction gets destroyed", "construction stays intact"]},
-  {name: 'pbp19',  files: default_files, solution: ["at least one object flies through the air", "all object always touch something"]},
-  {name: 'pbp28',  files: default_files, solution: ["rolls well", "does not roll well"]},
-  {name: 'stability_tests', files: ['1-1', '1-2', '1-3', '2-1', '2-2', '2-3', '3-1', '3-2', '3-3', '4-1', '4-2', '4-3', '5-1', '5-2', '6-1', '7-1', '7-2', '8-1', '8-2']},
-  {name: 'support_tests', files: ['1-1', '1-2', '1-3', '1-4', '2-1', '2-2', '2-3', '3-1', '3-2']},
-];
+function init_pbp_data() {
+  default_files = ['1-1', '1-2', '1-3', '1-4'
+                      ,'2-1', '2-2', '2-3', '2-4'
+                      ,'3-1', '3-2', '3-3', '3-4'
+                      ,'4-1', '4-2', '4-3', '4-4'
+                      ,'5-1', '5-2', '5-3', '5-4'];
+  pbps = [
+    {name: 'pbp02',  files: default_files, solution: ["one object", "two objects"]},
+    {name: 'pbp04',  files: default_files, solution: ["squares", "circles"]},
+    {name: 'pbp08',  files: default_files, solution: ["unstable situation", "stable situation"]},
+    {name: 'pbp11b', files: default_files, solution: ["objects close to each other", "objects far from each other"]},
+    {name: 'pbp12',  files: default_files, solution: ["small object falls off", "small object stays on top"]},
+    {name: 'pbp13',  files: default_files, solution: ["objects form a tower", "objects form an arc"]},
+    {name: 'pbp16',  files: default_files, solution: ["the circle is left of the square", "the square is left of the circle"]},
+    {name: 'pbp18',  files: default_files, solution: ["object touch eventually", "objects don't touch eventually"]},
+    {name: 'pbp20',  files: default_files, solution: ["the square supports other objects", "the square does not support other objects"]},
+    {name: 'pbp22',  files: default_files, solution: ["objects collide with each other", "objects don't collide with each other"]},
+    {name: 'pbp26',  files: default_files, solution: ["circle moves right", "circle moves left"]},
+    {name: 'pbp30',  files: default_files, solution: ["less stable situation", "stable situation"]},
+    {name: 'pbp31',  files: default_files, solution: ["circle can be picked up directly", "circle cannot be picked up directly"]},
+    {name: 'pbp35',  files: default_files, solution: ["triangle moves", "triangle does not move"]},
+    {name: 'pbp36',  files: default_files, solution: ["small objects hits large object", "small object does not hit large object"]},
+    {name: 'pbp23',  files: default_files, solution: ["collision", "no collision"]},
+    {name: 'pbp32',  files: default_files, solution: ["objects rotate a lot", "objects rotate little or no at all"]},
+    {name: 'pbp27',  files: default_files, solution: ["(potential) chain reaction","no chain reaction"]},
+    {name: 'pbp24',  files: default_files, solution: ["several possible outcomes", "one possible outcome"]},
+    {name: 'pbp21',  files: default_files, solution: ["strong collision", "weak or no collision"]},
+    {name: 'pbp09',  files: default_files, solution: ["objects move in opposite directions", "objects move in same direction"]},
+    {name: 'pbp33',  files: default_files, solution: ["construction gets destroyed", "construction stays intact"]},
+    {name: 'pbp19',  files: default_files, solution: ["at least one object flies through the air", "all object always touch something"]},
+    {name: 'pbp28',  files: default_files, solution: ["rolls well", "does not roll well"]},
+    {name: 'stability_tests', files: ['1-1', '1-2', '1-3', '2-1', '2-2', '2-3', '3-1', '3-2', '3-3', '4-1', '4-2', '4-3', '5-1', '5-2', '6-1', '7-1', '7-2', '8-1', '8-2']},
+    {name: 'support_tests', files: ['1-1', '1-2', '1-3', '1-4', '2-1', '2-2', '2-3', '3-1', '3-2']},
+  ];
+}
+
+function getPBPFromURL() {
+  var str = getURLParameter('pbp');
+  if (!str) return false;
+  var name = 'pbp'+str;
+  for (var i=0; i<pbps.length; i++) {
+    if (pbps[i].name === 'pbp'+name) return i;
+    if (pbps[i].name === 'pbp0'+name) return i;
+    if (pbps[i].name === name) return i;
+  }
+  return false;
+}
+
+function getURLParameter(name) {
+  var val = RegExp(name + '=' + '(.+?)(&|$)').exec(location.search);
+  return val ? decodeURIComponent(val[1]) : null;
+}

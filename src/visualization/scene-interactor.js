@@ -260,7 +260,7 @@ SceneInteractor.prototype.addShape = function(container, shape) {
 	  	else self.selectShapes([d]);
 	  	if (self.value_getter) console.log(self.value_getter(d.object_node));
 	  	console.log("obj=", d.object_node.describe());
-	  	obj = d;
+	  	obj = d.object_node;
 	  });
 }
 
@@ -326,11 +326,8 @@ SceneInteractor.prototype.updateScene = function() {
 	gs.exit().remove();
 
 	this.svg.classed('active', this.sn.active);
-	// color scene background according to 'fits_solution' attribute
-	// var color = 'none';
-	// if (this.sn.fits_solution === true) color = '#efe';
-	// else if (this.sn.fits_solution === false) color = '#fee';
-	// this.svg.style('background-color', color);
+	this.svg.style('background-color', null);
+
 }
 
 SceneInteractor.prototype.draw = function() {
@@ -358,7 +355,11 @@ SceneInteractor.prototype.applySelector = function(sel) {
 
 SceneInteractor.prototype.applySolution = function(sol) {
 	var res = sol.check_scene(this.sn);
-	this.selectShapes(res.match ? res.group.objs : []);
+	this.selectShapes(res.group.objs);
+	if (sol.isPotentialSolution()) {
+		var color = res.match ? '#efe' : '#fee';
+		this.svg.style('background-color', color);
+	}
 }
 
 SceneInteractor.prototype.colorize_values = function(value_getter) {

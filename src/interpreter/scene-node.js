@@ -12,6 +12,7 @@ SceneNode = function(scene, oracle) {
   this.frame = null;
   this.collisions = []; // list of collisions
   this.times = ['start', 'end'];
+  this.activity_ranges = new ActivityRanges();
   this.init();
 }
 

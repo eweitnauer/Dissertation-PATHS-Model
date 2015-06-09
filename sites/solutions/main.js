@@ -23,8 +23,8 @@ function getSolutions(pbp) {
   }
   if (pbp == 'pbp08' || pbp == 'pbp30') { // stable vs. unstable
     /// NEEDS 'slightly unstable' as 'stable' for pbp08 and as unstable for pbp30!
-    var s1 = new Selector().add_attr(new Selector.AttrMatcher('stability', 'unstable'))
-       ,s2 = new Selector().add_attr(new Selector.AttrMatcher('stability', 'stable'));
+    var s1 = new Selector().add_attr(new Selector.AttrMatcher('unstable', 'unstable'))
+       ,s2 = new Selector().add_attr(new Selector.AttrMatcher('stable', 'stable'));
     sols.push(new Solution(s1, 'left', 'exists'));
     sols.push(new Solution(s2, 'right', 'all'));
   }

@@ -24,6 +24,18 @@ CheckHypothesisCodelet.updateObjectSelectorArrays = function(groups, sel) {
   }
 }
 
+CheckHypothesisCodelet.prototype.removeFromSelectorArrays = function(sel) {
+  var remove_el = function(array, el) {
+    var idx = array.indexOf(el);
+    if (idx !== -1) array.splice(idx, 1);
+  }
+
+  this.ws.forEachScene(function(sn) {
+    for (var i=0; i<sn.objs.length; i++) remove_el(sn.objs[i].selectors, sel);
+    for (var i=0; i<sn.groups.length; i++) remove_el(sn.groups[i].selectors, sel);
+  });
+}
+
 CheckHypothesisCodelet.prototype.run = function() {
   var hyp = this.hypothesis;
   var options = this.ws.options;
@@ -40,7 +52,19 @@ CheckHypothesisCodelet.prototype.run = function() {
   this.ws.log(3, 'checking hyp "'+ hyp.describe()+'"');
 
   var scenes = this.ws.getActiveScenePair();
+  var was_pot_sol = hyp.isPotentialSolution();
+  var side = hyp.main_side;
   var selected_groups = hyp.checkScenePair(scenes, this.ws.scene_pair_index);
+
+  var is_pot_sol = hyp.isPotentialSolution();
+  if (was_pot_sol && !is_pot_sol) {
+    if (hyp.adjustThresholds(side, this.ws.left_scenes, this.ws.right_scenes)) {
+      this.removeFromSelectorArrays(hyp.sel);
+      hyp.reset();
+      hyp.sel.cached_results = [];
+      selected_groups = hyp.checkScenePair(scenes, this.ws.scene_pair_index);
+    }
+  }
   if (hyp.main_side === 'fail') {
     return true;
   }
