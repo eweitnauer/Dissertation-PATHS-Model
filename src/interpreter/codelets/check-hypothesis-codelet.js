@@ -67,6 +67,7 @@ CheckHypothesisCodelet.prototype.run = function() {
   }
   this.ws.log(3, 'hyp after checking now is: "'+ hyp.describe()+'"');
   if (hyp.main_side === 'fail') {
+    this.removeFromSelectorArrays(hyp.sel);
     return true;
   }
   CheckHypothesisCodelet.updateObjectSelectorArrays(selected_groups, hyp.sel);

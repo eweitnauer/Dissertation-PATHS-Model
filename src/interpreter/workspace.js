@@ -230,14 +230,14 @@ Workspace.prototype.addSolution = function(sol) {
 }
 
 Workspace.prototype.addGroup = function(group) {
-  this.aNet.addGroup(group);
+  this.attentionNet.addGroup(group);
 }
 
 /// Selects a random group from the passed scene based on the attention values
 /// of the respective group's selectors. Returns null if no group could be
 /// selected. Options: filter (GroupNode->bool)
 Workspace.prototype.getExistingRandomGroup = function(scene, options) {
-  return this.aNet.getRandomGroup(scene, options);
+  return this.attentionNet.getRandomGroup(scene, options);
   // var group_pool = scene.groups;
   // if (options && options.filter) group_pool = group_pool.filter(options.filter);
   // var sel_pool = [];

@@ -166,7 +166,7 @@ var pi_default_options = function() {
               , { klass: LargeAttribute,       initial_activation: high,  group: 'shape' }
                 //, { klass: ShapeAttribute,       initial_activation: high, group: 'shape' }
               , { klass: MovesAttribute,       initial_activation: mid, group: 'dynamics' }
-              ,  { klass: UnstableAttribute,    initial_activation: mid, group: 'dynamics' }
+              , { klass: UnstableAttribute,    initial_activation: mid, group: 'dynamics' }
               , { klass: StableAttribute,      initial_activation: mid, group: 'dynamics' }
               , { klass: SingleAttribute,      initial_activation: low, group: 'distance' }
               , { klass: TouchRelationship,    initial_activation: low, group: 'distance' }
@@ -176,17 +176,17 @@ var pi_default_options = function() {
               , { klass: TopMostAttribute,     initial_activation: low,  group: 'vert-pos' }
                 // , { klass: LeftMostAttribute,    initial_activation: low,  group: 'hor-pos' }
                 // , { klass: RightMostAttribute,   initial_activation: low,  group: 'hor-pos' }
-                , { klass: FarRelationship,      initial_activation: low,  group: 'distance' }
-                , { klass: FarAttribute,         initial_activation: low,  group: 'distance' }
+              , { klass: FarRelationship,      initial_activation: low,  group: 'distance' }
+              , { klass: FarAttribute,         initial_activation: low,  group: 'distance' }
               , { klass: OnTopRelationship,    initial_activation: low,  group: 'vert-pos' }
               , { klass: OnGroundAttribute,    initial_activation: low,  group: 'vert-pos' }
               , { klass: RightRelationship,    initial_activation: low,  group: 'hor-pos' }
               , { klass: LeftRelationship,     initial_activation: low,  group: 'hor-pos' }
-                , { klass: AboveRelationship,    initial_activation: low,  group: 'vert-pos' }
-                , { klass: BelowRelationship,    initial_activation: low,  group: 'vert-pos' }
-                , { klass: BesideRelationship,   initial_activation: low,  group: 'hor-pos' }
-                , { klass: BottomAttribute,      initial_activation: low,  group: 'vert-pos' }
-                , { klass: TopAttribute,         initial_activation: low,  group: 'vert-pos' }
+              , { klass: AboveRelationship,    initial_activation: low,  group: 'vert-pos' }
+              , { klass: BelowRelationship,    initial_activation: low,  group: 'vert-pos' }
+              , { klass: BesideRelationship,   initial_activation: low,  group: 'hor-pos' }
+              , { klass: BottomAttribute,      initial_activation: low,  group: 'vert-pos' }
+              , { klass: TopAttribute,         initial_activation: low,  group: 'vert-pos' }
               , { klass: TouchAttribute,       initial_activation: low,  group: 'distance' }
               , { klass: SupportsRelationship, initial_activation: low,  group: 'dynamics' }
               , { klass: HitsRelationship,     initial_activation: low,  group: 'dynamics' }
@@ -211,27 +211,28 @@ var pi_default_options = function() {
                               // picked first during perception
     }
   , activity:
-    { time: { start: 0.67, end: 0.33 }
-    , feature: {
-      hyp_base: 0.1 // >=0, the smaller, the bigger the influence of hypotheses activities
-    }
-    , obj: {
-        hyp_base: 0 // >=0, the smaller, the bigger the influence of hypotheses activities
-      , attr_priors: { // only apply at time "start"
-          moves: 2
-          // should we include stability->unstable?
-        , top_most: 1.5 // this & below: often will get boosted via sel.specificity, too
-        // , single: 1.5
-        //, left_most: 1.25
-        //, right_most: 1.25
+    {
+      time: { start: 0.67, end: 0.33 }
+      , feature: {
+        hyp_base: 0.1 // >=0, the smaller, the bigger the influence of hypotheses activities
+      }
+      , obj: {
+          hyp_base: 0 // >=0, the smaller, the bigger the influence of hypotheses activities
+        , attr_priors: { // only apply at time "start"
+            moves: 2
+            // should we include stability->unstable?
+          , top_most: 1.5 // this & below: often will get boosted via sel.specificity, too
+          // , single: 1.5
+          //, left_most: 1.25
+          //, right_most: 1.25
         }
       }
-    }
-    , group: {
-      hyp_base: 0
-    , attr_priors: {
-        touching: 2
-      , close: 1.5
+      , group: {
+        hyp_base: 0
+      , attr_priors: {
+          touching: 1.5
+        , close: 1.25
+        }
       }
     }
   };

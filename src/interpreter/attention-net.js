@@ -114,7 +114,7 @@ AttentionNet.prototype.calcObjectActivity = function(obj) {
 
 AttentionNet.prototype.calcGroupActivity = function(grp) {
 	var self = this;
-	var sum = d3.sum(group.selectors, function(sel) {
+	var sum = d3.sum(grp.selectors, function(sel) {
 		return self.getActivity(sel.solution);
 	});
 	return this.getGroupPrior(grp) * (this.group_base+sum);
@@ -134,7 +134,7 @@ AttentionNet.prototype.getObjectPrior = function(obj) {
 	return prod;
 }
 
-AttentionNet.prototype.getGroupPrior = function(obj) {
+AttentionNet.prototype.getGroupPrior = function(group) {
 	var prod = 1, perception;
 	for (var attr in this.group_attr_priors) {
 		perception = group.getDeliberateOnly(attr, {time: 'start'});
@@ -215,7 +215,7 @@ AttentionNet.prototype.groupsByScene = function() {
 /// Returns true if successfully inserted.
 AttentionNet.prototype.addElement = function(type, element, val) {
 	if (typeof(val) === 'undefined') val = 1.0;
-	var map = {feature: this.features, solution: this.solutions, object: this.objects};
+	var map = {feature: this.features, solution: this.solutions, object: this.objects, group: this.groups};
 	var arr = map[type];
 	if (!arr) return false;
 	if (arr.indexOf(element) != -1) return false;
@@ -255,6 +255,12 @@ AttentionNet.prototype.addObject = function(object, val) {
 	return this.addElement('object', object, val);
 }
 
+/// Returns true if successfully inserted. Optionally pass an attention value
+/// (default: 1.0).
+AttentionNet.prototype.addGroup = function(group, val) {
+	return this.addElement('group', group, val);
+}
+
 /// Chooses a random object from the passed scene based on their attention values.
 /// If the objects have a summed activity of 0, any on of them is picked.
 /// Available options:
@@ -277,24 +283,20 @@ AttentionNet.prototype.getRandomObject = function(scene, options) {
 }
 
 /// Chooses a random group from the passed scene based on their attention values.
-/// If the groups have a summed activity of 0, any on of them is picked.
+/// If the groups have a summed activity of 0, null is returned.
 /// Available options:
 /// filter (GroupNode->bool)
 AttentionNet.prototype.getRandomGroup = function(scene, options) {
 	options = options || {};
 	var self = this;
-	var activity_sum = 0;
 	var groups = scene.groups.filter(function(group) {
-		if (!options.filter || options.filter(group)) {
-			activity_sum += self.getActivity(group);
-			return true;
-		} else return false;
+		return ( self.getActivity(group) > 0
+			    && (!options.filter || options.filter(group)));
 	});
 	if (groups.length === 0) return null;
-	if (activity_sum > 0) return Random.pick_weighted(groups, function (group) {
+	return Random.pick_weighted(groups, function (group) {
 		return self.getActivity(group);
 	});
-	else return Random.pick(groups);
 }
 
 /// Chooses a random object from the passed scene based on their attention values.
