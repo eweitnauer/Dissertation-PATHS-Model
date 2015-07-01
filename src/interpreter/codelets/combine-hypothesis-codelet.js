@@ -18,8 +18,8 @@ CombineHypothesisCodelet.prototype.getBlankRelationship = function(sel) {
 }
 
 CombineHypothesisCodelet.prototype.run = function() {
-  var obj = this.ws.getRandomObject();
-  if (obj.selectors.length < 2) return;
+  var obj = this.ws.getRandomObject(null, { filter: function(o) { return o.selectors.length >= 2 }});
+  if (!obj) return false;
   var hyp_pool = obj.selectors.map(function(sel) { return sel.solution });
   var hyp1 = this.ws.getRandomHypothesis(
     { no_blank: true, pool: hyp_pool, main_side: 'both' }

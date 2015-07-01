@@ -35,7 +35,7 @@ Coderack.prototype.codeletFinished = function(codelet, res) {
 
 Coderack.prototype.createStats = function() {
   var cdls = [ AttrCodelet, NewHypothesisCodelet, CheckHypothesisCodelet
-             , CombineHypothesisCodelet];
+             , CombineHypothesisCodelet, RecombineHypothesisCodelet];
   var res = {};
   cdls.forEach(function(cdl) {
     res[cdl.prototype.name] = { success: 0, failure: 0, name: cdl.prototype.name

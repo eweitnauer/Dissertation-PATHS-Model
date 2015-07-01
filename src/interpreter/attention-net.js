@@ -24,6 +24,8 @@ AttentionNet = function(options) {
 	this.obj_attr_priors = options.activity.obj.attr_priors;
 	this.group_attr_priors = options.activity.group.attr_priors;
 	this.group_base = options.activity.group.hyp_base;
+	this.sol_attr_priors = options.activity.selector.attr_priors;
+	this.sol_rel_priors = options.activity.selector.rel_priors;
 }
 
 /// Can throw "unknown element" exception.
@@ -68,10 +70,10 @@ AttentionNet.prototype.calcSolutionActivity = function(sol) {
 	var exp = sol.uncheckedSceneCount() + sol.sel.getComplexity();
 	if (sol.main_side === 'both') {
 		exp += sol.scene_pair_count;
-		if (!sol.allMatch() || !sol.sel.base_level_only())
+		if (!sol.allMatch()) // || !sol.sel.base_level_only())
 		  exp += sol.incompatibleMatchCount();
 	}
-	return Math.pow(2, -exp);
+	return Math.pow(2, -exp) * this.getSolutionPrior(sol);
 }
 
 AttentionNet.prototype.calcFeatureSelfActivity = function(feat) {
@@ -131,6 +133,17 @@ AttentionNet.prototype.getObjectPrior = function(obj) {
 	// 	if (perception && this.isActive(perception)) prod *= this.obj_rel_priors[rel][0];
 	// 	// we should also check for this object being the `other` object in a relationship
 	// }
+	return prod;
+}
+
+AttentionNet.prototype.getSolutionPrior = function(sol) {
+	var prod = 1;
+	for (var attr in this.sol_attr_priors) {
+		if (sol.sel.hasAttr(attr)) prod *= this.sol_attr_priors[attr];
+	}
+	for (var rel in this.sol_rel_priors) {
+		if (sol.sel.hasRel(rel)) prod *= this.sol_rel_priors[rel];
+	}
 	return prod;
 }
 
@@ -269,7 +282,8 @@ AttentionNet.prototype.getRandomObject = function(scene, options) {
 	options = options || {};
 	var self = this;
 	var activity_sum = 0;
-	var objs = scene.objs.filter(function(obj) {
+	var pool = options.pool || scene.objs;
+	var objs = pool.filter(function(obj) {
 		if (!options.filter || options.filter(obj)) {
 			activity_sum += self.getActivity(obj);
 			return true;

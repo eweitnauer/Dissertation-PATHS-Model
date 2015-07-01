@@ -204,8 +204,15 @@ function hypothesisClicked(hyp) {
 }
 
 function featureClicked(feature) {
-  tester.ws.changeAttention(feature, 1, 0, 1);
+  if (feature.prototype.initial_apriori !== feature.prototype.apriori) {
+    tester.ws.resetFeaturePrior(feature);
+    tester.ws.setSelectorPrior(feature.prototype.key, {1: 'attr', 2: 'rel'}[feature.prototype.arity], 1);
+  } else {
+    tester.ws.setFeaturePrior(feature, 5);
+    tester.ws.setSelectorPrior(feature.prototype.key, {1: 'attr', 2: 'rel'}[feature.prototype.arity], 10);
+  }
   updateFeatureList();
+  updateHypothesisTable();
 }
 
 function logText(text) {

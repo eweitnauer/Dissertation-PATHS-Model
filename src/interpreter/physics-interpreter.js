@@ -3,7 +3,32 @@ var PI = PI || {};
 
 /*
 
-In Progress:
+Bugs / Problems:
+- The other_sel in a relationship matcher is a reference to an existing selector.
+  When that existing selector changes its selection thresholds, the relationship
+  matcher changes but is not updated or reset. It would be preferable if it would
+  use a clone of the existing selector.
+- Adjustment of thresholds does not work for relationship target-selectors. We can't
+  get to the selector "left of very small objects"
+- Once a relationship matcher is created, its target-selector is fixed. It can't be
+  updated via a merge action. If during the first observation the target-selectors
+  of a relationship are chosen wrong, the algorithm will never find a solution.
+
+Version 0.7.0
+- new codelet: RecombineHypothesisCodelet, which changes the target-selector of a
+  relationship matcher
+- the new action probabilities are:
+  perceive: 0.6, check_hyp: 0.25, combine_hyp: 0.1, recombine_hyp: 0.05
+
+Version 0.6.2
+- simulate priming or scaffolding by fixing the priors for
+  ✓ features -> set options.features.initial_activation (or use Workspace.setFeaturePrior)
+  ✓ hypotheses -> set options.activity.attr_priors and .rel_priors (or use Workspace.setSelectorPrior)
+  ✓ times -> set options.activity.time
+  ✓ action types -> set options.action_priors
+- changed the calculation of hypothesis activity: don't check for base_level_only() anymore
+- added prior=1.5 for unstable attribute
+
 Version 0.6.1
 - make group selection analog to object selection:
   - prob. of a group to be chosen is the summed prob. of its selectors
@@ -152,7 +177,7 @@ PBP 22: [HitsRelationship, CollidesRelationship]
 PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
-var pi_version = '0.6.1';
+var pi_version = '0.7.0';
 var pi_default_options = function() {
   var low = 0.1, mid = 0.2, high = 0.3;
   return {
@@ -202,8 +227,9 @@ var pi_default_options = function() {
   , action_priors:
     {
       perceive: 0.6
-    , check_hyp: 0.3
+    , check_hyp: 0.25
     , combine_hyp: 0.1
+    , recombine_hyp: 0.05
     }
   , perception:
     {
@@ -220,6 +246,7 @@ var pi_default_options = function() {
           hyp_base: 0 // >=0, the smaller, the bigger the influence of hypotheses activities
         , attr_priors: { // only apply at time "start"
             moves: 2
+          , unstable: 1.5
             // should we include stability->unstable?
           , top_most: 1.5 // this & below: often will get boosted via sel.specificity, too
           // , single: 1.5
@@ -228,10 +255,16 @@ var pi_default_options = function() {
         }
       }
       , group: {
-        hyp_base: 0
-      , attr_priors: {
-          touching: 1.5
-        , close: 1.25
+          hyp_base: 0
+        , attr_priors: {
+            touching: 1.5
+          , close: 1.25
+          }
+        }
+      , selector: {
+        attr_priors: {
+        }
+      , rel_priors: {
         }
       }
     }
@@ -259,7 +292,8 @@ PI[pi_version.replace(/\./g, '_')] = (function(opts) {
     this.name = 'MainBehavior';
     this.codelet_infos = [{klass: AttrCodelet, attention: options.action_priors.perceive }
                          ,{klass: CheckHypothesisCodelet, attention: options.action_priors.check_hyp }
-                         ,{klass: CombineHypothesisCodelet, attention: options.action_priors.combine_hyp }];
+                         ,{klass: CombineHypothesisCodelet, attention: options.action_priors.combine_hyp }
+                         ,{klass: RecombineHypothesisCodelet, attention: options.action_priors.recombine_hyp }];
     this.att_getter = function(ci) {
       return ci.attention// * coderack.getCodeletTypeActivity(ci.klass)
     };

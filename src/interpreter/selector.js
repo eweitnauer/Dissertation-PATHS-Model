@@ -74,6 +74,15 @@ Selector.prototype.hasRelationships = function() {
 	return this.rels.length > 0;
 }
 
+Selector.prototype.hasAttr = function(key) {
+	return ( this.obj_attrs.some(function(attr) { return attr.key === key })
+		    || this.grp_attrs.some(function(attr) { return attr.key === key }));
+}
+
+Selector.prototype.hasRel = function(key) {
+	return this.rels.some(function(rel) { return rel.key === key });
+}
+
 Selector.prototype.featureCount = function() {
 	return this.obj_attrs.length + this.grp_attrs.length + this.rels.length;
 }
@@ -180,8 +189,8 @@ Selector.prototype.mergedWith = function(other_sel) {
 
 Selector.prototype.clone = function() {
 	var sel = new Selector(this.unique);
-	var add_attr = function(attr) { sel.add_attr(attr) };
-	var add_rel = function(rel) { sel.add_rel(rel) };
+	var add_attr = function(attr) { sel.add_attr(attr.clone()) };
+	var add_rel = function(rel) { sel.add_rel(rel.clone()) };
 	this.obj_attrs.forEach(add_attr);
 	this.grp_attrs.forEach(add_attr);
 	this.rels.forEach(add_rel);

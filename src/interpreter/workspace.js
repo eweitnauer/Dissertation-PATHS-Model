@@ -128,6 +128,7 @@ Workspace.prototype.initAttentionNet = function() {
 
   options.features.forEach(function (info) {
     info.klass.prototype.apriori = info.initial_activation;
+    info.klass.prototype.initial_apriori = info.initial_activation;
     aNet.addFeature(info.klass, info.group, 1/options.features.length);
   });
 
@@ -145,6 +146,25 @@ Workspace.prototype.getHypothesisInfoArray = function() {
            , sol: sol.describe()
            , src: sol }
   });
+}
+
+/// Type can be 'attr' or 'rel'.
+Workspace.prototype.setSelectorPrior = function(feature_key, type, prior) {
+  var sel = this.options.activity.selector;
+  sel[type+'_priors'][feature_key] = prior;
+  this.attentionNet.updateActivities(this.scenes);
+}
+
+Workspace.prototype.setFeaturePrior = function(feature, prior) {
+  feature.prototype.apriori = prior;
+  this.attentionNet.updateActivities(this.scenes);
+}
+
+Workspace.prototype.resetFeaturePrior = function(feature) {
+  var fs = this.options.features.filter(function(f) { return feature === f.klass});
+  if (fs.length !== 1) throw "could not find feature " + feature.prototype.key;
+  feature.prototype.apriori = fs[0].initial_activation;
+  this.attentionNet.updateActivities(this.scenes);
 }
 
 Workspace.prototype.getFeatureInfoArray = function() {
@@ -273,7 +293,7 @@ Workspace.prototype.getRandomScene = function() {
 
 /// You may pass a filter function in the options (ObjectNode->bool).
 Workspace.prototype.getRandomObject = function(scene, options) {
-  if (typeof(scene) == 'undefined') scene = this.getRandomScene();
+  if (!scene) scene = this.getRandomScene();
   return this.attentionNet.getRandomObject(scene, options);
 }
 
