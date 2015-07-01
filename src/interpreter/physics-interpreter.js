@@ -3,6 +3,12 @@ var PI = PI || {};
 
 /*
 
+In Progress:
+Version 0.6.1
+- make group selection analog to object selection:
+  - prob. of a group to be chosen is the summed prob. of its selectors
+  - use "close" and "touches" as priors
+
 Version 0.6.0
 - split stability function into stable and unstable features
 - added mechanism for adaptive thresholds:
@@ -146,7 +152,7 @@ PBP 22: [HitsRelationship, CollidesRelationship]
 PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
-var pi_version = '0.6.0';
+var pi_version = '0.6.1';
 var pi_default_options = function() {
   var low = 0.1, mid = 0.2, high = 0.3;
   return {
@@ -190,8 +196,8 @@ var pi_default_options = function() {
               , { klass: RightAttribute,       initial_activation: low,  group: 'hor-pos' }
               , { klass: MovableUpAttribute,   initial_activation: low,  group: 'dynamics' }
              ]
-  , pres_mode: 'interleaved-sim-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
-  , randomize_row_order: true
+  , pres_mode: 'interleaved-dis-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
+  , randomize_row_order: false
   , pres_time: 100 // every x steps, switch to the next scene pair
   , action_priors:
     {
@@ -219,6 +225,13 @@ var pi_default_options = function() {
         //, left_most: 1.25
         //, right_most: 1.25
         }
+      }
+    }
+    , group: {
+      hyp_base: 0
+    , attr_priors: {
+        touching: 2
+      , close: 1.5
       }
     }
   };

@@ -131,7 +131,7 @@ Workspace.prototype.initAttentionNet = function() {
     aNet.addFeature(info.klass, info.group, 1/options.features.length);
   });
 
-  aNet.updateActivities();
+  aNet.updateActivities(this.scenes);
 }
 
 Workspace.prototype.getAttention = function(thing) {
@@ -229,21 +229,26 @@ Workspace.prototype.addSolution = function(sol) {
   this.log(3, 'adding solution:', sol.describe());
 }
 
+Workspace.prototype.addGroup = function(group) {
+  this.aNet.addGroup(group);
+}
+
 /// Selects a random group from the passed scene based on the attention values
 /// of the respective group's selectors. Returns null if no group could be
 /// selected. Options: filter (GroupNode->bool)
 Workspace.prototype.getExistingRandomGroup = function(scene, options) {
-  var group_pool = scene.groups;
-  if (options && options.filter) group_pool = group_pool.filter(options.filter);
-  var sel_pool = [];
-  group_pool.forEach(function(group) { sel_pool = sel_pool.concat(group.selectors) });
+  return this.aNet.getRandomGroup(scene, options);
+  // var group_pool = scene.groups;
+  // if (options && options.filter) group_pool = group_pool.filter(options.filter);
+  // var sel_pool = [];
+  // group_pool.forEach(function(group) { sel_pool = sel_pool.concat(group.selectors) });
 
-  var hyp = this.getRandomHypothesis({filter: function(hyp) {
-    return sel_pool.indexOf(hyp.sel) !== -1;
-  }});
-  var res = null;
-  if (hyp) res = hyp.sel.getCachedResult(scene);
-  return res;
+  // var hyp = this.getRandomHypothesis({filter: function(hyp) {
+  //   return sel_pool.indexOf(hyp.sel) !== -1;
+  // }});
+  // var res = null;
+  // if (hyp) res = hyp.sel.getCachedResult(scene);
+  // return res;
 }
 
 /** Selects a group based on a randomly chosen hypothesis.

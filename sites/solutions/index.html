@@ -95,6 +95,10 @@
       </div>
     </div>
     <div id="vis" class="box">
+        <div id="selectors" class="box info" style="top: 670px; position: absolute; width: 91%">
+            <h2>Hypotheses</h2>
+            <table id="selector-table"></table>
+        </div>
         <img id="btnPrev" onclick="prev()" src="left.png"/>
         <h2 id="pbp-num">PBP</h2>
         <img id="btnNext" onclick="next()" src="right.png"/>
@@ -112,22 +116,22 @@
             <button id="solver-reset-btn">reset</button>
             <button id="solver-run-btn">run</button>
             <button id="solver-step-btn">step</button>
-            <span>step: <span id="solver-step">?</span></span><br/>
+            <span>&nbsp;&nbsp;actions: <span id="solver-step">?</span></span><br/>
             <div id="codelet-stats"></div>
-            <div id="debug-text"></div>
+            <div id="debug-text" style="display: none"></div>
         </div>
-        <div id="features" class="box info">
-            <h2>Features</h2>
-        </div>
-        <div id="selectors" class="box info">
+        <!-- <div id="selectors" class="box info">
             <h2>Hypotheses</h2>
             <table id="selector-table"></table>
+        </div> -->
+        <div id="features" class="box info" style="max-height: 1000px">
+            <h2>Features</h2>
         </div>
-        <div id="solutions" class="box info">
+        <div id="solutions" class="box info" style="display: none">
             <h2>Solutions</h2>
             <ol></ol>
         </div>
-        <div id="scene-info" class="box info">
+        <div id="scene-info" class="box info" style="display: none">
             <h2>Selected Scene</h2>
         </div>
     </div>

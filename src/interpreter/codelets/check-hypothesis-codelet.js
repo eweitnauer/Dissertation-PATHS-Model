@@ -65,10 +65,12 @@ CheckHypothesisCodelet.prototype.run = function() {
       selected_groups = hyp.checkScenePair(scenes, this.ws.scene_pair_index);
     }
   }
+  this.ws.log(3, 'hyp after checking now is: "'+ hyp.describe()+'"');
   if (hyp.main_side === 'fail') {
     return true;
   }
   CheckHypothesisCodelet.updateObjectSelectorArrays(selected_groups, hyp.sel);
+  for (var i=0; i<selected_groups.length; i++) this.ws.addGroup(selected_groups[i]);
 
   if (hyp.isSolution(this.ws.scene_pair_sequence.length)) this.ws.addSolution(hyp);
 

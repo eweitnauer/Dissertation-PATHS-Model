@@ -1,6 +1,6 @@
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
 init_pbp_data();
-var pbp_idx = getPBPFromURL() || 16;
+var pbp_idx = getPBPFromURL() || 0;
 var curr_sols = [];
 var tester = null;
 var log_area = null;
@@ -17,7 +17,7 @@ function loadScenes(name, files) {
   var adapter = new Box2DAdapter();
   problems = {};
 
-  for (var i=0; i<files.length; i++) {
+  for (var i=0; i<files.length-4; i++) {
     console.log('loading and analyzing scene ' + files[i] + ' of ' + name + '...');
     var scene = SVGSceneParser.parseFile(path + "/" + files[i] + '.svg', pixels_per_unit);
     // quick hack to extract side from the file name
@@ -62,7 +62,7 @@ function create_html_elements(files) {
   d3.select("#svgs")
     .style('height', 5*a+2+mar + 'px')
     .selectAll("svg")
-    .data(files)
+    .data(files.slice(0, files.length-4))
     .enter()
     .append("svg")
     .attr("id", function(d) { return "s"+d })
@@ -80,7 +80,7 @@ function create_html_elements(files) {
     .append('div')
     .style({ position: 'absolute', background: '#aaa', border: '1px solid black'
            , width: 8*vis_scaling+'px', left: mar + 2*a+10*vis_scaling+'px', top: 0
-           , height: 5*a+'px' });
+           , height: 4*a+'px' });
 }
 
 function next() {
@@ -217,7 +217,7 @@ function createTester() {
   var scenes = [];
   for (var p in problems) scenes.push(problems[p].sn);
   tester = new PITester('current', scenes, 1, 5000, 1, 'info');
-  tester.setLogCallback(logText);
+  //tester.setLogCallback(logText);
   d3.select('#solver h2').text('Solver ' + tester.pi.version);
   d3.select('#solver-step').text('0');
   tester.after_step_callback = after_step_callback;
@@ -397,15 +397,14 @@ function init_pbp_data() {
 }
 
 function getPBPFromURL() {
-  var str = getURLParameter('pbp');
+  var str = getURLParameter('pbp') || getURLParameter('PBP');
   if (!str) return false;
-  var name = 'pbp'+str;
   for (var i=0; i<pbps.length; i++) {
-    if (pbps[i].name === 'pbp'+name) return i;
-    if (pbps[i].name === 'pbp0'+name) return i;
-    if (pbps[i].name === name) return i;
+    if (pbps[i].name === 'pbp'+str) return i;
+    if (pbps[i].name === 'pbp0'+str) return i;
+    if (pbps[i].name === str) return i;
   }
-  return false;
+  return 0;
 }
 
 function getURLParameter(name) {

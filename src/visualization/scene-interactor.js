@@ -356,10 +356,10 @@ SceneInteractor.prototype.applySelector = function(sel) {
 SceneInteractor.prototype.applySolution = function(sol) {
 	var res = sol.check_scene(this.sn);
 	this.selectShapes(res.group.objs);
-	if (sol.isPotentialSolution()) {
+	//if (sol.isPotentialSolution()) {
 		var color = res.match ? '#efe' : '#fee';
 		this.svg.style('background-color', color);
-	}
+	//}
 }
 
 SceneInteractor.prototype.colorize_values = function(value_getter) {

@@ -422,6 +422,7 @@ Selector.RelMatcher = function(other_sel, key, label, active, time) {
 	this.other_sel = other_sel;
 	this.key = key;
 	this.label = label;
+	this.type = 'object';
 	this.active = typeof(active) === 'undefined' ? true : active;
 	this.constant = pbpSettings.obj_rels[key].prototype.constant;
 	this.symmetric = pbpSettings.obj_rels[key].prototype.symmetric;

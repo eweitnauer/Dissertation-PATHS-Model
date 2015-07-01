@@ -48,7 +48,7 @@ Coderack.prototype.step = function() {
   this.ws.scene_pair_steps++;
   if (this.followups.length === 0) this.runBehaviors();
   this.runCodelet();
-  this.ws.attentionNet.updateActivities();
+  this.ws.attentionNet.updateActivities(this.ws.scenes);
 }
 
 /// Default urgency is 10. Urgency must be above 0.

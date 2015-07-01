@@ -15,12 +15,15 @@ AttentionNet = function(options) {
 	this.solutions = [];
 	this.objects = [];
 	this.objects_by_scene = null; // internal cache, keys are scene ids
+	this.groups = [];
 	this.attention_values = new WeakMap();
 	this.feature_groups = [];
 
 	this.feature_base = options.activity.feature.hyp_base;
 	this.object_base = options.activity.obj.hyp_base;
 	this.obj_attr_priors = options.activity.obj.attr_priors;
+	this.group_attr_priors = options.activity.group.attr_priors;
+	this.group_base = options.activity.group.hyp_base;
 }
 
 /// Can throw "unknown element" exception.
@@ -29,7 +32,7 @@ AttentionNet.prototype.getActivity = function(el) {
 	return this.attention_values.get(el);
 }
 
-AttentionNet.prototype.updateActivities = function() {
+AttentionNet.prototype.updateActivities = function(scenes) {
 	var self = this;
 	this.solutions.forEach(function(sol) {
 		self.attention_values.set(sol, self.calcSolutionActivity(sol))
@@ -51,7 +54,12 @@ AttentionNet.prototype.updateActivities = function() {
 	this.objects.forEach(function(obj) {
 		self.attention_values.set(obj, self.calcObjectActivity(obj))
 	});
-	this.normalize('objects');
+	this.normalize('objects', scenes);
+
+	this.groups.forEach(function(grp) {
+		self.attention_values.set(grp, self.calcGroupActivity(grp))
+	});
+	this.normalize('groups', scenes);
 }
 
 AttentionNet.prototype.calcSolutionActivity = function(sol) {
@@ -104,16 +112,34 @@ AttentionNet.prototype.calcObjectActivity = function(obj) {
 	return this.getObjectPrior(obj) * (this.object_base+sum);
 }
 
+AttentionNet.prototype.calcGroupActivity = function(grp) {
+	var self = this;
+	var sum = d3.sum(group.selectors, function(sel) {
+		return self.getActivity(sel.solution);
+	});
+	return this.getGroupPrior(grp) * (this.group_base+sum);
+}
+
 AttentionNet.prototype.getObjectPrior = function(obj) {
 	var prod = 1, perception;
 	for (var attr in this.obj_attr_priors) {
 		perception = obj.getDeliberateOnly(attr, {time: 'start'});
 		if (perception && this.isActive(perception)) prod *= this.obj_attr_priors[attr];
 	}
+	// The following is an imperfect implementation of relation priors
 	// 	perception = obj.getDeliberateOnly(rel, {time: 'start'});
 	// 	if (perception && this.isActive(perception)) prod *= this.obj_rel_priors[rel][0];
 	// 	// we should also check for this object being the `other` object in a relationship
 	// }
+	return prod;
+}
+
+AttentionNet.prototype.getGroupPrior = function(obj) {
+	var prod = 1, perception;
+	for (var attr in this.group_attr_priors) {
+		perception = group.getDeliberateOnly(attr, {time: 'start'});
+		if (perception && this.isActive(perception)) prod *= this.group_attr_priors[attr];
+	}
 	return prod;
 }
 
@@ -125,16 +151,18 @@ AttentionNet.prototype.isActive = function(percept) {
 /// and 'objects' the attentions add up to 1 (per scene for objects).
 /// The `type` argument is optional, if not passed, all types are
 /// normalized.
-AttentionNet.prototype.normalize = function(type) {
+AttentionNet.prototype.normalize = function(type, scenes) {
 	if (!type) {
 		this.normalize('features');
 		this.normalize('solutions');
 		this.normalize('objects');
+		this.normalize('groups');
 		return;
 	}
 	if (type === 'objects') {
-		var objs = this.objectsByScene();
-		for (var idx in objs)	this.normalizeElements(objs[idx]);
+		for (var i=0; i<scenes.length; i++) this.normalizeElements(scenes[i].objs);
+	} else if (type === 'groups') {
+		for (var i=0; i<scenes.length; i++) this.normalizeElements(scenes[i].groups);
 	} else {
 		this.normalizeElements(this[type]);
 	}
@@ -169,6 +197,17 @@ AttentionNet.prototype.objectsByScene = function() {
 		this.objects_by_scene = objs;
 	}
 	return this.objects_by_scene;
+}
+
+/// Returns all groups grouped by scenes.
+AttentionNet.prototype.groupsByScene = function() {
+	var groups = {}, group;
+	for (var i=0; i<this.groups.length; i++) {
+	  group = this.groups[i];
+	  if (!(group.scene_node.id in groups)) groups[group.scene_node.id] = [];
+	  groups[group.scene_node.id].push(group);
+	}
+	return groups;
 }
 
 /// Type can be 'feature', 'solution' and 'object'. Optionally pass an
@@ -235,6 +274,27 @@ AttentionNet.prototype.getRandomObject = function(scene, options) {
 		return self.getActivity(obj);
 	});
 	else return Random.pick(objs);
+}
+
+/// Chooses a random group from the passed scene based on their attention values.
+/// If the groups have a summed activity of 0, any on of them is picked.
+/// Available options:
+/// filter (GroupNode->bool)
+AttentionNet.prototype.getRandomGroup = function(scene, options) {
+	options = options || {};
+	var self = this;
+	var activity_sum = 0;
+	var groups = scene.groups.filter(function(group) {
+		if (!options.filter || options.filter(group)) {
+			activity_sum += self.getActivity(group);
+			return true;
+		} else return false;
+	});
+	if (groups.length === 0) return null;
+	if (activity_sum > 0) return Random.pick_weighted(groups, function (group) {
+		return self.getActivity(group);
+	});
+	else return Random.pick(groups);
 }
 
 /// Chooses a random object from the passed scene based on their attention values.

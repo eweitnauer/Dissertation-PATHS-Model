@@ -211,8 +211,6 @@ ObjectNode.prototype.describeState = function(time, prefix) {
   for (var a in ObjectNode.attrs) {
     var attr = this.times[time][a];
     if (!attr) continue;
-    var active = attr.get_activity() >= 0.5;
-    //var res = (active ? '' : '!') + attr.get_label();
     var res = attr.get_label() + '[' + attr.get_activity().toFixed(2) + ']';
     out.push(attr.deliberate ? res.toUpperCase() : res);
   }
@@ -221,9 +219,8 @@ ObjectNode.prototype.describeState = function(time, prefix) {
     if (!rels) continue;
     for (var i=0; i<rels.length; i++) {
       if (!rels[i]) continue;
-      var active = rels[i].get_activity() >= 0.5;
-      var res = (active ? '' : '!') + rels[i].get_label() + rels[i].other.id;
-      out.push(rels[i].deliberate ? res : '('+res+')');
+      var res = rels[i].get_label() + '#' + rels[i].other.id + '[' + rels[i].get_activity().toFixed(2) + ']';
+      out.push(rels[i].deliberate ? res.toUpperCase() : res);
     }
   }
   return prefix + time + ": " + out.join(', ');
