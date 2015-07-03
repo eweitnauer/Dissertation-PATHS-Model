@@ -95,8 +95,9 @@ PITestSuite.prototype.logResult = function(opts, params, stats) {
            , targetType: fi.klass.prototype.targetType
            , initial_activation: fi.initial_activation }
   });
-  var res = { step_idx: this.curr_idx
-            , step_count: this.step_count
+  var res = { trial_curr: this.curr_idx
+            , trial_total: this.step_count
+            , steps_max: this.max_solver_steps
             , test_id: this.id
             , options: opts };
   var dot = /\./g;

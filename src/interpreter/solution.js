@@ -208,7 +208,6 @@ Solution.prototype.adjustThresholds = function(main_side, left_scenes, right_sce
 	var thresh;
 
 	for (var key in ranges.left) {
-		console.log(key);
 		var main = ranges[main_side][key]
 		  , other = ranges[other_side][key];
 

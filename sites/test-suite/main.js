@@ -2,7 +2,8 @@ var pixels_per_unit = 50
   , div, p, t;
 
 function init(from, to) {
-	var ps = setup_testsuite(100, 2500);
+	var ps = setup_testsuite(25, 2500);
+	// var ps = setup_testsuite(2, 250);
 	ps.addParameter('pres_mode',
 		['interleaved-sim-sim', 'interleaved-sim-dis'
 		,'interleaved-dis-sim', 'interleaved-dis-dis'
