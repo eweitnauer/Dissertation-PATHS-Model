@@ -36,7 +36,7 @@ ActivityRanges.calcStats = function(selector, scenes) {
 		var key = m.time + '.' + m.key + '.' + m.type;
 		if (!res[key]) res[key] = { minmin:1, minmax:1, maxmin:0, maxmax:0 };
 		for (var i=0; i<scenes.length; i++) {
-	  	var range = scenes[i].activity_ranges[key];
+	  	var range = scenes[i].activity_ranges.ranges[key];
 	  	if (!range) continue;
 	  	res[key].minmin = Math.min(range.min, res[key].minmin);
 	  	res[key].minmax = Math.min(range.max, res[key].minmax);
