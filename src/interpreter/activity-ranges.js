@@ -3,9 +3,8 @@
 /// Based on this information, the threshold of a feature can be adjusted to
 /// allow for a solution.
 ActivityRanges = function() {
-	this.ranges = new Map();
+	this.ranges = {};
 }
-ActivityRanges.prototype = new Map();
 
 ActivityRanges.update = function(percept, time) {
 	var scene;
@@ -19,16 +18,16 @@ ActivityRanges.prototype.update = function(percept, time) {
 	        + (percept.targetType === 'obj' ? 'object' : 'group');
 	var act = percept.get_activity();
 
-	if (!this.ranges.has(key)) this.ranges.set(key, { min: 1, max: 0 });
+	if (!this.ranges[key]) this.ranges[key] = { min: 1, max: 0 };
 
-	var d = this.ranges.get(key);
+	var d = this.ranges[key];
 
 	d.min = Math.min(d.min, act);
 	d.max = Math.max(d.max, act);
 }
 
 ActivityRanges.prototype.get = function(key) {
-	return this.ranges.get(key);
+	return this.ranges[key];
 }
 
 ActivityRanges.calcStats = function(selector, scenes) {
@@ -37,7 +36,7 @@ ActivityRanges.calcStats = function(selector, scenes) {
 		var key = m.time + '.' + m.key + '.' + m.type;
 		if (!res[key]) res[key] = { minmin:1, minmax:1, maxmin:0, maxmax:0 };
 		for (var i=0; i<scenes.length; i++) {
-	  	var range = scenes[i].activity_ranges.get(key);
+	  	var range = scenes[i].activity_ranges[key];
 	  	if (!range) continue;
 	  	res[key].minmin = Math.min(range.min, res[key].minmin);
 	  	res[key].minmax = Math.min(range.max, res[key].minmax);
