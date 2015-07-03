@@ -148,7 +148,8 @@ Selector.prototype.applyToScene = function(scene) {
 			var g = scene.groups[i];
     	if (this.arraysIdentical(g.objs, group.objs)) {
       	if (g.selectors.some(function(ssel) { return ssel.equals(sel) })) {
-        	throw "I won't insert an existing selector";
+      		var dublicate = g.selectors.filter(function(ssel) { return ssel.equals(sel) })[0];
+        	throw "I won't insert an existing selector: old is '" + sel.describe() + "' new is '" + dublicate.describe() + "'";
       	}
       	g.selectors.push(sel);
       	sel.cached_results.push(g);
@@ -256,6 +257,7 @@ Selector.prototype.equals = function(other) {
 	if (this.obj_attrs.length !== other.obj_attrs.length) return false;
 	if (this.grp_attrs.length !== other.grp_attrs.length) return false;
 	if (this.rels.length !== other.rels.length) return false;
+	for (var key in this.thresholds) if (this.thresholds[key] !== other.thresholds[key]) return false;
 	var self = this;
 	var differs = function(field) {
 		return (!self[field].every(function (ours) {
