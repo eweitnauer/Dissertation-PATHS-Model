@@ -39,7 +39,7 @@ RecombineHypothesisCodelet.prototype.run = function() {
     }
   });
   if (!new_other_sel) return false;
-  new_other_sel = new_other_sel.sel;
+  new_other_sel = new_other_sel.sel.clone();
 
   var new_hyp = hyp1.clone();
   var new_rel = new_hyp.sel.rels[hyp1.sel.rels.indexOf(rel)];

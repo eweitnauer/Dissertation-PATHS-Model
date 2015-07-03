@@ -249,8 +249,12 @@ Workspace.prototype.addSolution = function(sol) {
   this.log(3, 'adding solution:', sol.describe());
 }
 
+/// Adds a group to the attention net, but only if that group is registered in the groups
+/// array of its scene. Otherwise it is either an empty group or was created when matching
+/// a reference-selector (other_sel in rel-matcher) and should not be taken into account
+/// during activity calculations.
 Workspace.prototype.addGroup = function(group) {
-  this.attentionNet.addGroup(group);
+  if (group.scene_node.groups.indexOf(group) !== -1) this.attentionNet.addGroup(group);
 }
 
 /// Selects a random group from the passed scene based on the attention values

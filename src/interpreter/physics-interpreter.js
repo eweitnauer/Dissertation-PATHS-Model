@@ -4,21 +4,22 @@ var PI = PI || {};
 /*
 
 Bugs / Problems:
-- The other_sel in a relationship matcher is a reference to an existing selector.
-  When that existing selector changes its selection thresholds, the relationship
-  matcher changes but is not updated or reset. It would be preferable if it would
-  use a clone of the existing selector.
 - Adjustment of thresholds does not work for relationship target-selectors. We can't
   get to the selector "left of very small objects"
-- Once a relationship matcher is created, its target-selector is fixed. It can't be
-  updated via a merge action. If during the first observation the target-selectors
-  of a relationship are chosen wrong, the algorithm will never find a solution.
 
 Version 0.7.0
 - new codelet: RecombineHypothesisCodelet, which changes the target-selector of a
   relationship matcher
 - the new action probabilities are:
   perceive: 0.6, check_hyp: 0.25, combine_hyp: 0.1, recombine_hyp: 0.05
+✓ Fixes this problem: Once a relationship matcher is created, its target-selector is fixed.
+  It can't be updated via a merge action. If during the first observation the target-selectors
+  of a relationship are chosen wrong, the algorithm will never find a solution.
+- other_sel selectors in rel-matchers are now clones, not references
+✓ Fixes this problem: The other_sel in a relationship matcher is a reference to an existing selector.
+  When that existing selector changes its selection thresholds, the relationship
+  matcher changes but is not updated or reset. It would be preferable if it would
+  use a clone of the existing selector.
 
 Version 0.6.2
 - simulate priming or scaffolding by fixing the priors for

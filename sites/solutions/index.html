@@ -82,7 +82,7 @@
     <link href="main.css" rel="stylesheet">
   </head>
   <body onload="init();">
-    <div id="header">
+    <!-- <div id="header">
       <div id="options" style="display: none"></div>
       <div id="solution" style="display: block">
         <div id="sol-texts"></div>
@@ -93,7 +93,7 @@
         <button id="show-hide-2">show solutions</button>
         <button id="solve">solve</button>
         <button id="solve-debug">solve (debug)</button>
-      </div>
+      </div> -->
     </div>
     <div id="vis" class="box">
         <!-- <div id="selectors" class="box info" style="top: 670px; position: absolute; width: 91%">
@@ -105,9 +105,10 @@
         <img id="btnNext" onclick="next()" src="right.png"/>
         <div id='time-control'>
           <span>set time to:</span>
-          <a href='#' id='jump-to-zero'>0</a>
-          <a href='#' id='jump-to-start'>start</a>
-          <a href='#' id='jump-to-end'>end</a>
+          <a href='#' id='jump-to-zero' style='text-decoration: underline'>0</a>
+          <a href='#' id='jump-to-start' style='text-decoration: underline'>start</a>
+          <a href='#' id='jump-to-end' style='text-decoration: underline'>end</a>
+          <a href='#' id='curr-as-start' style='text-decoration: underline'>[start&lt;-curr]</a>
         </div>
         <div id="svgs"></div>
     </div>

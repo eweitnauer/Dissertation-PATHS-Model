@@ -21,6 +21,17 @@ GroupNode.prototype.empty = function() {
   return this.objs.length === 0;
 }
 
+GroupNode.prototype.addSelector = function(new_sel) {
+  if (this.selectors.some(function(sel) { return new_sel.equals(sel) })) {
+    var dublicate = this.selectors.filter(function(sel) { return new_sel.equals(sel) })[0];
+    console.warn("Not inserting duplicate selector.");
+    console.warn("New selector: '" + new_sel.describe() + "' from solution ", new_sel.solution.describe());
+    console.warn("Old selector: '" + dublicate.describe() + "' from solution", dublicate.solution.describe());
+    throw 'xxx';
+  }
+  this.selectors.push(new_sel);
+};
+
 /// Returns a clone with the same scene node, a copy of the objs array.
 /// CAUTION: The times field that holds all cached percepts is the same
 /// reference as in the original group node!

@@ -21,6 +21,9 @@ var Selector = function(unique) {
 	this.rels = [];         // object relationships
 	this.unique = !!unique;
 	this.solution = null;   // the solution associated with this selector
+  this.is_reference_selector = false; // set to true if this is an other_sel in a rel-matcher
+                                      // in that case, we don't add this selector to the group
+                                      // selector array after matching, to avoid duplicates
 
 	this.thresholds = { /*'unstable.object': 0.3*/ };   // can be used to map features (e.g. 'close.object') to custom thresholds
 
@@ -122,45 +125,38 @@ Selector.prototype.getCachedResult = function(scene) {
 		if (g.scene_node === scene) return g;
 	}
 	return null;
-	// for (var i=0; i<scene.groups.length; i++) {
-  //    var g = scene.groups[i];
-  //    if (g.selectors.indexOf(this) !== -1) return g;
-  //  }
-  //return null;
+}
+
+/// Clones all matchers, the solution reference, and cached results.
+Selector.prototype.clone = function() {
+	var sel = new Selector(this.unique);
+	sel.solution = this.solution;
+    sel.is_reference_selector = this.is_reference_selector;
+	var add_attr = function(attr) { sel.add_attr(attr.clone()) };
+	var add_rel = function(rel) { sel.add_rel(rel.clone()) };
+	this.obj_attrs.forEach(add_attr);
+	this.grp_attrs.forEach(add_attr);
+	this.rels.forEach(add_rel);
+	sel.cached_results = this.cached_results.slice();
+	sel.cached_complexity = this.cached_complexity;
+	return sel;
 }
 
 /** Will return a cached result if it exists. If not, it will apply the selector
  * to the scene. If there is a group in the scene that contains the same objects
  * as selected by this selector, it will return that group, otherwise the newly
- * created group, after adding it to the scene. */
+ * created group, after adding it to the scene.
+ * It the passed selector is a reference selector, it will not do any caching or
+ * adding to the selector arrays. */
 Selector.prototype.applyToScene = function(scene) {
-	var sel = this, group;
-	group = this.getCachedResult(scene);
-	if (group) return group;
-	// we did not apply this selector to this scene yet
-	var all_group = scene.groups[0] || GroupNode.sceneGroup(scene);
-	if (all_group.objs.length !== scene.objs.length)
-	  throw "1st group in each scene should be the all-group";
-	group = this.select(all_group, scene);
-	group.selectors = [this];
-	if (!group.empty()) {
-		for (var i=0; i<scene.groups.length; i++) {
-			var g = scene.groups[i];
-    	if (this.arraysIdentical(g.objs, group.objs)) {
-      	if (g.selectors.some(function(ssel) { return ssel.equals(sel) })) {
-      		var dublicate = g.selectors.filter(function(ssel) { return ssel.equals(sel) })[0];
-        	throw "I won't insert an existing selector: old is '" + sel.describe() + "' new is '" + dublicate.describe() + "'";
-      	}
-      	g.selectors.push(sel);
-      	sel.cached_results.push(g);
-      	return g;
-    	}
-  	}
-  	// a new group!
-  	scene.groups.push(group);
-  	sel.cached_results.push(group);
-	}
-	return group;
+  var group = this.getCachedResult(scene);
+  if (group) return group; 
+  group = this.selectFromAll(scene);
+  if (this.is_reference_selector) return group;
+  if (scene.groups.indexOf(group) === -1) scene.groups.push(group);
+  if (group.selectors.indexOf(this) === -1) group.addSelector(this);
+  this.cached_results.push(group);
+  return group;
 }
 
 Selector.prototype.hasFeatureType = function(klass) {
@@ -185,16 +181,6 @@ Selector.prototype.mergedWith = function(other_sel) {
 	this.rels.forEach(add_rel);
 	other_sel.rels.forEach(add_rel);
 
-	return sel;
-}
-
-Selector.prototype.clone = function() {
-	var sel = new Selector(this.unique);
-	var add_attr = function(attr) { sel.add_attr(attr.clone()) };
-	var add_rel = function(rel) { sel.add_rel(rel.clone()) };
-	this.obj_attrs.forEach(add_attr);
-	this.grp_attrs.forEach(add_attr);
-	this.rels.forEach(add_rel);
 	return sel;
 }
 
@@ -235,6 +221,7 @@ Selector.prototype.use_rel = function(other_sel, rel, time) {
 /// Adds the passed RelMatcher. Will replace if a rel with the same key, target object
 /// and time is in the list already.
 Selector.prototype.add_rel = function(rel_matcher) {
+  rel_matcher.other_sel.is_reference_selector = true;
 	// if we have an attr of same type, replace
 	for (var i=0; i<this.rels.length; i++) {
 		var rel = this.rels[i];
@@ -251,13 +238,14 @@ Selector.prototype.add_rel = function(rel_matcher) {
 
 /// Returns true if the passed other selector has the same relationships and attributes.
 /// They might be in a different order.
+/// We consider two otherwise identical selectors with different thresholds as equal. This
+/// is useful since it avoids duplicate selectors when changing the thresholds.
 Selector.prototype.equals = function(other) {
 	if (!other) return false;
 	if (this === other) return true;
 	if (this.obj_attrs.length !== other.obj_attrs.length) return false;
 	if (this.grp_attrs.length !== other.grp_attrs.length) return false;
 	if (this.rels.length !== other.rels.length) return false;
-	for (var key in this.thresholds) if (this.thresholds[key] !== other.thresholds[key]) return false;
 	var self = this;
 	var differs = function(field) {
 		return (!self[field].every(function (ours) {
@@ -295,40 +283,29 @@ Selector.prototype.matchesGroup = function(group) {
 	});
 };
 
-/// Returns a group node. If a test_fn is passed, it is called for each object
-/// node that matches the selector attributes and only if the function returns
-/// true, the node is used. The relationships of the selector are not used in
-/// this case.
-Selector.prototype.select = function(group_node, scene_node, test_fn) {
-	if (this.blank()) return group_node;
+/// Applies the selector to all elements in the scene.
+Selector.prototype.selectFromAll = function(scene) {
+	if (scene.groups.length === 0) scene.groups.push(GroupNode.sceneGroup(scene));
+	var all_group = scene.groups[0]
+  if (all_group.objs.length !== scene.objs.length) throw "1st group in each scene should be the all-group";
+  var type = this.getType();
+  var self = this;
+  var gn = all_group;
+  if (type === 'mixed' || type === 'object') {
+    var nodes = gn.objs
+      .map(function (obj) { return obj.object_node })
+      .filter(function (node) { return self.matchesObject(node) })
+      .map(function (on) { return on.obj });
 
-	var selector = this.mergedWith(group_node.selectors[0]);
-	var gn = group_node.clone();
-	var type = this.getType();
-	var self = this;
-	gn.selectors = [selector];
-	// first apply object-level features
-	if (type === 'mixed' || type === 'object') {
-		var nodes = gn.objs
-	  	.map(function (obj) { return obj.object_node })
-	  	.filter(function (node) { return self.matchesObject(node, null, test_fn) })
-	  	.map(function (on) { return on.obj });
-
-	  // check whether a group with these nodes already exists in the scene
-	  var gn2 = scene_node.getGroupByNodes(nodes);
-	  if (gn2) {
-	  	gn = gn2;
-	  	gn.selectors.push(selector);
-	  } else {
-	  	gn = new GroupNode(scene_node, nodes, selector);
-	  }
-	}
-	// then apply group-level features
-	if (type === 'mixed' || type === 'group') {
-		if (!this.matchesGroup(gn)) gn = new GroupNode(scene_node, [], selector);
-	}
-	return gn;
-};
+    // check whether a group with these nodes already exists in the scene
+    gn = scene.getGroupByNodes(nodes) || new GroupNode(scene, nodes, this);
+  }
+  // then apply group-level features
+  if (type === 'mixed' || type === 'group') {
+    if (!this.matchesGroup(gn)) gn = new GroupNode(scene, [], this);
+  }
+  return gn;
+}
 
 /// Returns a human readable description of the attributes used in this selector.
 Selector.prototype.describe = function() {
@@ -344,26 +321,6 @@ Selector.prototype.describe = function() {
 	if (this.unique) return '[the ' + attrs + ' object' + (rels === '' ? '' : ' that is ' + rels) + ']';
 	return '(' + attrs + ' objects' + (rels === '' ? '' : ' that are ' + rels) + ')';
 };
-
-Selector.prototype.describe2 = function(omit_mode) {
-	if (this.blank()) {
-	 	if (omit_mode) return '*';
-	 	return (this.unique ? 'there is exactly one object' : 'any object');
-	}
-	var attrs = this.obj_attrs.map(function (attr) { return attr.describe() });
-	var grp_attrs = this.grp_attrs.map(function (attr) { return attr.describe() }).join(" and ");
-	var rels = this.rels.map(function (rel) { return rel.describe() });
-	var res = attrs.concat(rels).concat(grp_attrs).join(" and ");
-	if (omit_mode) {
-	 	if (this.unique) return '[that is ' + res + ']';
-	 	else return '[that are ' + res + ']';
-	} else {
-	 	if (this.unique) return '[exactly one object is ' + res + ']';
-	 	else return '(objects that are ' + res + ')';
-	}
-};
-
-
 
 Selector.AttrMatcher = function(key, label, active, time, type) {
 	this.key = key;

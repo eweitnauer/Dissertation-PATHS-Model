@@ -11,16 +11,15 @@ CheckHypothesisCodelet.prototype.describe = function() {
   return 'CheckHypothesisCodelet';
 }
 
-CheckHypothesisCodelet.updateObjectSelectorArrays = function(groups, sel) {
-  for (var i=0; i<groups.length; i++) {
-    for (var j=0; j<groups[i].objs.length; j++) {
-      var on = groups[i].objs[j].object_node;
-      // the following check should be needed for the blank selector only, which
-      // is initially applied to all scenes, as all other selectors are only
-      // applied once to each scene and their result gets cached
-      if (on.selectors.indexOf(sel) !== -1) throw "duplicate selector!";
-      on.selectors.push(sel);
-    }
+CheckHypothesisCodelet.updateObjectSelectorArrays = function(group, sel) {
+  if (sel.is_reference_selector) throw "this should not happen!";
+  for (var j=0; j<group.objs.length; j++) {
+    var on = group.objs[j].object_node;
+    // the following check should be needed for the blank selector only, which
+    // is initially applied to all scenes, as all other selectors are only
+    // applied once to each scene and their result gets cached
+    if (on.selectors.indexOf(sel) !== -1) throw "duplicate selector!";
+    on.selectors.push(sel);
   }
 }
 
@@ -70,8 +69,11 @@ CheckHypothesisCodelet.prototype.run = function() {
     this.removeFromSelectorArrays(hyp.sel);
     return true;
   }
-  CheckHypothesisCodelet.updateObjectSelectorArrays(selected_groups, hyp.sel);
-  for (var i=0; i<selected_groups.length; i++) this.ws.addGroup(selected_groups[i]);
+  for (var i=0; i<selected_groups.length; i++) {
+    if (selected_groups[i].length > 0 && selected_groups[i].scene_node.groups.indexOf(selected_groups[i]) === -1) throw "this should not happen";
+    this.ws.addGroup(selected_groups[i]);
+    CheckHypothesisCodelet.updateObjectSelectorArrays(selected_groups[i], hyp.sel);
+  }
 
   if (hyp.isSolution(this.ws.scene_pair_sequence.length)) this.ws.addSolution(hyp);
 
