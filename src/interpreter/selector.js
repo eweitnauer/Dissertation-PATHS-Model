@@ -152,10 +152,11 @@ Selector.prototype.applyToScene = function(scene) {
   var group = this.getCachedResult(scene);
   if (group) return group; 
   group = this.selectFromAll(scene);
+  this.cached_results.push(group);
   if (this.is_reference_selector) return group;
+  if (group.empty()) return group;
   if (scene.groups.indexOf(group) === -1) scene.groups.push(group);
   if (group.selectors.indexOf(this) === -1) group.addSelector(this);
-  this.cached_results.push(group);
   return group;
 }
 
@@ -285,9 +286,9 @@ Selector.prototype.matchesGroup = function(group) {
 
 /// Applies the selector to all elements in the scene.
 Selector.prototype.selectFromAll = function(scene) {
-	if (scene.groups.length === 0) scene.groups.push(GroupNode.sceneGroup(scene));
-	var all_group = scene.groups[0]
+	var all_group = scene.groups[0] || GroupNode.sceneGroup(scene, this);
   if (all_group.objs.length !== scene.objs.length) throw "1st group in each scene should be the all-group";
+  if (this.blank()) return all_group;
   var type = this.getType();
   var self = this;
   var gn = all_group;

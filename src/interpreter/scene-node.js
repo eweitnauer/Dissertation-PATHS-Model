@@ -22,7 +22,7 @@ SceneNode.prototype.getAllGroup = function() {
 
 SceneNode.prototype.getGroupByNodes = function(nodes) {
   var gs = this.groups.filter(function(group) {
-    return SceneNode.same_elements(group, nodes);
+    return SceneNode.same_elements(group.objs, nodes);
   });
   if (gs.length === 0) return null;
   return gs[0];

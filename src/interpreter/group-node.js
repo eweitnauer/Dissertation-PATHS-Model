@@ -41,15 +41,12 @@ GroupNode.prototype.clone = function() {
   return gn;
 }
 
-/// Creates and returns a single GroupNode of all objects of a scene. If the key_obj
-/// parameter is passed, the key_obj is not included in the group.
-GroupNode.sceneGroup = function(scene_node, key_obj) {
-	var g = new GroupNode(scene_node);
-  for (var i=0; i<scene_node.objs.length; i++) {
-    var on = scene_node.objs[i];
-    if (on != key_obj && on instanceof ObjectNode) g.objs.push(on.obj);
-  }
-  return g;
+/// Creates and returns a single GroupNode of all objects of a scene. If a blank selector
+/// is passed, it is used as selector for the new group node.
+GroupNode.sceneGroup = function(scene_node, sel) {
+  if (!sel.blank()) throw "Selector must be blank, but is " + sel.describe() + "!";
+  var objs = scene_node.objs.map(function(on) { return on.obj});
+	return new GroupNode(scene_node, objs, sel);
 }
 
 /// Creates a GroupNodes for each set of spatially close objects in the scene
