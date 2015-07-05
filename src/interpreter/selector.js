@@ -131,7 +131,7 @@ Selector.prototype.getCachedResult = function(scene) {
 Selector.prototype.clone = function() {
 	var sel = new Selector(this.unique);
 	sel.solution = this.solution;
-    sel.is_reference_selector = this.is_reference_selector;
+  sel.is_reference_selector = this.is_reference_selector;
 	var add_attr = function(attr) { sel.add_attr(attr.clone()) };
 	var add_rel = function(rel) { sel.add_rel(rel.clone()) };
 	this.obj_attrs.forEach(add_attr);

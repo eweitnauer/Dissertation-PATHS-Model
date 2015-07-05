@@ -185,7 +185,7 @@ var pi_default_options = function() {
     version: pi_version
   , features: [
                 { klass: CircleAttribute,      initial_activation: high,  group: 'shape' }
-              , { klass: SquareAttribute,      initial_activation: high,  group: 'shape' }
+               , { klass: SquareAttribute,      initial_activation: high,  group: 'shape' }
               , { klass: TriangleAttribute,    initial_activation: high,  group: 'shape' }
               , { klass: RectangleAttribute,   initial_activation: high,  group: 'shape' }
               , { klass: SmallAttribute,       initial_activation: high,  group: 'shape' }

@@ -24,10 +24,9 @@ GroupNode.prototype.empty = function() {
 GroupNode.prototype.addSelector = function(new_sel) {
   if (this.selectors.some(function(sel) { return new_sel.equals(sel) })) {
     var dublicate = this.selectors.filter(function(sel) { return new_sel.equals(sel) })[0];
-    console.warn("Not inserting duplicate selector.");
-    console.warn("New selector: '" + new_sel.describe() + "' from solution ", new_sel.solution.describe());
-    console.warn("Old selector: '" + dublicate.describe() + "' from solution", dublicate.solution.describe());
-    throw 'xxx';
+    console.error("Inserting duplicate selector, this should not happen.");
+    console.info("New selector: '" + new_sel.describe() + "' from solution ", new_sel.solution.describe());
+    console.info("Old selector: '" + dublicate.describe() + "' from solution", dublicate.solution.describe());
   }
   this.selectors.push(new_sel);
 };
