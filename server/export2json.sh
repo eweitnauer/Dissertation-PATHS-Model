@@ -1,1 +1,1 @@
-mongoexport --host localhost --db data-server --collection $1 -f test_id,step_idx,step_count,pbp,pres_mode,rep,reps,solved,steps,perception_count,retrieval_count,sol,timestamp --csv
+mongoexport --host localhost --db data-server --collection $1 -f test_id,trial_curr,trial_total,rep,reps,steps,steps_max,pbp,pres_mode,perception_count,retrieval_count,sol,solved,timestamp --csv

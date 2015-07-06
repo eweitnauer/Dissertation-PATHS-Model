@@ -1,13 +1,14 @@
 /// This is not required anymore due to our new, flat document structure.
 /// Instead, use
 /// `mongoexport --host localhost --db data-server --collection pi -f test_id,step_idx,step_count,pbp,pres_mode,rep,reps,solved,steps,perception_count,retrieval_count,sol,timestamp --csv`
+/// However, mongoexport does not support column names with spaces or dashes, so we need this script after all.
 var db = require('./db');
 var stringify = require('csv-stringify');
 var fs = require('fs');
 db.connect(on_connect);
 
 function on_connect() {
-	var data = db.findAll('pi', {sort: 'step_idx'}, writeData);
+	var data = db.findAll('pi_0_7_0', {sort: 'trial_curr'}, writeData);
 }
 
 function getField(d, path) {
@@ -17,10 +18,10 @@ function getField(d, path) {
   return d;
 }
 
-var cols = [ 'test_id', 'step_idx', 'step_count', 'pbp'
-           , 'pres_mode', ['feature1st', 'perception->pick_feature_fist']
-           , 'rep', 'reps', 'solved', 'steps', 'perception_count'
-           , 'retrieval_count', 'sol', 'timestamp' ];
+var cols = [ 'test_id', 'trial_curr', 'trial_total', 'rep'
+           , 'reps', ['feature_prior_strength', 'activity->feature->hyp_base']
+           , 'steps', 'steps_max', 'pbp', 'pres_mode', 'perception_count'
+           , 'retrieval_count', 'sol', 'solved', 'timestamp' ];
 function writeData(data) {
   db.close();
   stringifier = stringify();

@@ -9,6 +9,7 @@ function init(from, to) {
 		,'interleaved-dis-sim', 'interleaved-dis-dis'
 	  ,'blocked-sim-sim', 'blocked-sim-dis'
 		,'blocked-dis-sim', 'blocked-dis-dis']);
+	ps.addParameter('activity.feature.hyp_base', [0.1, 100]);
 	ps.run(from || 0, to || Infinity);
 }
 

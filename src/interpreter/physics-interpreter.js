@@ -223,7 +223,7 @@ var pi_default_options = function() {
               , { klass: MovableUpAttribute,   initial_activation: low,  group: 'dynamics' }
              ]
   , pres_mode: 'interleaved-dis-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
-  , randomize_row_order: false
+  , randomize_row_order: true
   , pres_time: 100 // every x steps, switch to the next scene pair
   , action_priors:
     {
@@ -239,7 +239,7 @@ var pi_default_options = function() {
     }
   , activity:
     {
-      time: { start: 0.67, end: 0.33 }
+        time: { start: 0.67, end: 0.33 }
       , feature: {
         hyp_base: 0.1 // >=0, the smaller, the bigger the influence of hypotheses activities
       }
