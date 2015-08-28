@@ -20,6 +20,7 @@ Version 0.7.0
   When that existing selector changes its selection thresholds, the relationship
   matcher changes but is not updated or reset. It would be preferable if it would
   use a clone of the existing selector.
+- fixed bug that would result in wrong solutions -- related to cloning cached results with selectors.
 
 Version 0.6.2
 - simulate priming or scaffolding by fixing the priors for

@@ -189,6 +189,7 @@ Solution.prototype.checkScenePair = function(pair, pair_id) {
     }
   });
   this.matchedAgainst.push(pair_id);
+  //this.recheck_all_checked_scenes(); // ONLY FOR DEBUGGING
 
   if (!this.tryMode('exists', 'one-sided') &&
   	  !this.tryMode('all', 'one-sided') &&
@@ -249,7 +250,7 @@ Solution.prototype.check = function(scenes_l, scenes_r) {
 	   ,self = this;
 
   var check_scene = function(scene) {
-  	return self.check_scene(scene).match;
+  	return self.check_scene(scene, true).match;
   }
 
 	return (main_scenes.every(check_scene)
@@ -288,8 +289,10 @@ Solution.prototype.applyToScene = function(scene) {
 /// whether the resulting group of objects fits the mode of the
 /// solution. It returns an object { match: boolean, group: GroupNode }
 /// where group is the group of the selected nodes.
-Solution.prototype.check_scene = function(scene) {
-	var group = this.sel.applyToScene(scene);
+/// If no_caching is passed as true, all scene matches will be recomputed
+/// and will not be cached.
+Solution.prototype.check_scene = function(scene, no_caching) {
+	var group = this.sel.applyToScene(scene, no_caching);
 	var N = group.objs.length;
 	var res = false;
 	if (this.mode == 'unique' && N == 1) res = true;
@@ -299,6 +302,38 @@ Solution.prototype.check_scene = function(scene) {
 	scene.fits_solution = res;
 	return { match: res, group: group, match_count: N };
 }
+
+/// ONLY USED FOR DEBUGGING
+///   to find the wrong solution bug
+// Solution.prototype.recheck_all_checked_scenes = function() {
+// 	var ws = tester.ws, self = this;
+// 	var left = 0, right = 0;
+// 	this.matchedAgainst.forEach(function(pair_id) {
+// 		var scenes = ws.getScenePairById(pair_id);
+// 		if (self.check_scene(scenes[0], true).match_count) {
+// 			if (scenes[0].side == 'left') left++;
+// 			else right++;
+// 		}
+// 		if (self.check_scene(scenes[1], true).match_count) {
+// 			if (scenes[1].side == 'left') left++;
+// 			else right++;
+// 		}
+// 	});
+// 	if (this.mmatches.exists.left !== left || this.mmatches.exists.right !== right) {
+// 		//throw "mismatch!!";
+// 		this.matchedAgainst.forEach(function(pair_id) {
+// 		var scenes = ws.getScenePairById(pair_id);
+// 		if (self.check_scene(scenes[0], true).match_count) {
+// 			if (scenes[0].side == 'left') left++;
+// 			else right++;
+// 		}
+// 		if (self.check_scene(scenes[1], true).match_count) {
+// 			if (scenes[1].side == 'left') left++;
+// 			else right++;
+// 		}
+// 		});
+// 	}
+// }
 
 /// Returns a human readable description of the solution.
 Solution.prototype.describe = function() {

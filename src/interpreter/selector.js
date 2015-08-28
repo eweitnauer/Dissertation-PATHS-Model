@@ -137,8 +137,8 @@ Selector.prototype.clone = function() {
 	this.obj_attrs.forEach(add_attr);
 	this.grp_attrs.forEach(add_attr);
 	this.rels.forEach(add_rel);
-	sel.cached_results = this.cached_results.slice();
-	sel.cached_complexity = this.cached_complexity;
+	//sel.cached_results = this.cached_results.slice();
+	//sel.cached_complexity = this.cached_complexity;
 	return sel;
 }
 
@@ -148,10 +148,11 @@ Selector.prototype.clone = function() {
  * created group, after adding it to the scene.
  * It the passed selector is a reference selector, it will not do any caching or
  * adding to the selector arrays. */
-Selector.prototype.applyToScene = function(scene) {
-  var group = this.getCachedResult(scene);
+Selector.prototype.applyToScene = function(scene, no_caching) {
+  var group = no_caching ? null : this.getCachedResult(scene);
   if (group) return group; 
   group = this.selectFromAll(scene);
+  if (no_caching) return group;
   this.cached_results.push(group);
   if (this.is_reference_selector) return group;
   if (group.empty()) return group;

@@ -349,12 +349,12 @@ SceneInteractor.prototype.scaling = function(val) {
 }
 
 SceneInteractor.prototype.applySelector = function(sel) {
-	var gn = sel.applyToScene(this.sn);
+	var gn = sel.applyToScene(this.sn, true);
 	this.selectShapes(gn.objs);
 }
 
 SceneInteractor.prototype.applySolution = function(sol) {
-	var res = sol.check_scene(this.sn);
+	var res = sol.check_scene(this.sn, true);
 	this.selectShapes(res.group.objs);
 	//if (sol.isPotentialSolution()) {
 		var color = res.match ? '#efe' : '#fee';

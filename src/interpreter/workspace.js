@@ -206,6 +206,10 @@ Workspace.prototype.getActiveScenePair = function() {
   return this.active_scene_pair;
 }
 
+Workspace.prototype.getScenePairById = function(id) {
+  return this.scene_pair_sequence[id];
+}
+
 /// Available options: type ('obj' or 'group'), filter (Feature->bool)
 Workspace.prototype.getRandomFeature = function(options) {
   return this.attentionNet.getRandomFeature(options);
