@@ -150,7 +150,7 @@ Selector.prototype.clone = function() {
  * adding to the selector arrays. */
 Selector.prototype.applyToScene = function(scene, no_caching) {
   var group = no_caching ? null : this.getCachedResult(scene);
-  if (group) return group; 
+  if (group) return group;
   group = this.selectFromAll(scene);
   if (no_caching) return group;
   this.cached_results.push(group);
@@ -298,6 +298,8 @@ Selector.prototype.selectFromAll = function(scene) {
       .map(function (obj) { return obj.object_node })
       .filter(function (node) { return self.matchesObject(node) })
       .map(function (on) { return on.obj });
+
+    if (nodes.length === 0) return new GroupNode(scene, [], this);
 
     // check whether a group with these nodes already exists in the scene
     gn = scene.getGroupByNodes(nodes) || new GroupNode(scene, nodes, this);

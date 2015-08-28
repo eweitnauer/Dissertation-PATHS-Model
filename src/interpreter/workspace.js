@@ -310,7 +310,7 @@ Workspace.prototype.getDescription = function(thing) {
   if (thing instanceof ObjectNode) {
     return thing.scene_node.id+":Obj"+thing.obj.id;
   } else if (thing instanceof GroupNode) {
-    return thing.scene_node.id+":Grp";
+    return thing.scene_node.id+":Grp"+thing.id;
   }
 }
 

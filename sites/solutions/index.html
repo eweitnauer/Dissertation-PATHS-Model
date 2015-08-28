@@ -137,6 +137,38 @@
             <h2>Selected Scene</h2>
         </div>
     </div>
+
+<script>
+// Efficiency Analysis
+var oA = 30; // 28 object attributes including start/end time for non-constant ones PLUS 2 (touches rel obj-ground start/end)
+var R = 23;  // 23 relationshipsincluding start/end time for non-constant ones
+var gA = 7;  // 7 group attributes including start/end time for non-constant ones
+
+function get_perception_count(obj_count) {
+  return oA * obj_count
+       + R * obj_count * (obj_count-1) // asymmetric
+       + gA * (Math.pow(2, obj_count) - 1);
+}
+
+function efficiency() {
+  var obj_counts = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+  for (i=1; i<=4; i++) for (j=1; j<=4; j++) {
+    var p = i+'-'+j;
+    var sn = problems[p].sn;
+    obj_counts[sn.objs.length]++;
+  }
+  console.log('obj_counts', obj_counts);
+
+  var perceptions = obj_counts.map(function(c, i) {
+    return c*get_perception_count(i);
+  });
+  console.log('maximum number of perceptions:', perceptions);
+  var total_perceptions = d3.sum(perceptions);
+  console.log('sum:', total_perceptions);
+}
+
+</script>
+
   </body>
 </html>
 
