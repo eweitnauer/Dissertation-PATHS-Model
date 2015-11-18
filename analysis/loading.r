@@ -1,7 +1,7 @@
 # import data for algorithmic data
 
 # renames the following columns: mturk_id (rep), found_solution (solved), cond (pres_mode), train_time (steps)
-load_data = function() {
+load_data_old = function() {
   #data = read.csv("pbp-computer-results.csv", header=TRUE, colClasses=c("steps"="numeric"));
   data = read.csv("data-0-5-6-latest.csv", header=TRUE, colClasses=c("steps"="numeric"));
   data = rename(data, c("solved"="found_solution","pres_mode"="cond","steps"="train_time","rep"="mturk_id"));
@@ -10,7 +10,7 @@ load_data = function() {
   # for now, don't use problems PBP35 and PBP36
   pbps = c('pbp02', 'pbp04', 'pbp08', 'pbp11b', 'pbp12', 'pbp13', 'pbp16', 'pbp18', 'pbp20', 'pbp22', 'pbp26', 'pbp31');#, 'pbp35', 'pbp36');
   data = data[data$pbp %in% pbps,]
-  data$pbp = revalue(data$pbp, c("pbp02"="2", "pbp04"="4", "pbp08"="8", "pbp11b"="11b", 'pbp12'='12', 'pbp13'='13', 'pbp16'='16', 'pbp18'='18', 'pbp20'='20', 'pbp22'='22', 'pbp26'='26', 'pbp31'='31'));#, 'pbp35', 'pbp36');))
+  #data$pbp = revalue(data$pbp, c("pbp02"="2", "pbp04"="4", "pbp08"="8", "pbp11b"="11b", 'pbp12'='12', 'pbp13'='13', 'pbp16'='16', 'pbp18'='18', 'pbp20'='20', 'pbp22'='22', 'pbp26'='26', 'pbp31'='31'));#, 'pbp35', 'pbp36');))
   data = droplevels(data)
   
   print("subjects total:")
@@ -20,6 +20,30 @@ load_data = function() {
   
   return(data)
 }
+
+load_data = function(use_all=FALSE) {
+  data = read.csv("data-0-7-0.csv", header=TRUE, colClasses=c("steps"="numeric"));
+  data = rename(data, c("solved"="found_solution","pres_mode"="cond","steps"="train_time","rep"="mturk_id"));
+  data$found_solution = ifelse((data$found_solution == 'true') | (data$found_solution == 1), 1, 0);
+  
+  # for now, don't use problems PBP35 and PBP36
+  if (use_all) {
+    pbps = c('pbp02', 'pbp04', 'pbp08', 'pbp11b', 'pbp12', 'pbp13', 'pbp16', 'pbp18', 'pbp20', 'pbp22', 'pbp26', 'pbp30', 'pbp31', 'pbp35', 'pbp36');
+  } else {
+    pbps = c('pbp02', 'pbp04', 'pbp08', 'pbp11b', 'pbp12', 'pbp13', 'pbp16', 'pbp18', 'pbp20', 'pbp22', 'pbp26', 'pbp30', 'pbp31');
+  }
+  data = data[data$pbp %in% pbps,]
+  data$pbp = revalue(data$pbp, c("pbp02"="2", "pbp04"="4", "pbp08"="8", "pbp11b"="11b", 'pbp12'='12', 'pbp13'='13', 'pbp16'='16', 'pbp18'='18', 'pbp20'='20', 'pbp22'='22', 'pbp26'='26', 'pbp30'='30', 'pbp31'='31', 'pbp35'='35', 'pbp36'='36'));
+  data = droplevels(data)
+  
+  print("subjects total:")
+  print(length(table(data$mturk_id)))
+  print("% problems solved:");
+  print(100 * sum(data$found_solution) / length(data$found_solution));
+  
+  return(data)
+}
+
 
 # Adds new condition columns sch_cond, sim_cond_wi_cat, sim_cond_bw_cat and sim_cond_both_cat.
 # Adds columns for the number of correctly classified test scenes "num_correct", a column for the "consistency"

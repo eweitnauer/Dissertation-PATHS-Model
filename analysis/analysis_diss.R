@@ -1,12 +1,15 @@
 library(plyr)
 library(sciplot)
 library(ez)
+library(effsize)
 rm(list=ls())  
 
 setwd("~/Code/diss/modelling/current/analysis")
 source("loading.r");
 data_ai = load_data(use_all=FALSE);
 data_ai = annotate_data(data_ai);
+data_ai_all = load_data(use_all=TRUE);
+data_ai_all = annotate_data(data_ai_all);
 data_ai$population = 'ai';
 data = data_ai;
 
@@ -40,21 +43,14 @@ data_ss4_b$flag = 'delete me (I\'m identical)';
 data_ss4_ab = merge(data_ss4_a, data_ss4_b, all=T);
 
 data_ss_34 = merge(data_ss, data_ss4, all=T);
-
-data_all = merge(data_ai, data_ss[c("pbp", "cond", "found_solution", "train_time", "population")], all=T);
   
 # print solutions ordered by frequency per problem:
-pbp = '36';
+pbp = '31';
 sols = count(data[data$found_solution==1 & data$pbp==pbp,]$sol);
 sols[order(sols$freq),]
 
 
-## scatter plot of time to solution
-
-#hist(data_ss$train_time[data_ss$pbp == pbp & data_ss$found_solution == 1 & data_ss$train_time < 1000*60*12]/1000/60, breaks=c(0:100)/3, xlim=c(0,10), xlab='time to solution in minutes', main=paste0('PBP ', pbp, ': subjects'));
-
-pbp=35
-hist(data_ai$train_time[data_ai$feature_prior_strength == 100 & data_ai$pbp == pbp & data_ai$found_solution == 1 & data_ai$train_time], breaks=c(0:100)*1000/12, xlim=c(0,2500), xlab='actions to solution in minutes', main=paste0('PBP ', pbp, ': model'));
+### Historgrams of time to solution #######################################################################
 
 setwd("~/Code/diss/modelling/current/analysis")
 for (pbp in c(pbps,'35','36')) {
@@ -71,12 +67,315 @@ for (pbp in c(pbps,'35','36')) {
   dev.off();
 }
 
-par(mfrow=c(2,1));
-for (pbp in pbps) {
-  hist(data_ss_34$train_time[data_ss_34$pbp == pbp & data_ss_34$found_solution == 1 & data_ss_34$train_time < 1000*60*12]/1000/60, breaks=c(0:100)/3, xlim=c(0,10), xlab='time to solution in minutes', main=paste0('PBP ', pbp, ': subjects'));
-  hist(data_ai$train_time[data_ai$feature_prior_strength == 100 & data_ai$pbp == pbp & data_ai$found_solution == 1 & data_ai$train_time], breaks=c(0:100)*1000/12, xlim=c(0,2500), xlab='actions to solution in minutes', main=paste0('PBP ', pbp, ': model'));
-}
-par(mfrow=c(1,1));
+data_ai$difficulty = pmin(2500, data_ai$train_time);
+data_ai$log_difficulty = log(data_ai$difficulty)
+cohen.d(data_ai$log_difficulty[data_ai$feature_prior_strength == 100 & data_ai$sch_cond=='interleaved' & data_ai$sim_cond_bw_cat=='dis. b/w cat.']
+      , data_ai$log_difficulty[data_ai$feature_prior_strength == 100 & data_ai$sch_cond=='interleaved' & data_ai$sim_cond_bw_cat=='sim. b/w cat.']);
+cohen.d(data_ai$log_difficulty[data_ai$feature_prior_strength == 100 & data_ai$sch_cond=='blocked' & data_ai$sim_cond_wi_cat=='sim. w/i cat.']
+      , data_ai$log_difficulty[data_ai$feature_prior_strength == 100 & data_ai$sch_cond=='blocked' & data_ai$sim_cond_wi_cat=='dis. w/i cat.']);
+
+
+data_ss_34$difficulty = ifelse(data_ss_34$found_solution == 0, 10*1000*60, pmin(10*1000*60, data_ss_34$train_time));
+data_ss_34$log_difficulty = log(data_ss_34$difficulty);
+cohen.d(data_ss_34$log_difficulty[data_ss_34$sch_cond=='interleaved' & data_ss_34$sim_cond_bw_cat=='dissimilar across categories']
+      , data_ss_34$log_difficulty[data_ss_34$sch_cond=='interleaved' & data_ss_34$sim_cond_bw_cat=='similar across categories']);
+cohen.d(data_ss_34$log_difficulty[data_ss_34$sch_cond=='simultaneous' & data_ss_34$sim_cond_wi_cat=='similar within categories']
+      , data_ss_34$log_difficulty[data_ss_34$sch_cond=='simultaneous' & data_ss_34$sim_cond_wi_cat=='dissimilar within categories']);
+
+### train-time per condition #############################################################################
+
+# AI
+
+# actions
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-actions-by-cond-v0_7_0.pdf",height=1.8, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=train_time,ylim=c(500,1000),data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylab='actions', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'), x.leg=5.5)
+dev.off();
+
+# log actions
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-log-actions-by-cond-v0_7_0.pdf",height=1.8, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=log(train_time),ylim=c(5,6.5),data=data_ai[data_ai$feature_prior_strength==100&data_ai$found_solution==1,],legend=T,ylab='log actions for successful trials', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'), x.leg=5.5)
+dev.off();
+
+# log difficulty
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-log-difficulty-by-cond-v0_7_0.pdf",height=1.8, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=log(difficulty),ylim=c(5,6.5),data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylab='model log difficulty score', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'), x.leg=5.5)
+dev.off();
+
+data_ai$log_train_time = log(data_ai$train_time)
+data_ai$log_difficulty = log(data_ai$difficulty)
+ezANOVA(data=data_ai[data_ai$feature_prior_strength==100&data_ai$found_solution==1,],dv=log_train_time,wid=mturk_id,within=.(sch_cond,sim_cond_wi_cat,sim_cond_bw_cat))
+ezANOVA(data=data_ai[data_ai$feature_prior_strength==100,],dv=log_difficulty,wid=mturk_id,within=.(sch_cond,sim_cond_wi_cat,sim_cond_bw_cat))
+
+# SS
+
+# accuracy
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-acc-by-cond.pdf",height=1.8, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=found_solution,data=data_ss_34[data_ss_34$train_time < 1000*60*10,], ylim=c(0,1.05), legend=T, ylab='solution rate', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
+#bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=subject_pairs_seen,data=data_ss[data_ss$subject_pairs_seen<100,],legend=T,ylab='actions', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'), x.leg=5.5)
+dev.off();
+
+# time in minutes
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-time-by-cond.pdf",height=1.8, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=train_time/1000/60,data=data_ss_34[data_ss_34$train_time < 1000*60*10,], ylim=c(0,1.8), legend=T, ylab='time in minutes', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
+#bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=subject_pairs_seen,data=data_ss[data_ss$subject_pairs_seen<100,],legend=T,ylab='actions', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'), x.leg=5.5)
+dev.off();
+
+# log time minutes
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-log-time-by-cond.pdf",height=1.8, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,ylim=c(10,11.5),response=log(train_time),data=data_ss_34[data_ss_34$train_time < 1000*60*10,],legend=T,ylab='log (time in ms)', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
+#bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=log(subject_pairs_seen),data=data_ss[data_ss$subject_pairs_seen<100,],legend=T,ylab='actions', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'), x.leg=5.5)
+dev.off();
+
+# log time minutes for solved trials
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-log-time-by-cond-for-solved.pdf",height=1.8, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,ylim=c(10,14),response=log(train_time),data=data_ss_34[data_ss_34$train_time < 1000*60*10 & data_ss_34$found_solution==1,],legend=T,ylab='log (time in ms) for solved trials', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
+#bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=log(subject_pairs_seen),data=data_ss[data_ss$subject_pairs_seen<100,],legend=T,ylab='actions', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'), x.leg=5.5)
+dev.off();
+
+# difficulty
+data_ss_34$difficulty = ifelse(data_ss_34$found_solution == 0, 10.0*1000*60, pmin(10.0*1000*60, data_ss_34$train_time));
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-log-difficulty-by-cond.pdf",height=1.8, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,ylim=c(10,14),response=log(difficulty),data=data_ss_34[data_ss_34$train_time < 1000*60*10,],legend=T,ylab='human log difficulty score', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
+dev.off();
+
+## ezMIXED analysis
+
+data_ss_34$difficulty = ifelse(data_ss_34$found_solution == 0, 10.0*1000*60, pmin(10.0*1000*60, data_ss_34$train_time));
+data_ss_34$log_train_time = log(data_ss_34$train_time)
+data_ss_34$log_difficulty = log(data_ss_34$difficulty)
+data_ss$difficulty = ifelse(data_ss$found_solution == 0, 10.0*1000*60, pmin(10.0*1000*60, data_ss$train_time));
+data_ss$log_train_time = log(data_ss$train_time)
+data_ss$log_difficulty = log(data_ss$difficulty)
+data_ss4$difficulty = ifelse(data_ss4$found_solution == 0, 10.0*1000*60, pmin(10.0*1000*60, data_ss4$train_time));
+data_ss4$log_train_time = log(data_ss4$train_time)
+data_ss4$log_difficulty = log(data_ss4$difficulty)
+
+# log RT ss3
+res = ezMixed(data = data_ss[data_ss$train_time < 1000*60*10 & data_ss$found_solution == 1,], dv = .(log_train_time), random = .(mturk_id), fixed = .(sim_cond_bw_cat, sim_cond_wi_cat, sch_cond))
+print(res$summary)
+
+# log RT ss4
+res = ezMixed(data = data_ss4[data_ss4$train_time < 1000*60*10 & data_ss4$found_solution ==1 & data_ss4$sch_cond == 'simultaneous',], dv = .(log_train_time), random = .(mturk_id), fixed = .(sim_cond_bw_cat, sim_cond_wi_cat, sch_cond))
+print(res$summary)
+
+# log difficulty ss3
+res = ezMixed(data = data_ss[data_ss$train_time < 1000*60*10,], dv = .(log_difficulty), random = .(mturk_id), fixed = .(sim_cond_bw_cat, sim_cond_wi_cat, sch_cond))
+print(res$summary)
+
+# log difficulty ss4
+res = ezMixed(data = data_ss4[data_ss4$train_time < 1000*60*10 & data_ss4$sch_cond == 'simultaneous',], dv = .(log_difficulty), random = .(mturk_id), fixed = .(sim_cond_bw_cat, sim_cond_wi_cat, sch_cond))
+print(res$summary)
+
+
+### train time per b/w and w/i similarity
+
+data_ai$log_train_time = log(data_ai$train_time)
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-log-time-by-bw-sim-per-sched-v0.7.0.pdf",height=1.7, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond, group=sim_cond_bw_cat,response=log_train_time,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylab='log actions', ylim=c(5,6.5)); #, main='AI b/w similarity')
+dev.off();
+
+data_ai$log_train_time = log(data_ai$train_time)
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-log-time-by-wi-sim-per-sched-v0.7.0.pdf",height=1.7, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond, group=sim_cond_wi_cat,response=log_train_time,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylab='log actions', ylim=c(5,6.5)); #, main='AI b/w similarity')
+dev.off();
+
+data_ai$difficulty = pmin(10.0, data_ai$train_time/250);
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-difficulty-by-wi-sim-per-sched-v0.7.0.pdf",height=1.7, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond, group=sim_cond_wi_cat,response=difficulty,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylab='difficulty', ylim=c(2,4)); #, main='AI b/w similarity')
+dev.off();
+
+data_ai$difficulty = pmin(10.0, data_ai$train_time/250);
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-difficulty-by-bw-sim-per-sched-v0.7.0.pdf",height=1.7, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond, group=sim_cond_bw_cat,response=difficulty,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylab='difficulty', ylim=c(2,4)); #, main='AI b/w similarity')
+dev.off();
+
+data_ai$log_train_time = log(data_ai$train_time)
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-difficulty-by-wi-sim-per-sched-v0.7.0.pdf",height=1.7, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond, group=sim_cond_wi_cat,response=log_train_time,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylab='log actions', ylim=c(5,6.5)); #, main='AI b/w similarity')
+dev.off();
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-acc-by-bw-sim-per-sched.pdf",height=1.7, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,response=found_solution,group=sim_cond_bw_cat,data=data_ss_34,legend=T,ylab='solution rate', ylim=c(0.2,0.8));#, main='Subjects b/w similarity')
+dev.off();
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-acc-by-wi-sim-per-sched.pdf",height=1.7, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,response=found_solution,group=sim_cond_wi_cat,data=data_ss_34,legend=T,ylab='solution rate', ylim=c(0.2,0.8));#, main='Subjects b/w similarity')
+dev.off();
+
+data_ss_34$log_train_time = log(data_ss_34$train_time)
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-logtime-by-bw-sim-per-sched.pdf",height=1.7, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,response=log_train_time,group=sim_cond_bw_cat,data=data_ss_34[data_ss_34$train_time<1000*60*10 & data_ss_34$found_solution==1,],legend=T,ylab='log time for solved trials', ylim=c(10,12));#, main='Subjects b/w similarity')
+dev.off();
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-logtime-by-wi-sim-per-sched.pdf",height=1.7, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,response=log_train_time,group=sim_cond_wi_cat,data=data_ss_34[data_ss_34$train_time<1000*60*10 & data_ss_34$found_solution==1,],legend=T,ylab='log time for solved trials', ylim=c(10,12));#, main='Subjects b/w similarity')
+dev.off();
+
+data_ss_34$difficulty = ifelse(data_ss_34$found_solution == 0, 10.0*1000*60, pmin(10.0*1000*60, data_ss_34$train_time));#/1000/60));
+data_ss_34$log_difficulty = ifelse(data_ss_34$found_solution == 0, log(10.0*60*1000), log(pmin(10.0*60000, data_ss_34$train_time)));
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-difficulty-by-bw-sim-per-sched.pdf",height=1.7, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,response=difficulty,group=sim_cond_bw_cat,data=data_ss_34[data_ss_34$train_time<1000*60*10,],legend=T,ylab='difficulty score', ylim=c(0,10));#, main='Subjects b/w similarity')
+dev.off();
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-difficulty-by-wi-sim-per-sched.pdf",height=1.7, width=3.4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,response=difficulty,group=sim_cond_wi_cat,data=data_ss_34[data_ss_34$train_time<1000*60*10,],legend=T,ylab='difficulty score', ylim=c(0,10));#, main='Subjects b/w similarity')
+dev.off();
+
+### problem time / difficulty correlation #################################################################
+
+# 1. we only look at correctly solved & at failed problems
+# 2. we cut-off problem time at 10 minutes (and at 2500 actions)
+# 3. we count problem all unsolved problems as requiring 10 minutes (or 2500 actions)
+# 4. problem 31 is a major outlier, so we calculate the correlation & regression line without it
+
+data_ss_34$difficulty = ifelse(data_ss_34$found_solution == 0, 10.0, pmin(10.0, data_ss_34$train_time/1000/60));
+data_ai$difficulty = pmin(2500, data_ai$train_time);
+mean_ai = ddply(.data=data_ai, .variables=.(pbp), acc = mean(found_solution), difficulty = mean(difficulty), train_time=mean(train_time), .fun=summarize);
+mean_ss = ddply(.data=data_ss_34, .variables=.(pbp), acc = mean(found_solution), difficulty = mean(difficulty), train_time=mean(train_time), .fun=summarize);
+mean_ai_no_31 = ddply(.data=data_ai[data_ai$pbp != 31,], .variables=.(pbp), acc = mean(found_solution), difficulty = mean(difficulty), train_time=mean(train_time), .fun=summarize);
+mean_ss_no_31 = ddply(.data=data_ss_34[data_ss_34$pbp != 31,], .variables=.(pbp), acc = mean(found_solution), difficulty = mean(difficulty), train_time=mean(train_time), .fun=summarize);
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="problem-difficulty-correlation.pdf",height=2.5, width=4, pointsize=7)
+par(mar=c(2+2,4,1,0)+0.2)
+plot(mean_ai$difficulty, mean_ss$difficulty, xlab='model difficulty score', ylab='human difficulty score');
+reg1 <- lm(mean_ss_no_31$difficulty~mean_ai_no_31$difficulty)
+abline(reg1, col='gray')
+text(mean_ai$difficulty, mean_ss$difficulty, labels = mean_ai$pbp, pos = c(4,4,4,4,4,4,4,4,1,4,4,4,3))
+dev.off();
+
+cor.test(mean_ai$difficulty, mean_ss$difficulty, method = "pearson", alternative = "two.sided")
+cor.test(mean_ai_no_31$difficulty, mean_ss_no_31$difficulty, method = "pearson", alternative = "two.sided")
+
+# now do it again, but look at train time of SOLVED trials
+
+mean_solved_ai = ddply(.data=data_ai[data_ai$found_solution==1,], .variables=.(pbp), train_time=mean(train_time), .fun=summarize);
+mean_solved_ss = ddply(.data=data_ss_34[data_ss_34$found_solution==1&data_ss_34$train_time<10*1000*60,], .variables=.(pbp), train_time=mean(train_time/1000/60), .fun=summarize);
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="problem-time-correlation.pdf",height=2.5, width=4, pointsize=7)
+par(mar=c(2+2,4,1,0)+0.2)
+plot(mean_solved_ai$train_time, mean_solved_ss$train_time, xlab='model actions to solution', ylab='human time to solution in minutes', ylim=c(0,2),xlim=c(0,1500));
+reg1 <- lm(mean_solved_ss$train_time~mean_solved_ai$train_time)
+abline(reg1, col='gray')
+text(mean_solved_ai$train_time, mean_solved_ss$train_time, labels = mean_solved_ai$pbp, pos = 4)
+dev.off();
+
+cor.test(mean_solved_ai$train_time, mean_solved_ss$train_time, method = "pearson", alternative = "two.sided")
+
+
+### performance per problem ##############################################################################################
+
+### AI performance per problem
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-acc-per-problem-v0-7-0.pdf",height=1.2, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ai_all[data_ai_all$feature_prior_strength == 100,],legend=T,ylab='correct answer rate'); #, main='AI')
+dev.off();
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-actions-per-problem-v0-7-0.pdf",height=1.2, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(col='gray',x.factor=pbp,ylim=c(0,2500),response=train_time,data=data_ai_all[data_ai_all$feature_prior_strength == 100,],legend=T,ylab='actions taken');
+par(new=TRUE)
+bargraph.CI(col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim=c(0,2500),response=train_time,data=data_ai_all[data_ai_all$feature_prior_strength == 100 & data_ai_all$found_solution == 1,], legend=F, axes=false, names.arg=FALSE);
+dev.off();
+
+# perception and retrieval count
+# use this to plot standard derivation instead of standard error interval: ci.fun= function(x) c(mean(x)-sd(x), mean(x)+sd(x))
+bargraph.CI(x.factor=pbp,response=retrieval_count,data=data_ai_all[data_ai_all$feature_prior_strength == 100,],legend=T,ylab='perceptions');
+
+data_ai_all$max_perc = 0;
+data_ai_all$max_perc[data_ai_all$pbp==2] = 1312;
+data_ai_all$max_perc[data_ai_all$pbp==4] = 2272;
+data_ai_all$max_perc[data_ai_all$pbp==8] = 1492;
+data_ai_all$max_perc[data_ai_all$pbp=='11b'] = 2632;
+data_ai_all$max_perc[data_ai_all$pbp==12] = 2032;
+data_ai_all$max_perc[data_ai_all$pbp==13] = 5624;
+data_ai_all$max_perc[data_ai_all$pbp==16] = 2032;
+data_ai_all$max_perc[data_ai_all$pbp==18] = 2632;
+data_ai_all$max_perc[data_ai_all$pbp==20] = 3828;
+data_ai_all$max_perc[data_ai_all$pbp==22] = 2032;
+data_ai_all$max_perc[data_ai_all$pbp==26] = 16464;
+data_ai_all$max_perc[data_ai_all$pbp==30] = 1312;
+data_ai_all$max_perc[data_ai_all$pbp==31] = 3528;
+data_ai_all$max_perc[data_ai_all$pbp==35] = 3052;
+data_ai_all$max_perc[data_ai_all$pbp==36] = 3528;
+
+data_ai_perc = ddply(data_ai_all[data_ai_all$feature_prior_strength == 100,], c('pbp'), summarize, perc=mean(perception_count)/mean(max_perc));
+bargraph.CI(fun=mean,col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,response=perception_count,data=data_ai_all[data_ai_all$feature_prior_strength == 100,],legend=T,ylab='perceptions');
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-perceived-features-v0-7-0.pdf",height=3, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=pbp,ylim=c(0,17000),response=max_perc,data=data_ai_all[data_ai_all$feature_prior_strength == 100,],legend=T,ylab='perceptions');
+par(new=TRUE)
+bargraph.CI(fun=mean,col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim=c(0,17000),response=perception_count,data=data_ai_all[data_ai_all$feature_prior_strength == 100,],legend=T,ylab='perceptions');
+dev.off();
+
+bargraph.CI(x.factor=pbp,ylim=c(0,17000),response=max_perc,data=data_ai_all[data_ai_all$feature_prior_strength == 100 & data_ai_all$found_solution==1,],legend=T,ylab='perceptions');
+par(new=TRUE)
+bargraph.CI(fun=mean,col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim=c(0,17000),response=perception_count,data=data_ai_all[data_ai_all$feature_prior_strength == 100 & data_ai_all$found_solution==1,],legend=T,ylab='perceptions');
+
+z### Subject performance per problem
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-acc-per-problem.pdf",height=1.2, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=pbp,ylim=c(0,1.05),response=1-found_solution,data=data_ss_34,legend=T,ylab='correct answer rate');
+dev.off();
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="SS34-time-per-problem.pdf",height=1.2, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=pbp,ylim=c(0,5),response=train_time/1000/60,data=data_ss_34[data_ss_34$train_time < 1000*60*10,],legend=T,ylab='time');
+par(new=TRUE)
+bargraph.CI(col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim=c(0,5),response=train_time/1000/60,data=data_ss_34[data_ss_34$train_time < 1000*60*10 & data_ss_34$found_solution == 1,], legend=F, names.arg=FALSE);
+dev.off();
+
+
+
+
+
 
 ####### VISUALIZE PER PROBLEM
 
@@ -229,8 +528,8 @@ ezANOVA(data=data[data$found_solution==1,],dv=train_time,wid=mturk_id,within=.(s
 ezANOVA(data=data_ai,dv=train_time,wid=mturk_id,within=.(feature_prior_strength))
 
 data_ai$log_train_time = log(data_ai$train_time)
-data_ai$inv_train_time = 1/data_ai$train_time
 ezANOVA(data=data_ai[data_ai$feature_prior_strength==100,],dv=log_train_time,wid=mturk_id,within=.(sch_cond,sim_cond_wi_cat,sim_cond_bw_cat))
+data_ai$inv_train_time = 1/data_ai$train_time
 ezANOVA(data=data_ai[data_ai$feature_prior_strength==100,],dv=inv_train_time,wid=mturk_id,within=.(sch_cond,sim_cond_wi_cat,sim_cond_bw_cat))
 
 ezANOVA(data=data_ai[data_ai$feature_prior_strength==100,],dv=train_time,wid=mturk_id,within=.(sch_cond,sim_cond_wi_cat,sim_cond_bw_cat),within_covariates=pbp_accuracy)
@@ -300,13 +599,17 @@ dev.off();
 setwd("~/Code/diss/modelling/current/analysis")
 pdf(file="AI-bw-sim-by-sched-v0.7.0.pdf",height=1.7, width=3.4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
-bargraph.CI(x.factor=sch_cond, group=sim_cond_bw_cat,response=train_time,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylab='steps to solution or fail', ylim=c(500,1000)); #, main='AI b/w similarity')
+bargraph.CI(x.factor=sch_cond, group=sim_cond_bw_cat,response=log_train_time,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylab='actions to solution or fail', ylim=c(5,6.5)); #, main='AI b/w similarity')
 dev.off();
 
+data_ai$log_train_time = log(data_ai$train_time)
+data_ss_34$log_train_time = log(data_ss_34$train_time)
 setwd("~/Code/diss/modelling/current/analysis")
 pdf(file="SS3-bw-sim-by-sched.pdf",height=1.7, width=3.4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
-bargraph.CI(x.factor=sch_cond,response=1-found_solution,group=sim_cond_bw_cat,data=data_ss,legend=T,ylab='wrong/no answer rate', ylim=c(0.2,0.8));#, main='Subjects b/w similarity')
+bargraph.CI(x.factor=sch_cond,response=found_solution,group=sim_cond_bw_cat,data=data_ss_34,legend=T,ylab='solution rate', ylim=c(0.2,0.8));#, main='Subjects b/w similarity')
+#bargraph.CI(x.factor=sch_cond,response=train_time,group=sim_cond_bw_cat,data=data_ss_34[data_ss_34$train_time<1000*60*10,],legend=T,ylab='time');#, main='Subjects b/w similarity')
+#bargraph.CI(x.factor=sch_cond,response=log_train_time,group=sim_cond_bw_cat,data=data_ss_34[data_ss_34$train_time<1000*60*10,],legend=T,ylab='log time', ylim=c(10,12));#, main='Subjects b/w similarity')
 dev.off();
 
 ### FINAL PLOTS FOR COGSCI 2015 ###########################
@@ -324,6 +627,8 @@ pdf(file="SS3-error-by-wi-pair-sim.pdf",height=1.8, width=3.4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
 bargraph.CI(x.factor=sch_cond,response=1-found_solution,group=sim_cond_wi_pair,data=data_ss,legend=T,ylab='error rate', ylim=c(0,1.01), x.leg=3.6);
 dev.off();
+
+bargraph.CI(x.factor=sch_cond,response=difficulty,group=sim_cond_wi_cat,data=data_ss_34,legend=T,ylab='error rate', x.leg=3.6);
 
 ## w/i category similarity for Ss4
 setwd("~/Code/diss/modelling/current/analysis")

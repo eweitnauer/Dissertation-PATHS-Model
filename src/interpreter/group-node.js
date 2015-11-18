@@ -6,6 +6,7 @@
 GroupNode = function(scene_node, objs, selectors) {
   this.scene_node = scene_node;
   this.objs = objs || [];   // shapes
+  this.id =(''+Math.random()).substr(2,5);
   this.times = {};
   // selectors that select this group node:
   this.selectors = selectors ? (Array.isArray(selectors) ? selectors.slice()
