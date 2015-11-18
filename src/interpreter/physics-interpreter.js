@@ -232,9 +232,8 @@ var pi_default_options = function() {
               , { klass: RightAttribute,       initial_activation: low,  group: 'hor-pos' }
               , { klass: MovableUpAttribute,   initial_activation: low,  group: 'dynamics' }
              ]
-  , pres_mode: 'interleaved-sim-dis' // {blocked, interleaved} X {sim, dis} X {sim, dis}
+  , pres_mode: 'interleaved-sim-dis' // {blocked, interleaved} X b/w{sim, dis} X w/i{sim, dis}
   , randomize_row_order: false
-  , pres_time: 100 // every x steps, switch to the next scene pair
   , action_priors:
     {
       perceive: 0.6

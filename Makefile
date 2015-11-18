@@ -54,6 +54,7 @@ all: pbp-model.js
 	src/interpreter/group-node.js \
 	src/interpreter/selector.js \
 	src/interpreter/solution.js \
+	src/interpreter/activity-ranges.js \
 	src/interpreter/attention-net.js \
 	src/interpreter/scene-node.js \
 	src/interpreter/random.js \
@@ -62,6 +63,7 @@ all: pbp-model.js
 	src/interpreter/codelets/attr-codelet.js \
 	src/interpreter/codelets/check-hypothesis-codelet.js \
 	src/interpreter/codelets/combine-hypothesis-codelet.js \
+	src/interpreter/codelets/recombine-hypothesis-codelet.js \
 	src/interpreter/codelets/new-hypothesis-codelet.js \
 	src/interpreter/physics-interpreter.js \
 	src/interpreter/pi-tester.js \
@@ -70,16 +72,16 @@ all: pbp-model.js
 
 pbp-model.js: Makefile
 	@rm -f $@
-	#@echo "var d3 = require('d3')" > $@;
-	#@echo 'module.exports = (function() {' >> $@
+	@#echo "var d3 = require('d3')" > $@;
+	@#echo 'module.exports = (function() {' >> $@
 	cat $(filter %.js,$^) >> $@
-	#@echo "\n return init; })();" >> $@
+	@#echo "\n return init; })();" >> $@
 	@chmod a-w $@
 
 install: pbp-model.js
 	# rm -f sites/public/geom.min.js sites/public/pbp-model.js sites/public/d3.min.js sites/public/Box2D.min.js
 	# cp libs/d3/d3.min.js libs/geom.js/geom.min.js libs/box2dweb/Box2D.min.js pbp-model.js sites/public/
-	rsync -r -a -v -L -e "ssh" --delete ./sites/public/* root@graspablemath.com:/srv/www/graspablemath.com/docs/pbp-model
+	rsync -r -a -v -L -e "ssh" --delete ./sites/public-0.7.1/* root@graspablemath.com:/srv/www/graspablemath.com/docs/pbp-model/0.7.1/
 
 clean:
 	rm -f pbp-model.js

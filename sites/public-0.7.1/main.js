@@ -1,3 +1,5 @@
+var vis_scaling = 1.5, pixels_per_unit = 50;
+
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
 init_pbp_data();
 var pbp_idx = getPBPFromURL() || 0;
@@ -5,8 +7,13 @@ var curr_sols = [];
 var tester = null;
 var log_area = null;
 
+function analyzeScene(sn, svis) {
+  sn.registerObjects();
+  sn.perceiveCollisions();
+}
+
 function loadScenes(name, files) {
-  var path = "../../libs/pbp-svgs/svgs/" + name;
+  var path = "./svgs/" + name;
 
   var heading = name.indexOf('pbp') === 0 ? 'PBP '+name.substring(3) : name;
   document.getElementById('pbp-num').innerText = heading;
@@ -48,11 +55,20 @@ function loadScenes(name, files) {
     analyzeScene(sn);
     var svis = new SceneInteractor(ps, sn, el_svg);
     svis.scaling(vis_scaling);
-    option_callback({name: 'attention', opts: []});
+    setup_scene_vis();
     problems[files[i]] = {sn: sn, svis: svis};//, sim: sim};
   }
+}
 
-  update_solutions(getSolutions(name));
+function setup_scene_vis() {
+  for (var i in problems) {
+    var p = problems[i];
+    p.svis.colorize_values(function(on) {
+      if (!on || !tester || !tester.ws) return 0;
+      return tester.ws.attentionNet.getActivity(on) * 100;//getAttentionValue(on) * 100;
+    });
+    p.svis.draw();
+  }
 }
 
 function create_html_elements(files) {
@@ -115,53 +131,6 @@ function disable_drawing() {
 
 function enable_drawing() {
   for (var p in problems) problems[p].svis.drawing = true;
-}
-
-function setup_options() {
-  d3.select('#show-hide-1')
-    .on('click', function () {
-      var n = d3.select('#options');
-      n.style('display', n.style('display') == 'none' ? 'block' : 'none')
-    });
-
-  var fields = d3.select('#options')
-                 .selectAll('div.opt-field')
-                 .data(options)
-                 .enter()
-                 .append('div')
-                 .classed('opt-field', true);
-  fields.append('input')
-        .attr('type', 'radio')
-        .attr('name', 'options')
-        .attr('value', function (d) { return d.name })
-        .attr('checked', function (d) { return d.checked })
-        .on('change', function (d) {
-          d3.select(this.parentNode.parentNode).selectAll('input').each(
-            function (d) { d.checked = this.checked }
-          );
-          if (this.checked) option_callback(d)
-        });
-  fields.append('span')
-        .text(function (d) { return d.name });
-
-  var opts = fields.selectAll('div.opt')
-        .data(function (d) { return d.opts.map(function (o) { o.parent = d; return o }) })
-        .enter()
-        .append('div')
-        .classed('opt', true);
-  opts.append('input')
-      .attr('type', function (d) { return d.parent.multiple ? 'checkbox' : 'radio' })
-      .attr('name', function (d) { return d.parent.name } )
-      .attr('value', function (d) { return d.name })
-      .attr('checked', function (d) { return d.checked })
-      .on('change', function (d) {
-        d3.select(this.parentNode.parentNode).selectAll('input').each(
-          function (d) { d.checked = this.checked }
-        );
-        if (d.parent.checked) option_callback(d.parent);
-      })
-  opts.append('span')
-        .text(function (d) { return d.name });
 }
 
 function after_step_callback() {
@@ -366,7 +335,6 @@ function set_time(time) {
 
 function init() {
   span = document.getElementById('curr_num');
-  setup_options();
   setup_solve();
   d3.select('#curr-as-start').on('click', curr_as_start);
   d3.select('#jump-to-zero').on('click', set_time.bind(null, '0'));
