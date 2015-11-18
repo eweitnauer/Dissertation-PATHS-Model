@@ -26,12 +26,12 @@ function getField(d, path) {
 }
 
 var cols_csv = [ 'test_id', 'trial_curr', 'trial_total', 'rep'
-           , 'reps', 'feature_prior_strength'
+           , 'reps', 'feature_count'//'activity_feature_hyp_base'
            , 'steps', 'steps_max', 'pbp', 'pres_mode', 'perception_count'
            , 'retrieval_count', 'sol', 'solved', 'timestamp' ];
 
 var cols_db = [ 'test_id', 'trial_curr', 'trial_total', 'rep'
-           , 'reps', 'activity->feature->hyp_base'
+           , 'reps', 'feature_count'//'activity->feature->hyp_base'
            , 'steps', 'steps_max', 'pbp', 'pres_mode', 'perception_count'
            , 'retrieval_count', 'sol', 'solved', 'timestamp' ];
 
@@ -44,8 +44,8 @@ function writeData(data) {
     var row = cols_db.map(function(key) {
       var res = data[i][key];
       if (key === 'solved') return res ? 1 : 0;
-      // if (key === 'rep') return res+75;
-      // if (key === 'reps') return 4*res;
+      //if (key === 'rep') return 75+res;
+      //if (key === 'reps') return 4*res;
       return res;
       // return getField(data[i], key);
   	});
