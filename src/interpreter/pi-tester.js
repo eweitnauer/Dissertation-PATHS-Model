@@ -238,7 +238,7 @@ PITester.prototype.updateFeatureList = function(div_el, click_callback) {
 	  .classed('val', true);
 
 	// divs.style('background-color', function(d) { return 'rgba(0,0,0,'+d.val/2+')' });
-	divs.style('opacity', function(d) { return 0.8*d.val+0.2 });
+	divs.style('opacity', function(d) { return 0.8*d.val/0.06/*0.8*d.val+0.2*/ });
 	divs.select('.val').text(function(d) { return d.val.toFixed(2) });
 
 	divs.exit().remove();

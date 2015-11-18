@@ -21,8 +21,8 @@ load_data_old = function() {
   return(data)
 }
 
-load_data = function(use_all=FALSE) {
-  data = read.csv("data-0-7-0.csv", header=TRUE, colClasses=c("steps"="numeric"));
+load_data = function(use_all=FALSE,filename="data-0-7-0.csv") {
+  data = read.csv(filename, header=TRUE, colClasses=c("steps"="numeric"));
   data = rename(data, c("solved"="found_solution","pres_mode"="cond","steps"="train_time","rep"="mturk_id"));
   data$found_solution = ifelse((data$found_solution == 'true') | (data$found_solution == 1), 1, 0);
   
@@ -43,7 +43,6 @@ load_data = function(use_all=FALSE) {
   
   return(data)
 }
-
 
 # Adds new condition columns sch_cond, sim_cond_wi_cat, sim_cond_bw_cat and sim_cond_both_cat.
 # Adds columns for the number of correctly classified test scenes "num_correct", a column for the "consistency"

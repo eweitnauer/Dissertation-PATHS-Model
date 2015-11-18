@@ -6,6 +6,15 @@ var PI = PI || {};
 Bugs / Problems:
 - Adjustment of thresholds does not work for relationship target-selectors. We can't
   get to the selector "left of very small objects"
+- ?? the model might never find a solution in a case where it perceived all
+  relevant relationships in a scene, constructed the relevant hypotheses, but
+  picked the wrong reference selector in each case. Normally the recombine-
+  hypothesis action would fix this situation, but it could happen that all
+  hypotheses with that relationship already failed
+
+Version 0.7.1
+- changed the default value of feature.hyp_base to 100, which practically leads
+to using the priors of each features as its estimated probability
 
 Version 0.7.0
 - new codelet: RecombineHypothesisCodelet, which changes the target-selector of a
@@ -179,7 +188,7 @@ PBP 22: [HitsRelationship, CollidesRelationship]
 PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
-var pi_version = '0.7.0';
+var pi_version = '0.7.1';
 var pi_default_options = function() {
   var low = 0.1, mid = 0.2, high = 0.3;
   return {
@@ -223,8 +232,8 @@ var pi_default_options = function() {
               , { klass: RightAttribute,       initial_activation: low,  group: 'hor-pos' }
               , { klass: MovableUpAttribute,   initial_activation: low,  group: 'dynamics' }
              ]
-  , pres_mode: 'interleaved-dis-sim' // {blocked, interleaved} X {sim, dis} X {sim, dis}
-  , randomize_row_order: true
+  , pres_mode: 'interleaved-sim-dis' // {blocked, interleaved} X {sim, dis} X {sim, dis}
+  , randomize_row_order: false
   , pres_time: 100 // every x steps, switch to the next scene pair
   , action_priors:
     {
@@ -242,7 +251,7 @@ var pi_default_options = function() {
     {
         time: { start: 0.67, end: 0.33 }
       , feature: {
-        hyp_base: 0.1 // >=0, the smaller, the bigger the influence of hypotheses activities
+        hyp_base: 100 // >=0, the smaller, the bigger the influence of hypotheses activities
       }
       , obj: {
           hyp_base: 0 // >=0, the smaller, the bigger the influence of hypotheses activities

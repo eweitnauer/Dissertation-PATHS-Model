@@ -6,6 +6,12 @@ rm(list=ls())
 
 setwd("~/Code/diss/modelling/current/analysis")
 source("loading.r");
+data_cx = load_data(use_all=FALSE, filename="data-0-7-0-complexity-all.csv");
+data_cx = annotate_data(data_cx);
+
+
+setwd("~/Code/diss/modelling/current/analysis")
+source("loading.r");
 data_ai = load_data(use_all=FALSE);
 data_ai = annotate_data(data_ai);
 data_ai_all = load_data(use_all=TRUE);
@@ -45,8 +51,8 @@ data_ss4_ab = merge(data_ss4_a, data_ss4_b, all=T);
 data_ss_34 = merge(data_ss, data_ss4, all=T);
   
 # print solutions ordered by frequency per problem:
-pbp = '31';
-sols = count(data[data$found_solution==1 & data$pbp==pbp,]$sol);
+pbp = '26';
+sols = count(data_ai_all[data_ai_all$found_solution==1 & data_ai_all$pbp==pbp,]$sol);
 sols[order(sols$freq),]
 
 
@@ -111,6 +117,7 @@ data_ai$log_train_time = log(data_ai$train_time)
 data_ai$log_difficulty = log(data_ai$difficulty)
 ezANOVA(data=data_ai[data_ai$feature_prior_strength==100&data_ai$found_solution==1,],dv=log_train_time,wid=mturk_id,within=.(sch_cond,sim_cond_wi_cat,sim_cond_bw_cat))
 ezANOVA(data=data_ai[data_ai$feature_prior_strength==100,],dv=log_difficulty,wid=mturk_id,within=.(sch_cond,sim_cond_wi_cat,sim_cond_bw_cat))
+ezANOVA(data=data_ai[data_ai$feature_prior_strength==100,],dv=log_difficulty,wid=mturk_id,within=.(sch_cond,sim_cond_wi_pair))
 
 # SS
 
@@ -130,11 +137,12 @@ bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=train_time/1000/6
 #bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=subject_pairs_seen,data=data_ss[data_ss$subject_pairs_seen<100,],legend=T,ylab='actions', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'), x.leg=5.5)
 dev.off();
 
+############# CORRECT COLORS HERE #####################
 # log time minutes
 setwd("~/Code/diss/modelling/current/analysis")
 pdf(file="SS34-log-time-by-cond.pdf",height=1.8, width=4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
-bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,ylim=c(10,11.5),response=log(train_time),data=data_ss_34[data_ss_34$train_time < 1000*60*10,],legend=T,ylab='log (time in ms)', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,ylim=c(10,11.5),response=log(train_time),data=data_ss_34[data_ss_34$train_time < 1000*60*10,],legend=T,ylab='log (time in ms)', density=c(25,25,-1,-1),angle=c(45),col=c('#E89696','#325D81', '#F6D5D5','#5A91BF'))
 #bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=log(subject_pairs_seen),data=data_ss[data_ss$subject_pairs_seen<100,],legend=T,ylab='actions', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'), x.leg=5.5)
 dev.off();
 
@@ -165,6 +173,9 @@ data_ss$log_difficulty = log(data_ss$difficulty)
 data_ss4$difficulty = ifelse(data_ss4$found_solution == 0, 10.0*1000*60, pmin(10.0*1000*60, data_ss4$train_time));
 data_ss4$log_train_time = log(data_ss4$train_time)
 data_ss4$log_difficulty = log(data_ss4$difficulty)
+data_ss4_ab$difficulty = ifelse(data_ss4_ab$found_solution == 0, 10.0*1000*60, pmin(10.0*1000*60, data_ss4_ab$train_time));
+data_ss4_ab$log_train_time = log(data_ss4_ab$train_time)
+data_ss4_ab$log_difficulty = log(data_ss4_ab$difficulty)
 
 # log RT ss3
 res = ezMixed(data = data_ss[data_ss$train_time < 1000*60*10 & data_ss$found_solution == 1,], dv = .(log_train_time), random = .(mturk_id), fixed = .(sim_cond_bw_cat, sim_cond_wi_cat, sch_cond))
@@ -312,6 +323,38 @@ par(mar=c(2,4,1,0)+0.2)
 bargraph.CI(x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ai_all[data_ai_all$feature_prior_strength == 100,],legend=T,ylab='correct answer rate'); #, main='AI')
 dev.off();
 
+# complexity plots
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-acc-per-feature-count-v0-7-0.pdf",height=1.8, width=6, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=feature_count,ylim=c(0,1.05),response=found_solution,data=data_cx,legend=T,ylab='correct answer rate',xlab='number of features the model can perceive');
+dev.off();
+
+#bargraph.CI(x.factor=feature_count,response=train_time,data=data_cx[data_cx$found_solution == 1,],legend=T,ylab='number of actions for solved');
+#bargraph.CI(x.factor=feature_count,response=train_time,data=data_cx,legend=T,ylab='number of actions all');
+
+d_cx = ddply(.data=data_cx, .variables=.(feature_count), perc_avg = mean(perception_count), perc_sdev = sd(perception_count), time_avg = mean(train_time), time_sdev = sd(train_time), time_se = se(train_time), .fun=summarize);
+#d_cx = ddply(.data=data_cx[data_cx$found_solution == 1,], .variables=.(feature_count), time_avg = mean(train_time), time_sdev = sd(train_time), time_se = se(train_time), .fun=summarize);
+
+setwd("~/Code/diss/modelling/current/analysis")
+pdf(file="AI-difficulty-per-feature-count-v0-7-0.pdf",height=2.2, width=6, pointsize=7)
+par(mar=c(4,4,1,0)+0.2)
+x = d_cx$feature_count;
+avg = d_cx$time_avg;
+sdev = d_cx$time_sdev;
+#avg = d_cx$perc_avg;
+#sdev = d_cx$perc_sdev;
+plot(x, avg, xaxt="n",
+     ylim=range(c(0, avg+sdev+100)),
+     pch=19, xlab="number of features the model can perceive", ylab="difficulty score"
+)
+axis(side=1, at=seq(3,34,1))
+# hack: we draw arrows but with very special "arrowheads"
+arrows(x, avg-sdev, x, avg+sdev, length=0.05, angle=90, code=3)
+dev.off();
+
+
 setwd("~/Code/diss/modelling/current/analysis")
 pdf(file="AI-actions-per-problem-v0-7-0.pdf",height=1.2, width=4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
@@ -356,12 +399,15 @@ bargraph.CI(x.factor=pbp,ylim=c(0,17000),response=max_perc,data=data_ai_all[data
 par(new=TRUE)
 bargraph.CI(fun=mean,col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim=c(0,17000),response=perception_count,data=data_ai_all[data_ai_all$feature_prior_strength == 100 & data_ai_all$found_solution==1,],legend=T,ylab='perceptions');
 
-z### Subject performance per problem
+### Subject performance per problem
 
 setwd("~/Code/diss/modelling/current/analysis")
 pdf(file="SS34-acc-per-problem.pdf",height=1.2, width=4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
-bargraph.CI(x.factor=pbp,ylim=c(0,1.05),response=1-found_solution,data=data_ss_34,legend=T,ylab='correct answer rate');
+#bargraph.CI(x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ss,legend=T,ylab='correct answer rate');
+bargraph.CI(x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ss_34,legend=T,ylab='correct answer rate');
+par(new=TRUE)
+bargraph.CI(col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ss4,legend=T,ylab='correct answer rate');
 dev.off();
 
 setwd("~/Code/diss/modelling/current/analysis")
@@ -616,30 +662,35 @@ dev.off();
 
 ## w/i PAIR similarity for AI
 setwd("~/Code/diss/modelling/current/analysis")
-pdf(file="AI-steps-by-wi-pair-sim-v0.7.0.pdf",height=1.8, width=3.4, pointsize=7)
+pdf(file="AI-log-difficulty-by-wi-pair-sim-v0.7.0.pdf",height=1.8, width=3.4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
-bargraph.CI(x.factor=sch_cond,response=train_time,group=sim_cond_wi_pair,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylab='action taken', ylim=c(500,1000), x.leg=3.6, y.leg=1200);
+#bargraph.CI(x.factor=sch_cond,response=train_time,group=sim_cond_wi_pair,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylab='actions taken', ylim=c(500,1000), x.leg=3.6, y.leg=1200);
+bargraph.CI(x.factor=sch_cond,response=log(difficulty),group=sim_cond_wi_pair,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylim=c(5,6.4),ylab='model log difficulty', x.leg=3.6);
 dev.off();
 
-## w/i PAIR similarity for Ss3
+bargraph.CI(x.factor=sch_cond,response=log(difficulty),group=sim_cond_bw_cat,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylim=c(5,6.4),ylab='model log difficulty', x.leg=3.6);
+bargraph.CI(x.factor=sch_cond,response=log(difficulty),group=sim_cond_wi_cat,data=data_ai[data_ai$feature_prior_strength==100,],legend=T,ylim=c(5,6.4),ylab='model log difficulty', x.leg=3.6);
+
+## w/i PAIR similarity for Ss3 #OK
 setwd("~/Code/diss/modelling/current/analysis")
-pdf(file="SS3-error-by-wi-pair-sim.pdf",height=1.8, width=3.4, pointsize=7)
+pdf(file="SS3-log-difficulty-by-wi-pair-sim.pdf",height=1.8, width=3.4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
-bargraph.CI(x.factor=sch_cond,response=1-found_solution,group=sim_cond_wi_pair,data=data_ss,legend=T,ylab='error rate', ylim=c(0,1.01), x.leg=3.6);
+#bargraph.CI(x.factor=sch_cond,response=1-found_solution,group=sim_cond_wi_pair,data=data_ss,legend=T,ylab='error rate', ylim=c(0,1.01), x.leg=3.6);
+bargraph.CI(x.factor=sch_cond,response=log(difficulty),group=sim_cond_wi_pair,data=data_ss,legend=T,ylab='human log difficulty score', ylim=c(10, 14), x.leg=3.6);
 dev.off();
 
-bargraph.CI(x.factor=sch_cond,response=difficulty,group=sim_cond_wi_cat,data=data_ss_34,legend=T,ylab='error rate', x.leg=3.6);
-
-## w/i category similarity for Ss4
+## w/i category similarity for Ss4 #OK
 setwd("~/Code/diss/modelling/current/analysis")
-pdf(file="SS4-error-by-wi-cat-sim.pdf",height=1.8, width=3.4, pointsize=7)
+pdf(file="SS4-log-difficulty-by-wi-cat-sim.pdf",height=1.8, width=3.4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
-bargraph.CI(group=sim_cond_wi_cat,x.factor=flag,response=1-found_solution,data=data_ss4_ab,legend=T,ylab='error rate', ylim=c(0,1.01), x.leg=1);
+#bargraph.CI(group=sim_cond_wi_cat,x.factor=flag,response=1-found_solution,data=data_ss4_ab,legend=T,ylab='error rate', ylim=c(0,1.01), x.leg=1);
+bargraph.CI(group=sim_cond_wi_cat,x.factor=flag,response=log_difficulty,data=data_ss4_ab,legend=T,ylab='human log difficulty score', ylim=c(10,14), x.leg=1);
 dev.off();
 setwd("~/Code/diss/modelling/current/analysis")
-pdf(file="SS4-error-by-bw-cat-sim.pdf",height=1.8, width=3.4, pointsize=7)
+pdf(file="SS4-log-difficulty-by-bw-cat-sim.pdf",height=1.8, width=3.4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
-bargraph.CI(x.factor=flag, group=sim_cond_bw_cat,response=1-found_solution,data=data_ss4_ab,legend=T,ylab='error rate', ylim=c(0,1.01), x.leg=0.85);
+#bargraph.CI(x.factor=flag, group=sim_cond_bw_cat,response=1-found_solution,data=data_ss4_ab,legend=T,ylab='error rate', ylim=c(0,1.01), x.leg=0.85);
+bargraph.CI(x.factor=flag, group=sim_cond_bw_cat,response=log_difficulty,data=data_ss4_ab,legend=T,ylab='human log difficulty score', ylim=c(10,14), x.leg=0.85);
 dev.off();
 
 
@@ -650,6 +701,8 @@ pdf(file="AI-acc-per-problem-v0-7-0.pdf",height=1.2, width=4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
 bargraph.CI(x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ai[data_ai$feature_prior_strength == 100,],legend=T,ylab='correct answer rate'); #, main='AI')
 dev.off();
+
+bargraph.CI(x.factor=pbp,ylim=c(0,1.05),group=cond,response=found_solution,data=data_ai[data_ai$feature_prior_strength == 100,],legend=T,ylab='correct answer rate'); #, main='AI')
 
 setwd("~/Code/diss/modelling/current/analysis")
 pdf(file="SS3-acc-per-problem.pdf",height=1.2, width=4, pointsize=7)
