@@ -13,6 +13,52 @@ function init(from, to, db_suffix) {
 	ps.run(from || 0, to || Infinity);
 }
 
+var low = 0.1, mid = 0.2, high = 0.3;
+var feature_list = 
+[
+    { klass: CircleAttribute,      initial_activation: high,  group: 'shape' }
+  , { klass: RightRelationship,    initial_activation: low,  group: 'hor-pos' }
+  , { klass: LeftRelationship,     initial_activation: low,  group: 'hor-pos' }
+  , { klass: TouchAttribute,       initial_activation: low,  group: 'distance' }
+  , { klass: SquareAttribute,      initial_activation: high,  group: 'shape' }
+  , { klass: FarRelationship,      initial_activation: low,  group: 'distance' }
+  , { klass: TriangleAttribute,    initial_activation: high,  group: 'shape' }
+  , { klass: CloseRelationship,    initial_activation: low,  group: 'distance' }
+  , { klass: RectangleAttribute,   initial_activation: high,  group: 'shape' }
+  , { klass: TouchRelationship,    initial_activation: low, group: 'distance' }
+  , { klass: SmallAttribute,       initial_activation: high,  group: 'shape' }
+  , { klass: HitsRelationship,     initial_activation: low,  group: 'dynamics' }
+  , { klass: MovesAttribute,       initial_activation: mid, group: 'dynamics' }
+  , { klass: GetsHitRelationship,  initial_activation: low,  group: 'dynamics' }
+  , { klass: FarAttribute,         initial_activation: low,  group: 'distance' }
+  , { klass: CollidesRelationship, initial_activation: low,  group: 'dynamics' }
+  , { klass: AboveRelationship,    initial_activation: low,  group: 'vert-pos' }
+  , { klass: CountAttribute,       initial_activation: low,  group: 'shape' }
+  , { klass: BelowRelationship,    initial_activation: low,  group: 'vert-pos' }
+  , { klass: CloseAttribute,       initial_activation: low,  group: 'distance' }
+  , { klass: TopMostAttribute,     initial_activation: low,  group: 'vert-pos' }
+  , { klass: LargeAttribute,       initial_activation: high,  group: 'shape' }
+  , { klass: OnTopRelationship,    initial_activation: low,  group: 'vert-pos' }
+  , { klass: OnGroundAttribute,    initial_activation: low,  group: 'vert-pos' }
+  , { klass: BesideRelationship,   initial_activation: low,  group: 'hor-pos' }
+  , { klass: BottomAttribute,      initial_activation: low,  group: 'vert-pos' }
+  , { klass: TopAttribute,         initial_activation: low,  group: 'vert-pos' }
+  , { klass: SupportsRelationship, initial_activation: low,  group: 'dynamics' }
+  , { klass: LeftAttribute,        initial_activation: low,  group: 'hor-pos' }
+  , { klass: RightAttribute,       initial_activation: low,  group: 'hor-pos' }
+  , { klass: UnstableAttribute,    initial_activation: mid, group: 'dynamics' }
+  , { klass: StableAttribute,      initial_activation: mid, group: 'dynamics' }
+  , { klass: MovableUpAttribute,   initial_activation: low,  group: 'dynamics' }
+  , { klass: SingleAttribute,      initial_activation: low, group: 'distance' }
+];
+
+function init_O(from, to, db_suffix) {
+	var ps = setup_testsuite(25, 2500, db_suffix);
+	ps.addParameter('feature_count', [3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34]);
+	ps.addParameter('pbp', ['pbp26']);
+	ps.run(from || 0, to || Infinity, feature_list);	
+}
+
 function init_ff(idx) {
 	var ps = setup_testsuite(75, 2000);
 	//ps.setParameter('pbp', ['pbp13']);

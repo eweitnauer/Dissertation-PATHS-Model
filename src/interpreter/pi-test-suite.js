@@ -28,7 +28,8 @@ PITestSuite.prototype.setLogServer = function(url, table_name) {
 }
 
 PITestSuite.prototype.addParameter = function(name, values) {
-	this.parameters.push({name: name, values: values, i: 0});
+  if (name === 'pbp') this.parameters[0] = {name: name, values: values};
+	else this.parameters.push({name: name, values: values, i: 0});
 }
 
 PITestSuite.prototype.setParameter = function(name, values) {
@@ -38,8 +39,8 @@ PITestSuite.prototype.setParameter = function(name, values) {
   p[0].i = 0;
 }
 
-PITestSuite.prototype.run = function(start_idx, end_idx) {
-	var param_settings = this.cartesianProduct(this.parameters);
+PITestSuite.prototype.run = function(start_idx, end_idx, custom_feature_list) {
+  var param_settings = this.cartesianProduct(this.parameters);
   this.step_count = param_settings.length;
   var i = start_idx || 0, self = this;
   function step() {
@@ -50,9 +51,13 @@ PITestSuite.prototype.run = function(start_idx, end_idx) {
     var params = param_settings[i++];
     self.curr_idx = i;
     var options = pi_default_options();
+    if (custom_feature_list) options.features = custom_feature_list;
     var pbp = null;
     for (var j=0; j<params.length; j++) {
       if (params[j].name === 'pbp') pbp = params[j].value;
+      else if (params[j].name === 'feature_count') {
+        options.features = options.features.slice(0,params[j].value);
+      }
       else self.applyParam(options, params[j]);
     }
     if (self.before_step_callback) self.before_step_callback(i, param_settings.length, params);
@@ -75,6 +80,7 @@ PITestSuite.prototype.applyParam = function(options, param) {
 PITestSuite.prototype.runOne = function(pbp, options, params, callback) {
   var scenes = this.getScenes(pbp);
   var pi = PITester.get_current_pi()(options);
+
   var tester = new PITester( pi, scenes, this.reps, this.max_solver_steps
                            , 1, 'error');
   var self = this;
