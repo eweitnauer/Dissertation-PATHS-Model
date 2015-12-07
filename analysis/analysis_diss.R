@@ -49,7 +49,9 @@ data_ss4_b$flag = 'delete me (I\'m identical)';
 data_ss4_ab = merge(data_ss4_a, data_ss4_b, all=T);
 
 data_ss_34 = merge(data_ss, data_ss4, all=T);
-  
+all_pbps = c('2', '4', '8', '9', '11b', '12', '13', '16', '18', '19', '20', '21', '22', '23', '24', '26', '27', '28', '30', '31', '32', '33');
+data_ss_34$pbp = factor(data_ss_34$pbp, levels=c(all_pbps))
+
 # print solutions ordered by frequency per problem:
 pbp = '26';
 sols = count(data_ai_all[data_ai_all$found_solution==1 & data_ai_all$pbp==pbp,]$sol);
@@ -401,19 +403,19 @@ bargraph.CI(fun=mean,col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim
 
 ### Subject performance per problem
 
-setwd("~/Code/diss/modelling/current/analysis")
-pdf(file="SS34-acc-per-problem.pdf",height=1.2, width=4, pointsize=7)
+setwd("~/Desktop")
+pdf(file="SS34-acc-per-problem.pdf",height=1.2, width=6, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
 #bargraph.CI(x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ss,legend=T,ylab='correct answer rate');
 bargraph.CI(x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ss_34,legend=T,ylab='correct answer rate');
-par(new=TRUE)
-bargraph.CI(col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ss4,legend=T,ylab='correct answer rate');
+#par(new=TRUE)
+#bargraph.CI(col=rgb(70/255,130/255,180/255,alpha=0.5),group=sch_cond,x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ss_34,legend=T,ylab='correct answer rate');
 dev.off();
 
-setwd("~/Code/diss/modelling/current/analysis")
-pdf(file="SS34-time-per-problem.pdf",height=1.2, width=4, pointsize=7)
+setwd("~/Desktop")
+pdf(file="SS34-time-per-problem.pdf",height=1.2, width=6, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
-bargraph.CI(x.factor=pbp,ylim=c(0,5),response=train_time/1000/60,data=data_ss_34[data_ss_34$train_time < 1000*60*10,],legend=T,ylab='time');
+bargraph.CI(x.factor=pbp,ylim=c(0,5),response=train_time/1000/60,data=data_ss_34[data_ss_34$train_time < 1000*60*10,],legend=T,ylab='time in minutes');
 par(new=TRUE)
 bargraph.CI(col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim=c(0,5),response=train_time/1000/60,data=data_ss_34[data_ss_34$train_time < 1000*60*10 & data_ss_34$found_solution == 1,], legend=F, names.arg=FALSE);
 dev.off();
