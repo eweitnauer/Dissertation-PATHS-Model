@@ -44,7 +44,11 @@ Workspace.prototype.generateSceneSequence = function(randomize_row_order) {
               , 'blocked-sim-sim': ['A1A2', 'B1B2', 'A3A4', 'B3B4', 'A5A6', 'B5B6', 'A7A8', 'B7B8']      // wip: 8 bwp: 4 | wic: 8 bwc: 4
               , 'blocked-sim-dis': ['A1A2', 'B3B4', 'A5A6', 'B7B8', 'A3A4', 'B1B2', 'A7A8', 'B5B6']      // wip: 8 bwp: 0 | wic: 8 bwc: 0
               , 'blocked-dis-sim': ['A1A3', 'B1B3', 'A2A4', 'B2B4', 'A5A7', 'B5B7', 'A6A8', 'B6B8']      // wip: 0 bwp: 6 | wic: 0 bwc: 6
-              , 'blocked-dis-dis': ['A1A5', 'B3B7', 'A6A2', 'B8B4', 'A7A3', 'B5B1', 'A4A8', 'B2B6']};    // wip: 0 bwp: 2 | wic: 0 bwc: 2
+              , 'blocked-dis-dis': ['A1A5', 'B3B7', 'A6A2', 'B8B4', 'A7A3', 'B5B1', 'A4A8', 'B2B6']      // wip: 0 bwp: 2 | wic: 0 bwc: 2
+              , 'fullblocked-sim-sim': ['A1A2', 'A3A4', 'A5A6', 'A7A8', 'B7B8', 'B5B6', 'B3B4', 'B1B2']
+              , 'fullblocked-sim-dis': ['A1A2', 'A3A4', 'A5A6', 'A7A8', 'B1B2', 'B3B4', 'B5B6', 'B7B8']
+              , 'fullblocked-dis-sim': ['A1A3', 'A5A7', 'A2A4', 'A6A8', 'B6B8', 'B2B4', 'B5B7', 'B1B3']
+              , 'fullblocked-dis-dis': ['A1A3', 'A5A7', 'A2A4', 'A6A8', 'B1B3', 'B5B7', 'B2B4', 'B6B8']};
   var lsn = this.left_scenes, rsn = this.right_scenes;
   if (randomize_row_order) {
     var row_map = Random.permutation(4);

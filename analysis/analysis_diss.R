@@ -4,13 +4,13 @@ library(ez)
 library(effsize)
 rm(list=ls())  
 
-setwd("~/Code/diss/modelling/current/analysis")
+setwd("~/Code/diss-model/analysis")
 source("loading.r");
 data_cx = load_data(use_all=FALSE, filename="data-0-7-0-complexity-all.csv");
 data_cx = annotate_data(data_cx);
 
 
-setwd("~/Code/diss/modelling/current/analysis")
+setwd("~/Code/diss-model/analysis")
 source("loading.r");
 data_ai = load_data(use_all=FALSE);
 data_ai = annotate_data(data_ai);
@@ -18,6 +18,18 @@ data_ai_all = load_data(use_all=TRUE);
 data_ai_all = annotate_data(data_ai_all);
 data_ai$population = 'ai';
 data = data_ai;
+
+setwd("~/Code/diss-model/analysis")
+source("loading.r");
+data_ai_fb = load_data(use_all=FALSE, filename="data-0-7-2-fullblocked.csv");
+data_ai_fb = annotate_data(data_ai_fb);
+data_ai_fb$feature_prior_strength=100; # makes joint plotting easier
+data_ai_all_fb = load_data(use_all=TRUE, filename="data-0-7-2-fullblocked.csv");
+data_ai_all_fb = annotate_data(data_ai_all_fb);
+data_ai_all_fb$feature_prior_strength=100; # makes joint plotting easier
+data_ai_fb$population = 'ai';
+data_fb = data_ai_fb;
+data_ai = merge(data_fb, data, all=T);
 
 setwd("~/Dropbox/Bongard Problems/pbp_mturk_exp3_2")
 source("loading.r");
@@ -139,6 +151,18 @@ bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=train_time/1000/6
 #bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=subject_pairs_seen,data=data_ss[data_ss$subject_pairs_seen<100,],legend=T,ylab='actions', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'), x.leg=5.5)
 dev.off();
 
+setwd("~/code/diss-model/analysis")
+pdf(file="SS34-all-log-time-for-solved-by-cond.pdf",height=1.8, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=log(train_time),data=data_ss_34[data_ss_34$train_time < 1000*60*10 & data_ss_34$found_solution==1,], ylim=c(10,12), legend=T, ylab='log time to solution', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
+dev.off();
+
+setwd("~/code/diss-model/analysis")
+pdf(file="SS34-all-acc-cond.pdf",height=1.8, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=found_solution,data=data_ss_34[data_ss_34$train_time < 1000*60*10,], ylim=c(0,1), legend=T, ylab='accuracy', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
+dev.off();
+
 ############# CORRECT COLORS HERE #####################
 # log time minutes
 setwd("~/Code/diss/modelling/current/analysis")
@@ -158,8 +182,10 @@ dev.off();
 
 # difficulty
 data_ss_34$difficulty = ifelse(data_ss_34$found_solution == 0, 10.0*1000*60, pmin(10.0*1000*60, data_ss_34$train_time));
-setwd("~/Code/diss/modelling/current/analysis")
-pdf(file="SS34-log-difficulty-by-cond.pdf",height=1.8, width=4, pointsize=7)
+#setwd("~/Code/diss/modelling/current/analysis")
+#pdf(file="SS34-log-difficulty-by-cond.pdf",height=1.8, width=4, pointsize=7)
+setwd("~/code/diss-model/analysis")
+pdf(file="SS34-all-log-difficulty-by-cond.pdf",height=1.8, width=4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
 bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,ylim=c(10,14),response=log(difficulty),data=data_ss_34[data_ss_34$train_time < 1000*60*10,],legend=T,ylab='human log difficulty score', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
 dev.off();
