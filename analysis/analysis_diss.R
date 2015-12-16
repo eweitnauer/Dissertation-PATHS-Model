@@ -181,6 +181,10 @@ data_ss4_ab$log_difficulty = log(data_ss4_ab$difficulty)
 res = ezMixed(data = data_ss[data_ss$train_time < 1000*60*10 & data_ss$found_solution == 1,], dv = .(log_train_time), random = .(mturk_id), fixed = .(sim_cond_bw_cat, sim_cond_wi_cat, sch_cond))
 print(res$summary)
 
+data_ss$log_sps = log(data_ss$subject_pairs_seen);
+res = ezMixed(data = data_ss[data_ss$train_time < 1000*60*10 & data_ss$found_solution == 1,], dv = .(log_sps), random = .(mturk_id), fixed = .(sim_cond_bw_cat, sim_cond_wi_cat, sch_cond))
+print(res$summary)
+
 # log RT ss4
 res = ezMixed(data = data_ss4[data_ss4$train_time < 1000*60*10 & data_ss4$found_solution ==1 & data_ss4$sch_cond == 'simultaneous',], dv = .(log_train_time), random = .(mturk_id), fixed = .(sim_cond_bw_cat, sim_cond_wi_cat, sch_cond))
 print(res$summary)
