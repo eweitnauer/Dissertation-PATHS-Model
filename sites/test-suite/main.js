@@ -13,8 +13,16 @@ function init(from, to, db_suffix) {
 	ps.run(from || 0, to || Infinity);
 }
 
+function init_fullblocked(from, to, db_suffix) {
+	var ps = setup_testsuite(25, 2500, db_suffix);
+	ps.addParameter('pres_mode',
+		['fullblocked-sim-sim', 'fullblocked-sim-dis'
+		,'fullblocked-dis-sim', 'fullblocked-dis-dis']);
+	ps.run(from || 0, to || Infinity);
+}
+
 var low = 0.1, mid = 0.2, high = 0.3;
-var feature_list = 
+var feature_list =
 [
     { klass: CircleAttribute,      initial_activation: high,  group: 'shape' }
   , { klass: RightRelationship,    initial_activation: low,  group: 'hor-pos' }
@@ -56,7 +64,7 @@ function init_O(from, to, db_suffix) {
 	var ps = setup_testsuite(25, 2500, db_suffix);
 	ps.addParameter('feature_count', [3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34]);
 	ps.addParameter('pbp', ['pbp26']);
-	ps.run(from || 0, to || Infinity, feature_list);	
+	ps.run(from || 0, to || Infinity, feature_list);
 }
 
 function init_ff(idx) {

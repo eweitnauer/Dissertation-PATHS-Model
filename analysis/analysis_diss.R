@@ -4,13 +4,13 @@ library(ez)
 library(effsize)
 rm(list=ls())  
 
-setwd("~/Code/diss/modelling/current/analysis")
+setwd("~/Code/diss-model/analysis")
 source("loading.r");
 data_cx = load_data(use_all=FALSE, filename="data-0-7-0-complexity-all.csv");
 data_cx = annotate_data(data_cx);
 
 
-setwd("~/Code/diss/modelling/current/analysis")
+setwd("~/Code/diss-model/analysis")
 source("loading.r");
 data_ai = load_data(use_all=FALSE);
 data_ai = annotate_data(data_ai);
@@ -18,6 +18,18 @@ data_ai_all = load_data(use_all=TRUE);
 data_ai_all = annotate_data(data_ai_all);
 data_ai$population = 'ai';
 data = data_ai;
+
+setwd("~/Code/diss-model/analysis")
+source("loading.r");
+data_ai_fb = load_data(use_all=FALSE, filename="data-0-7-2-fullblocked.csv");
+data_ai_fb = annotate_data(data_ai_fb);
+data_ai_fb$feature_prior_strength=100; # makes joint plotting easier
+data_ai_all_fb = load_data(use_all=TRUE, filename="data-0-7-2-fullblocked.csv");
+data_ai_all_fb = annotate_data(data_ai_all_fb);
+data_ai_all_fb$feature_prior_strength=100; # makes joint plotting easier
+data_ai_fb$population = 'ai';
+data_fb = data_ai_fb;
+data_ai = merge(data_fb, data, all=T);
 
 setwd("~/Dropbox/Bongard Problems/pbp_mturk_exp3_2")
 source("loading.r");
@@ -49,7 +61,9 @@ data_ss4_b$flag = 'delete me (I\'m identical)';
 data_ss4_ab = merge(data_ss4_a, data_ss4_b, all=T);
 
 data_ss_34 = merge(data_ss, data_ss4, all=T);
-  
+all_pbps = c('2', '4', '8', '9', '11b', '12', '13', '16', '18', '19', '20', '21', '22', '23', '24', '26', '27', '28', '30', '31', '32', '33');
+data_ss_34$pbp = factor(data_ss_34$pbp, levels=c(all_pbps))
+
 # print solutions ordered by frequency per problem:
 pbp = '26';
 sols = count(data_ai_all[data_ai_all$found_solution==1 & data_ai_all$pbp==pbp,]$sol);
@@ -137,6 +151,18 @@ bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=train_time/1000/6
 #bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=subject_pairs_seen,data=data_ss[data_ss$subject_pairs_seen<100,],legend=T,ylab='actions', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'), x.leg=5.5)
 dev.off();
 
+setwd("~/code/diss-model/analysis")
+pdf(file="SS34-all-log-time-for-solved-by-cond.pdf",height=1.8, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=log(train_time),data=data_ss_34[data_ss_34$train_time < 1000*60*10 & data_ss_34$found_solution==1,], ylim=c(10,12), legend=T, ylab='log time to solution', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
+dev.off();
+
+setwd("~/code/diss-model/analysis")
+pdf(file="SS34-all-acc-cond.pdf",height=1.8, width=4, pointsize=7)
+par(mar=c(2,4,1,0)+0.2)
+bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,response=found_solution,data=data_ss_34[data_ss_34$train_time < 1000*60*10,], ylim=c(0,1), legend=T, ylab='accuracy', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
+dev.off();
+
 ############# CORRECT COLORS HERE #####################
 # log time minutes
 setwd("~/Code/diss/modelling/current/analysis")
@@ -156,8 +182,10 @@ dev.off();
 
 # difficulty
 data_ss_34$difficulty = ifelse(data_ss_34$found_solution == 0, 10.0*1000*60, pmin(10.0*1000*60, data_ss_34$train_time));
-setwd("~/Code/diss/modelling/current/analysis")
-pdf(file="SS34-log-difficulty-by-cond.pdf",height=1.8, width=4, pointsize=7)
+#setwd("~/Code/diss/modelling/current/analysis")
+#pdf(file="SS34-log-difficulty-by-cond.pdf",height=1.8, width=4, pointsize=7)
+setwd("~/code/diss-model/analysis")
+pdf(file="SS34-all-log-difficulty-by-cond.pdf",height=1.8, width=4, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
 bargraph.CI(x.factor=sch_cond,group=sim_cond_both_cat,ylim=c(10,14),response=log(difficulty),data=data_ss_34[data_ss_34$train_time < 1000*60*10,],legend=T,ylab='human log difficulty score', density=c(25,25,-1,-1),angle=c(45),col=c('#D74B4B','#4682B4', '#e58b8b', '#99bbd7'))
 dev.off();
@@ -405,19 +433,19 @@ bargraph.CI(fun=mean,col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim
 
 ### Subject performance per problem
 
-setwd("~/Code/diss/modelling/current/analysis")
-pdf(file="SS34-acc-per-problem.pdf",height=1.2, width=4, pointsize=7)
+setwd("~/Desktop")
+pdf(file="SS34-acc-per-problem.pdf",height=1.2, width=6, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
 #bargraph.CI(x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ss,legend=T,ylab='correct answer rate');
 bargraph.CI(x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ss_34,legend=T,ylab='correct answer rate');
-par(new=TRUE)
-bargraph.CI(col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ss4,legend=T,ylab='correct answer rate');
+#par(new=TRUE)
+#bargraph.CI(col=rgb(70/255,130/255,180/255,alpha=0.5),group=sch_cond,x.factor=pbp,ylim=c(0,1.05),response=found_solution,data=data_ss_34,legend=T,ylab='correct answer rate');
 dev.off();
 
-setwd("~/Code/diss/modelling/current/analysis")
-pdf(file="SS34-time-per-problem.pdf",height=1.2, width=4, pointsize=7)
+setwd("~/Desktop")
+pdf(file="SS34-time-per-problem.pdf",height=1.2, width=6, pointsize=7)
 par(mar=c(2,4,1,0)+0.2)
-bargraph.CI(x.factor=pbp,ylim=c(0,5),response=train_time/1000/60,data=data_ss_34[data_ss_34$train_time < 1000*60*10,],legend=T,ylab='time');
+bargraph.CI(x.factor=pbp,ylim=c(0,5),response=train_time/1000/60,data=data_ss_34[data_ss_34$train_time < 1000*60*10,],legend=T,ylab='time in minutes');
 par(new=TRUE)
 bargraph.CI(col=rgb(70/255,130/255,180/255,alpha=0.5),x.factor=pbp,ylim=c(0,5),response=train_time/1000/60,data=data_ss_34[data_ss_34$train_time < 1000*60*10 & data_ss_34$found_solution == 1,], legend=F, names.arg=FALSE);
 dev.off();

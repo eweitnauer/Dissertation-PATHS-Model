@@ -12,6 +12,9 @@ Bugs / Problems:
   hypothesis action would fix this situation, but it could happen that all
   hypotheses with that relationship already failed
 
+Version 0.7.2
+- added fullblocked presentation schedule
+
 Version 0.7.1
 - changed the default value of feature.hyp_base to 100, which practically leads
 to using the priors of each features as its estimated probability
@@ -188,7 +191,7 @@ PBP 22: [HitsRelationship, CollidesRelationship]
 PBP 26: [ShapeAttribute, LeftAttribute]
 PBP 31: [MovableUpAttribute, ShapeAttribute]
 */
-var pi_version = '0.7.1';
+var pi_version = '0.7.2';
 var pi_default_options = function() {
   var low = 0.1, mid = 0.2, high = 0.3;
   return {
@@ -232,9 +235,8 @@ var pi_default_options = function() {
               , { klass: RightAttribute,       initial_activation: low,  group: 'hor-pos' }
               , { klass: MovableUpAttribute,   initial_activation: low,  group: 'dynamics' }
              ]
-  , pres_mode: 'interleaved-sim-dis' // {blocked, interleaved} X {sim, dis} X {sim, dis}
+  , pres_mode: 'fullblocked-sim-sim' // {blocked, interleaved, fullblocked} X w/i-pair{sim, dis} X b/w-pair{sim, dis}
   , randomize_row_order: false
-  , pres_time: 100 // every x steps, switch to the next scene pair
   , action_priors:
     {
       perceive: 0.6

@@ -238,7 +238,8 @@ PITester.prototype.updateFeatureList = function(div_el, click_callback) {
 	  .classed('val', true);
 
 	// divs.style('background-color', function(d) { return 'rgba(0,0,0,'+d.val/2+')' });
-	divs.style('opacity', function(d) { return 0.8*d.val/0.06/*0.8*d.val+0.2*/ });
+	var max = d3.max(features, function(d) { return d.val });
+	divs.style('background', function(d) { return 'rgba(140,140,140,'+d.val/max+')' });
 	divs.select('.val').text(function(d) { return d.val.toFixed(2) });
 
 	divs.exit().remove();
@@ -270,6 +271,7 @@ PITester.prototype.getActiveScenes = function() {
 }
 
 PITester.prototype.updateSolutionList = function(list_el) {
+	if (!list_el) return;
 	var solutions = this.ws ? this.ws.solutions : [];
 
 	var divs = d3.select(list_el)
@@ -281,4 +283,12 @@ PITester.prototype.updateSolutionList = function(list_el) {
 	  .text(function(d) { return d.describe() });
 
 	divs.exit().remove();
+}
+
+PITester.prototype.updateLastSolution = function(el) {
+	if (!el) return;
+	var solutions = this.ws ? this.ws.solutions : []
+	  , N = solutions.length;
+
+	d3.select(el).text(N ? solutions[N-1].describe() : '');
 }

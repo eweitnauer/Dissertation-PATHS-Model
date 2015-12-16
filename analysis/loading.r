@@ -50,28 +50,22 @@ load_data = function(use_all=FALSE,filename="data-0-7-0.csv") {
 # each of the 22 pbps for each pbp.
 annotate_data = function(data) {
   #create new conditions, to separate each factor (sim and schedule)
-  data$sch_cond = ifelse(data$cond %in% c('blocked-dis-dis','blocked-sim-sim','blocked-dis-sim','blocked-sim-dis'),'blocked','interleaved')
+  data$sch_cond = ifelse(data$cond %in% c('blocked-dis-dis','blocked-sim-sim','blocked-dis-sim','blocked-sim-dis'),'blocked'
+                        ,ifelse(data$cond %in% c('interleaved-dis-dis','interleaved-sim-sim','interleaved-dis-sim','interleaved-sim-dis'), 'interleaved', 'full-blocked'));
   
   # similarity within scene pairs and between scene pairs
-  data$sim_cond_wi_pair = ifelse(data$cond %in% c('blocked-dis-sim','interleaved-dis-sim','interleaved-dis-dis','blocked-dis-dis'),'dissimilar scenes paired','similar scenes paired')
+  data$sim_cond_wi_pair = ifelse(data$cond %in% c('blocked-dis-sim','interleaved-dis-sim','interleaved-dis-dis','blocked-dis-dis','fullblocked-dis-sim','fullblocked-dis-dis'),'dissimilar scenes paired','similar scenes paired')
   data$sim_cond_bw_pair = ifelse(data$cond %in% c('blocked-dis-sim','interleaved-dis-sim','interleaved-sim-sim','blocked-sim-sim'),'similar pairs next to each other','dissimilar pairs next to each other')
   
   # similarity in within category and between category comparisions
   #   since - same as in experiment 3.2 - the original similarity conditions were named based on w/i and b/w *pair* similarity,
   #   we need to swap interleaved-dis-sim with interleaved-sim-dis to get to the w/i and b/w *category* similarities we want.
-  data$sim_cond_wi_cat = ifelse(data$cond %in% c('blocked-dis-sim','blocked-dis-dis', 'interleaved-dis-dis','interleaved-sim-dis'), 'dis. w/i cat.','sim. w/i cat.')
-  data$sim_cond_bw_cat = ifelse(data$cond %in% c('blocked-dis-dis','blocked-sim-dis', 'interleaved-dis-dis','interleaved-dis-sim'), 'dis. b/w cat.','sim. b/w cat.')
+  data$sim_cond_wi_cat = ifelse(data$cond %in% c('blocked-dis-sim','blocked-dis-dis', 'interleaved-dis-dis','interleaved-sim-dis','fullblocked-dis-sim','fullblocked-dis-dis'), 'dis. w/i cat.','sim. w/i cat.')
+  data$sim_cond_bw_cat = ifelse(data$cond %in% c('blocked-dis-dis','blocked-sim-dis', 'interleaved-dis-dis','interleaved-dis-sim','fullblocked-sim-dis','fullblocked-dis-dis'), 'dis. b/w cat.','sim. b/w cat.')
   
   
   # this line is *much* faster than the loop below
   data$sim_cond_both_cat = interaction(data$sim_cond_wi_cat, data$sim_cond_bw_cat, sep=', ');
-  # create new condition sim_cond_both, which can take one of four values
-  #for(i in 1:length(data$cond)) {
-  #  cond_str = unlist(strsplit(as.character(data$cond[i]), '-'));
-  #  data$sim_cond_both_cat[i] = paste0(substr(data$sim_cond_wi_cat[i],1,3)
-  #                                     , '-'
-  #                                     ,substr(data$sim_cond_bw_cat[i],1,3));
-  #}
   
   # reorder similarity factor levels
   #data$sim_cond_both_cat = factor(data$sim_cond_both_cat, c("dis. w/i cat., dis. b/w cat.", "sim. w/i cat., dis. b/w cat.", "dis. w/i cat., sim. b/w cat.", "sim. w/i cat., sim. b/w cat."));

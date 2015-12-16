@@ -47,21 +47,26 @@ var SVGSceneParser = (function() {
     return (Point.len(tf.a, tf.b) + Point.len(tf.c, tf.d)) / 2
   }
 
+  /// Loads the shapes in the scene from the contents of an svg file (passed as url).
+  var parseFile = function(file_url, pixels_per_unit) {
+    var content = ajaxGetUrl(file_url);
+    return parseString(content, pixels_per_unit);
+  }
+  pub.parseFile = parseFile;
+
   /// Loads the shapes in the scene from the contents of an svg file (passed as string).
   /// The default pixels_per_unit is 100.
-  var parseFile = function(file_url, pixels_per_unit) {
+  var parseString = function(svg_str, pixels_per_unit) {
     pixels_per_unit = pixels_per_unit || 100;
-    //console.log('parsing', file_url);
-    var content = ajaxGetUrl(file_url);
-    var svg_dom = parseXml(content);
-    if (!svg_dom) throw 'Error parsing ' + content;
+    var svg_dom = parseXml(svg_str);
+    if (!svg_dom) throw 'Error parsing ' + svg_str;
 
     // WORKAROUND 1
     // normally we would use the svg dom tree directly, but due to this bug in Firefox
     // (https://bugzilla.mozilla.org/show_bug.cgi?id=756985),
     // we need to add it to the main dom tree if we want to use getCTM() dom function.
     var root = append_svg_to_dom(svg_dom, "hidden_svg_div");
-    //var root = append_svg_to_dom(content, "hidden_svg_div");
+    //var root = append_svg_to_dom(svg_str, "hidden_svg_div");
     var shapes = [];
 
     // the stroke-width must be multiplied with the scaling of the object to get the
@@ -127,7 +132,7 @@ var SVGSceneParser = (function() {
 
     return new SVGScene(shapes, frame, pixels_per_unit);
   }
-  pub.parseFile = parseFile;
+  pub.parseString = parseString;
 
   /// Applies the svg transformation to each object.
   var apply_transformations = function(shapes, dx, dy, s, svg) {

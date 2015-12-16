@@ -1,108 +1,20 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>PBP Solutions</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" type="text/css" href="../../libs/bootstrap-3.3.5-dist/css/bootstrap.min.css">
-    <script src="../../libs/bootstrap-3.3.5-dist/js/jquery-2.1.4.min.js"></script>
-    <script src="../../libs/bootstrap-3.3.5-dist/js/bootstrap.min.js"></script>
-    <script src="../../libs/d3/d3.min.js"></script>
-    <script src="../../libs/geom.js/src/point.js"></script>
-    <script src="../../libs/geom.js/src/circle.js"></script>
-    <script src="../../libs/geom.js/src/polygon.js"></script>
-    <script src="../../libs/geom.js/src/convex_decomposition.js"></script>
-    <script src="../../libs/geom.js/src/vector.js"></script>
-    <script src="../../libs/geom.js/src/matrix.js"></script>
-    <script src="../../libs/geom.js/src/spatial_relation_analyzer.js"></script>
-    <script src="../../libs/box2dweb/Box2D.js"></script>
-    <script src="../../libs/svg2physics/svg-scene-parser.js"></script>
-    <script src="../../libs/svg2physics/box2d-adapter.js"></script>
-    <script src="../../libs/svg2physics/box2d-extensions.js"></script>
-    <script src="../../libs/svg2physics/physics-scene.js"></script>
-    <script src="../../libs/svg2physics/physics-oracle.js"></script>
-    <script src="../../src/visualization/box2d-simulator.js"></script>
-    <script src="../../src/visualization/scene-visualizer.js"></script>
-    <script src="../../src/visualization/scene-interactor.js"></script>
-    <script src="../../src/features/stable-attr.js"></script>
-    <script src="../../src/features/unstable-attr.js"></script>
-    <script src="../../src/features/movable-up-attr.js"></script>
-    <script src="../../src/features/shape-attr.js"></script>
-    <script src="../../src/features/circle-attr.js"></script>
-    <script src="../../src/features/square-attr.js"></script>
-    <script src="../../src/features/rectangle-attr.js"></script>
-    <script src="../../src/features/triangle-attr.js"></script>
-    <script src="../../src/features/moves-attr.js"></script>
-    <script src="../../src/features/small-attr.js"></script>
-    <script src="../../src/features/large-attr.js"></script>
-    <script src="../../src/features/left-attr.js"></script>
-    <script src="../../src/features/left-most-attr.js"></script>
-    <script src="../../src/features/right-attr.js"></script>
-    <script src="../../src/features/right-most-attr.js"></script>
-    <script src="../../src/features/bottom-attr.js"></script>
-    <script src="../../src/features/single-attr.js"></script>
-    <script src="../../src/features/top-attr.js"></script>
-    <script src="../../src/features/top-most-attr.js"></script>
-    <script src="../../src/features/on-ground-attr.js"></script>
-    <script src="../../src/features/left-rel.js"></script>
-    <script src="../../src/features/right-rel.js"></script>
-    <script src="../../src/features/beside-rel.js"></script>
-    <script src="../../src/features/below-rel.js"></script>
-    <script src="../../src/features/above-rel.js"></script>
-    <script src="../../src/features/touch-rel.js"></script>
-    <script src="../../src/features/ontop-rel.js"></script>
-    <script src="../../src/features/far-rel.js"></script>
-    <script src="../../src/features/far-attr.js"></script>
-    <script src="../../src/features/close-rel.js"></script>
-    <script src="../../src/features/close-attr.js"></script>
-    <script src="../../src/features/hits-rel.js"></script>
-    <script src="../../src/features/gets-hit-rel.js"></script>
-    <script src="../../src/features/collides-rel.js"></script>
-    <script src="../../src/features/supports-rel.js"></script>
-    <script src="../../src/features/count-attr.js"></script>
-    <script src="../../src/features/touch-attr.js"></script>
-    <script src="../../src/settings.js"></script>
-    <script src="../../src/events.js"></script>
-    <script src="../../src/interpreter/object-node.js"></script>
-    <script src="../../src/interpreter/group-node.js"></script>
-    <script src="../../src/interpreter/selector.js"></script>
-    <script src="../../src/interpreter/solution.js"></script>
-    <script src="../../src/interpreter/attention-net.js"></script>
-    <script src="../../src/interpreter/activity-ranges.js"></script>
-    <script src="../../src/interpreter/scene-node.js"></script>
-    <script src="../../src/interpreter/random.js"></script>
-    <script src="../../src/interpreter/workspace.js"></script>
-    <script src="../../src/interpreter/coderack.js"></script>
-    <script src="../../src/interpreter/codelets/attr-codelet.js"></script>
-    <script src="../../src/interpreter/codelets/check-hypothesis-codelet.js"></script>
-    <script src="../../src/interpreter/codelets/combine-hypothesis-codelet.js"></script>
-    <script src="../../src/interpreter/codelets/recombine-hypothesis-codelet.js"></script>
-    <script src="../../src/interpreter/codelets/new-hypothesis-codelet.js"></script>
-    <script src="../../src/interpreter/physics-interpreter.js"></script>
-    <script src="../../src/interpreter/pi-tester.js"></script>
-    <script src="../../src/interpreter/pi-test-suite.js"></script>
-    <script src="loader.js"></script>
-    <script src="main.js"></script>
+    <title>PATHS Model</title>
+    <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+    <script src="jquery-2.1.4.min.js"></script>
+    <script src="bootstrap.min.js"></script>
+    <script src="d3.min.js"></script>
+    <script src="geom.min.js"></script>
+	  <script src="Box2D.min.js"></script>
+    <script src="pbp-model.js"></script>
     <link href="main.css" rel="stylesheet">
+    <script src="main.js"></script>
   </head>
   <body onload="init();">
-    <!-- <div id="header">
-      <div id="options" style="display: none"></div>
-      <div id="solution" style="display: block">
-        <div id="sol-texts"></div>
-      </div>
-      <div id="main">
-        <button id="curr-as-start">use curr. as start</button>
-        <button id="show-hide-1">analyze</button>
-        <button id="show-hide-2">show solutions</button>
-        <button id="solve">solve</button>
-        <button id="solve-debug">solve (debug)</button>
-      </div>
-    </div> -->
     <div id="vis" class="box">
-        <!-- <div id="selectors" class="box info" style="top: 670px; position: absolute; width: 91%">
-            <h2>Hypotheses</h2>
-            <table id="selector-table"></table>
-        </div> -->
         <img id="btnPrev" onclick="prev()" src="left.png"/>
         <h2 id="pbp-num">PBP</h2>
         <img id="btnNext" onclick="next()" src="right.png"/>
@@ -138,6 +50,9 @@
                 the "[start<-curr]" link will, differently from the other links, alter how PATHS sees the problem. It will redefine the problem such that the currently visible state in all scenes is treated as the initial state. This will potentially change the solution to the problem. The PATHS model should be reset
                 after making such a change.
 
+                <p><b>New feature: </b>Drag and drop SVG scenes onto the scenes above
+                to load your own scenes.</p>
+
                 <p>The objects in the scenes are colored with varying shades of gray,
                 reflecting the estimated probability that an object is part of a solution.
                 The darker an object is, the more likely it is to be selected for perception of further features and during the merging of hypothesis. Clicking on an object in one of the scenes will log all features
@@ -163,7 +78,7 @@
             <span>&nbsp;&nbsp;performed actions: <span id="solver-step">?</span></span><br/>
             <div id="codelet-stats"></div>
             <div id="debug-text" style="display: none"></div>
-            <div id='sol-text'>Solution:<p id="last-solution"></p></div>
+            <div id='sol-text'><p id="last-solution"></p></div>
         </div>
         <div id="selectors" class="box info">
             <button class='help-btn' type="button" data-toggle="collapse" data-target="#hyp-help">?</button>
@@ -203,37 +118,5 @@
             <h2>Selected Scene</h2>
         </div>
     </div>
-<script>
-// Efficiency Analysis
-var oA = 30; // 28 object attributes including start/end time for non-constant ones PLUS 2 (touches rel obj-ground start/end)
-var R = 23;  // 23 relationshipsincluding start/end time for non-constant ones
-var gA = 7;  // 7 group attributes including start/end time for non-constant ones
-
-function get_perception_count(obj_count) {
-  return oA * obj_count
-       + R * obj_count * (obj_count-1) // asymmetric
-       + gA * (Math.pow(2, obj_count) - 1);
-}
-
-function efficiency() {
-  var obj_counts = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-  for (i=1; i<=4; i++) for (j=1; j<=4; j++) {
-    var p = i+'-'+j;
-    var sn = problems[p].sn;
-    obj_counts[sn.objs.length]++;
-  }
-  console.log('obj_counts', obj_counts);
-
-  var perceptions = obj_counts.map(function(c, i) {
-    return c*get_perception_count(i);
-  });
-  console.log('maximum number of perceptions:', perceptions);
-  var total_perceptions = d3.sum(perceptions);
-  console.log('sum:', total_perceptions);
-}
-
-</script>
-
   </body>
 </html>
-

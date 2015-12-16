@@ -36,9 +36,10 @@ svg {
 }
 
 .active.show {
-	/*box-shadow: inset 0px 0px 2px 2px green;*/
 	box-shadow: inset 0px 0px 6px 2px #666;
+	/*border: 2px dashed black;*/
 }
+
 
 #solver button {
 	font-size: 1em;

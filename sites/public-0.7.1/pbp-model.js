@@ -881,10 +881,6 @@ var PhysicsOracle = function(physics_scene) {
                  'end'  : {time: 'end', pstate: null}};
 }
 
-PhysicsOracle.prototype.release = function() {
-  this.pscene.onWorldChange.removeListener(this.onWorldChange);
-}
-
 /// The state can be one of the ones defined in this.states. Each state gets saved the first time
 /// it is reached so the second time, no simulation is neccessary.
 PhysicsOracle.prototype.gotoState = function(state) {

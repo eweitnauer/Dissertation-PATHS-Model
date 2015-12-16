@@ -1,3 +1,5 @@
+var vis_scaling = 1.5, pixels_per_unit = 50;
+
 var problems = {}; // array of hashes with the keys sim, oracle, scene, snode, svis
 init_pbp_data();
 var pbp_idx = getPBPFromURL() || 0;
@@ -5,8 +7,67 @@ var curr_sols = [];
 var tester = null;
 var log_area = null;
 
+function analyzeScene(sn, svis) {
+  sn.registerObjects();
+  sn.perceiveCollisions();
+}
+
+// substituting a file the user dropped for the target scene
+function uploadSVG(file, id) {
+  if (file.type == 'image/svg+xml') {
+    reader = new FileReader();
+    reader.onload = function(e) {
+      console.log('loading and analyzing scene ' + file.name + '...');
+      var scene = SVGSceneParser.parseString(e.target.result, pixels_per_unit);
+      tester.pause();
+      tester = null;
+      setupScene(scene, id);
+      createTester();
+    }
+    reader.readAsText(file);
+  } else {
+    console.log('wrong file type, please drop SVGs only');
+  }
+}
+
+function setupScene(scene, id) {
+  // quick hack to extract side from the file name
+  if (id.split('-').length == 2 && Number(id.split('-')[1]) >= 3) scene.side = 'right';
+  else scene.side = 'left';
+
+  scene.name = id;
+  scene.adjustStrokeWidth(0.5*pixels_per_unit/100);
+
+  // create b2World
+  var world = new Box2D.Dynamics.b2World(new Box2D.Common.Math.b2Vec2(0, 10), true);
+  scene.friction = 0.3;
+  scene.resitution = 0.1;
+  var adapter = new Box2DAdapter();
+  adapter.loadScene(world, scene, true, false);
+
+  // create PhysicsScene, Simulator and SceneNode with PhysicsOracle
+  var ps = new PhysicsScene(world);
+  var sn = new SceneNode(scene, new PhysicsOracle(ps));
+
+  // create SceneVisualizer
+  var el_svg = document.getElementById('s'+id);
+  d3.select(el_svg).selectAll('*').remove();
+  analyzeScene(sn);
+  var svis = new SceneInteractor(ps, sn, el_svg);
+  svis.scaling(vis_scaling);
+  setup_scene_vis();
+  if (problems[id] && problems[id].svis) {
+    problems[id].svis.release();
+    problems[id].svis.pscene.onWorldChange.removeAll();
+  }
+  if (problems[id] && problems[id].sn) {
+    sn.active = problems[id].sn.active;
+  }
+  problems[id] = {sn: sn, svis: svis};
+}
+
 function loadScenes(name, files) {
-  var path = "../../libs/pbp-svgs/svgs/" + name;
+  var path = "./svgs/" + name;
 
   var heading = name.indexOf('pbp') === 0 ? 'PBP '+name.substring(3) : name;
   document.getElementById('pbp-num').innerText = heading;
@@ -14,52 +75,31 @@ function loadScenes(name, files) {
   d3.selectAll("svg").remove();
   d3.selectAll("canvas").remove();
   create_html_elements(files);
-  var adapter = new Box2DAdapter();
   problems = {};
 
   for (var i=0; i<files.length-4; i++) {
     console.log('loading and analyzing scene ' + files[i] + ' of ' + name + '...');
     var scene = SVGSceneParser.parseFile(path + "/" + files[i] + '.svg', pixels_per_unit);
-    // quick hack to extract side from the file name
-    if (files[i].split('-').length == 2 && Number(files[i].split('-')[1]) >= 3) {
-      scene.side = 'right';
-    } else scene.side = 'left';
-    scene.name = files[i];
-
-    scene.adjustStrokeWidth(0.5*pixels_per_unit/100);
-
-    // create b2World
-    var world = new Box2D.Dynamics.b2World(new Box2D.Common.Math.b2Vec2(0, 10), true);
-    scene.friction = 0.3;
-    scene.resitution = 0.1;
-    adapter.loadScene(world, scene, true, false);
-
-    // create PhysicsScene, Simulator and SceneNode with PhysicsOracle
-    var el_canvas = document.getElementById('c'+files[i]);
-    var ps = new PhysicsScene(world);
-    //var sim = new Simulator(ps, el_canvas, scene.pixels_per_unit*vis_scaling, true);
-    var sn = new SceneNode(scene, new PhysicsOracle(ps));
-
-    // create SceneVisualizer
-    var el_svg = document.getElementById('s'+files[i]);
-    //var svis = new SceneVisualizer(scene, sn, el_svg, vis_scaling);
-    //ps.onWorldChange.addListener(function(svis) { return function() {svis.draw_scene()} }(svis))
-    //svis.draw_scene();
-    analyzeScene(sn);
-    var svis = new SceneInteractor(ps, sn, el_svg);
-    svis.scaling(vis_scaling);
-    option_callback({name: 'attention', opts: []});
-    problems[files[i]] = {sn: sn, svis: svis};//, sim: sim};
+    setupScene(scene, files[i]);
   }
+}
 
-  update_solutions(getSolutions(name));
+function setup_scene_vis() {
+  for (var i in problems) {
+    var p = problems[i];
+    p.svis.colorize_values(function(on) {
+      if (!on || !tester || !tester.ws) return 0;
+      return tester.ws.attentionNet.getActivity(on) * 100;//getAttentionValue(on) * 100;
+    });
+    p.svis.draw();
+  }
 }
 
 function create_html_elements(files) {
   var a = 100*vis_scaling, mar = 0;
   d3.select('#vis')
     .style({width: 4*a + (2*10+8)*vis_scaling + 2*mar + 22 + 'px'});
-  d3.select("#svgs")
+  var svgs = d3.select("#svgs")
     .style('height', 4*a+2+mar + 'px')
     .selectAll("svg")
     .data(files.slice(0, files.length-4))
@@ -76,13 +116,30 @@ function create_html_elements(files) {
       return row*a;
     });
 
-  update_scene_styles();
+  svgs.on('dragover', function() {
+    d3.event.dataTransfer.dropEffect = "copy";
+    d3.event.preventDefault();
+  });
+
+  svgs.on('drop', function(d) {
+    d3.event.preventDefault();
+
+    console.log("Reading...");
+    var length = d3.event.dataTransfer.items.length;
+    if(length > 1){
+      console.log("Please only drop 1 file.");
+    } else {
+      uploadSVG(d3.event.dataTransfer.files[0], d);
+    }
+  });
 
   d3.select("#svgs")
     .append('div')
     .style({ position: 'absolute', background: '#aaa', border: '1px solid black'
            , width: 8*vis_scaling+'px', left: mar + 2*a+10*vis_scaling+'px', top: 0
            , height: 4*a+'px' });
+
+  update_scene_styles();
 }
 
 function update_scene_styles() {
@@ -115,53 +172,6 @@ function disable_drawing() {
 
 function enable_drawing() {
   for (var p in problems) problems[p].svis.drawing = true;
-}
-
-function setup_options() {
-  d3.select('#show-hide-1')
-    .on('click', function () {
-      var n = d3.select('#options');
-      n.style('display', n.style('display') == 'none' ? 'block' : 'none')
-    });
-
-  var fields = d3.select('#options')
-                 .selectAll('div.opt-field')
-                 .data(options)
-                 .enter()
-                 .append('div')
-                 .classed('opt-field', true);
-  fields.append('input')
-        .attr('type', 'radio')
-        .attr('name', 'options')
-        .attr('value', function (d) { return d.name })
-        .attr('checked', function (d) { return d.checked })
-        .on('change', function (d) {
-          d3.select(this.parentNode.parentNode).selectAll('input').each(
-            function (d) { d.checked = this.checked }
-          );
-          if (this.checked) option_callback(d)
-        });
-  fields.append('span')
-        .text(function (d) { return d.name });
-
-  var opts = fields.selectAll('div.opt')
-        .data(function (d) { return d.opts.map(function (o) { o.parent = d; return o }) })
-        .enter()
-        .append('div')
-        .classed('opt', true);
-  opts.append('input')
-      .attr('type', function (d) { return d.parent.multiple ? 'checkbox' : 'radio' })
-      .attr('name', function (d) { return d.parent.name } )
-      .attr('value', function (d) { return d.name })
-      .attr('checked', function (d) { return d.checked })
-      .on('change', function (d) {
-        d3.select(this.parentNode.parentNode).selectAll('input').each(
-          function (d) { d.checked = this.checked }
-        );
-        if (d.parent.checked) option_callback(d.parent);
-      })
-  opts.append('span')
-        .text(function (d) { return d.name });
 }
 
 function after_step_callback() {
@@ -365,8 +375,8 @@ function set_time(time) {
 }
 
 function init() {
+  disableDefaultDnD();
   span = document.getElementById('curr_num');
-  setup_options();
   setup_solve();
   d3.select('#curr-as-start').on('click', curr_as_start);
   d3.select('#jump-to-zero').on('click', set_time.bind(null, '0'));
@@ -376,6 +386,17 @@ function init() {
   loadScenes(pbps[pbp_idx].name, pbps[pbp_idx].files);
   log_area = d3.select('#debug-text');
   createTester();
+}
+
+function disableDefaultDnD() {
+  window.addEventListener("dragover",function(e){
+    e = e || event;
+    e.preventDefault();
+  },false);
+  window.addEventListener("drop",function(e){
+    e = e || event;
+    e.preventDefault();
+  },false);
 }
 
 function init_pbp_data() {
