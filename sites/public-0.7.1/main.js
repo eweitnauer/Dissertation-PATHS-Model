@@ -6,6 +6,7 @@ var pbp_idx = getPBPFromURL() || 0;
 var curr_sols = [];
 var tester = null;
 var log_area = null;
+var dragSource = null;
 
 function analyzeScene(sn, svis) {
   sn.registerObjects();
@@ -18,11 +19,7 @@ function uploadSVG(file, id) {
     reader = new FileReader();
     reader.onload = function(e) {
       console.log('loading and analyzing scene ' + file.name + '...');
-      var scene = SVGSceneParser.parseString(e.target.result, pixels_per_unit);
-      tester.pause();
-      tester = null;
-      setupScene(scene, id);
-      createTester();
+      loadFromString(e.target.result, id);
     }
     reader.readAsText(file);
   } else {
@@ -30,7 +27,15 @@ function uploadSVG(file, id) {
   }
 }
 
-function setupScene(scene, id) {
+function loadFromString(str, id) {
+  var scene = SVGSceneParser.parseString(str, pixels_per_unit);
+  tester.pause();
+  tester = null;
+  setupScene(scene, id, str);
+  createTester();
+}
+
+function setupScene(scene, id, svg_str) {
   // quick hack to extract side from the file name
   if (id.split('-').length == 2 && Number(id.split('-')[1]) >= 3) scene.side = 'right';
   else scene.side = 'left';
@@ -63,7 +68,7 @@ function setupScene(scene, id) {
   if (problems[id] && problems[id].sn) {
     sn.active = problems[id].sn.active;
   }
-  problems[id] = {sn: sn, svis: svis};
+  problems[id] = {sn: sn, svis: svis, svgString: svg_str};
 }
 
 function loadScenes(name, files) {
@@ -79,8 +84,9 @@ function loadScenes(name, files) {
 
   for (var i=0; i<files.length-4; i++) {
     console.log('loading and analyzing scene ' + files[i] + ' of ' + name + '...');
-    var scene = SVGSceneParser.parseFile(path + "/" + files[i] + '.svg', pixels_per_unit);
-    setupScene(scene, files[i]);
+    var str = SVGSceneParser.ajaxGetUrl(path + "/" + files[i] + '.svg');
+    var scene = SVGSceneParser.parseString(str, pixels_per_unit);
+    setupScene(scene, files[i], str);
   }
 }
 
@@ -99,22 +105,45 @@ function create_html_elements(files) {
   var a = 100*vis_scaling, mar = 0;
   d3.select('#vis')
     .style({width: 4*a + (2*10+8)*vis_scaling + 2*mar + 22 + 'px'});
-  var svgs = d3.select("#svgs")
+  d3.select("#svgs")
     .style('height', 4*a+2+mar + 'px')
+  var svgs = d3.select("#svgs")
     .selectAll("svg")
     .data(files.slice(0, files.length-4))
     .enter()
     .append("svg")
     .attr("id", function(d) { return "s"+d })
-    .style({width: a, height: a})
+    .style({width: a + 'px', height: a + 'px'})
     .style('left', function(d, i) {
       var col = i%4;
-      return mar + ((col < 2) ? col*a : col*a + (2*10+8)*vis_scaling);
+      return mar + ((col < 2) ? col*a : col*a + (2*10+8)*vis_scaling) + 'px';
     })
     .style('top', function(d, i) {
       var row = Math.floor(i/4);
-      return row*a;
+      return row*a + 'px';
     });
+
+  d3.select("#svgs")
+    .selectAll("div.handle")
+    .data(files.slice(0, files.length-4))
+    .enter()
+    .append('div')
+    .classed('draghandle', true)
+    .attr('draggable', true)
+    .style({width: a/6 + 'px', height: a/6 + 'px'})
+    .style('left', function(d, i) {
+      var col = i%4;
+      return mar + 5*a/6 + ((col < 2) ? col*a : col*a + (2*10+8)*vis_scaling) + 'px';
+    })
+    .style('top', function(d, i) {
+      var row = Math.floor(i/4);
+      return row*a + 5*a/6 + 'px';
+    })
+    .on('dragstart', function(d) {
+        d3.event.dataTransfer.dropEffect = 'copy';
+        dragSource = d;
+    });
+
 
   svgs.on('dragover', function() {
     d3.event.dataTransfer.dropEffect = "copy";
@@ -126,7 +155,11 @@ function create_html_elements(files) {
 
     console.log("Reading...");
     var length = d3.event.dataTransfer.items.length;
-    if(length > 1){
+    if (dragSource) {
+      loadFromString(problems[dragSource].svgString, d);
+      dragSource = null;
+    }
+    else if(length > 1) {
       console.log("Please only drop 1 file.");
     } else {
       uploadSVG(d3.event.dataTransfer.files[0], d);
@@ -207,6 +240,10 @@ function updateCodeletStats() {
 function updateSolutionList() {
   tester.updateSolutionList(d3.select("#solutions ol").node());
   tester.updateLastSolution(d3.select('#last-solution').node());
+  var text = d3.select('#last-solution').text();
+  if (text) {
+    d3.select('#last-solution').text(text.replace(/(\[.*\])/g, ''));
+  }
 }
 
 function updateHypothesisTable() {

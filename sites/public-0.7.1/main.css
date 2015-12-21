@@ -12,6 +12,12 @@ svg {
 	opacity: 0.2;
 }
 
+.draghandle {
+	position: absolute;
+	background: transparent;
+	z-index: 10000;
+}
+
 .help-btn {
 	float: right;
 	border: 1px solid silver;
