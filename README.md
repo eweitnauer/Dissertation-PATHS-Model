@@ -2,8 +2,7 @@
 
 PATHS is the cognitive process model that I developed as part of my PhD thesis. It learns concepts from sets of physical scenes. 
 
-The learning task:
-
+![image](https://cloud.githubusercontent.com/assets/53043/24169452/0d0df5f4-0e54-11e7-96b0-b2e17152f113.png)
 
 Here is the abstract from the thesis:
 
