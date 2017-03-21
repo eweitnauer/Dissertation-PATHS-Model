@@ -5,7 +5,7 @@ PATHS is the cognitive process model that I developed as part of my PhD thesis. 
 Here is a screen shot of the interface that you can use [here](https://graspablemath.com/projects/paths).
 ![image](https://cloud.githubusercontent.com/assets/53043/24169452/0d0df5f4-0e54-11e7-96b0-b2e17152f113.png)
 
-(1) The learning task. The goal is to come up with the difference of all scenes on the left with all scenes on the right. In this example, in the scenes on the left, there is always a single object, while on the right there are always two objects. The difference can be based on a physical property like imagined movement of the objects, too. Hover over a scene and click the play button to see the physics unfold.
+(1) The learning task. The goal is to come up with the difference between all scenes on the left and all scenes on the right. In this example, in the scenes on the left, there is always a single object, while on the right there are always two objects. The difference can be based on a physical property like imagined movement of the objects, too. Hover over a scene and click the play button to see the physics unfold.
 
 (2) The model. When you click the "Run" button, the PATHS model is presented with two scenes at a time and will do two things simultaneously: preceiving the scenes and coming up with / checking solution hypotheses. After a while it will automatically switch to the next two scenes.
 
