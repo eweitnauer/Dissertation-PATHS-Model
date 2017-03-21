@@ -1,6 +1,6 @@
 # PATHS
 
-PATHS is the cognitive process model that I developed as part of my PhD thesis. It learns concepts from sets of physical scenes. 
+PATHS (Perceiving and Testing Hypotheses on Structured data) is the cognitive process model that I developed as part of my PhD thesis. It learns concepts from sets of physical scenes. 
 
 Here is a screen shot of the interface that you can use [here](https://graspablemath.com/projects/paths).
 ![image](https://cloud.githubusercontent.com/assets/53043/24169452/0d0df5f4-0e54-11e7-96b0-b2e17152f113.png)
