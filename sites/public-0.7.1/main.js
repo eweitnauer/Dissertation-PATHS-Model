@@ -74,7 +74,7 @@ function setupScene(scene, id, svg_str) {
 function loadScenes(name, files) {
   var path = "./svgs/" + name;
 
-  var heading = name.indexOf('pbp') === 0 ? 'PBP '+name.substring(3) : name;
+  var heading = name.indexOf('pbp') === 0 ? 'Physical Bongard Problem '+name.substring(3) : name;
   document.getElementById('pbp-num').innerText = heading;
 
   d3.selectAll("svg").remove();
