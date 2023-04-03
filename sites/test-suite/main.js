@@ -1,16 +1,48 @@
+console.log('Hi!');
 var pixels_per_unit = 50
   , div, p, t;
 
 function init(from, to, db_suffix) {
 	var ps = setup_testsuite(25, 2500, db_suffix);
-	// var ps = setup_testsuite(2, 250);
+	ps.setParameter('pbp', ['pbp13', 'pbp26', 'pbp31']);
 	ps.addParameter('pres_mode',
 		['interleaved-sim-sim', 'interleaved-sim-dis'
 		,'interleaved-dis-sim', 'interleaved-dis-dis'
 	  ,'blocked-sim-sim', 'blocked-sim-dis'
 		,'blocked-dis-sim', 'blocked-dis-dis']);
-	ps.addParameter('activity.feature.hyp_base', [0.1, 100]);
-	ps.run(from || 0, to || Infinity);
+	ps.addParameter('activity.feature.hyp_base', [100]);
+	ps.addParameter('activity.obj.hyp_base', [0.1, 100]);
+	ps.run(0, to || Infinity);
+}
+
+function initLesion(from, to, db_suffix) {
+	var ps = setup_testsuite(25, 2500, db_suffix);
+	ps.addParameter('pres_mode',
+		['interleaved-sim-sim', 'interleaved-sim-dis'
+		,'interleaved-dis-sim', 'interleaved-dis-dis'
+	  ,'blocked-sim-sim', 'blocked-sim-dis'
+		,'blocked-dis-sim', 'blocked-dis-dis']);
+	ps.addParameter('activity.selector.hyp_base', [0.1, 10]);
+	ps.run(0, to || Infinity);
+}
+
+window.initNoPhysics = function initNoPhysics(from, to, db_suffix) {
+	var ps = setup_testsuite(5, 2500, db_suffix);
+	ps.addParameter('pres_mode',
+		['interleaved-sim-sim', 'interleaved-sim-dis'
+		,'interleaved-dis-sim', 'interleaved-dis-dis'
+	  ,'blocked-sim-sim', 'blocked-sim-dis'
+		,'blocked-dis-sim', 'blocked-dis-dis']);
+	ps.addParameter('activity.time', [{ start: 1, end: 0 }]);
+	ps.run(from || 0, to || Infinity, feature_list.filter(function(feature) { return feature.group !== 'dynamics' }));
+}
+
+function initNew18(from, to, db_suffix) {
+	var ps = setup_testsuite(100, 2500, db_suffix);
+	ps.setParameter('pbp', ['pbp18sim', 'pbp18dis']);
+	ps.addParameter('pres_mode', ['interleaved-sim-sim', 'blocked-sim-sim']);
+	ps.addParameter('randomize_row_order', [true]);
+	ps.run(from, to || Infinity);
 }
 
 function init_fullblocked(from, to, db_suffix) {

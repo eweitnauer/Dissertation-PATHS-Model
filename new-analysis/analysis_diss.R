@@ -4,24 +4,22 @@ library(ez)
 library(effsize)
 rm(list=ls())  
 
-setwd("~/Code/diss-model/analysis")
+setwd("~/Code/diss-model/new-analysis")
 source("loading.r");
 data_cx = load_data(use_all=FALSE, filename="data-0-7-0-complexity-all.csv");
 data_cx = annotate_data(data_cx);
 
 
-setwd("~/Code/diss-model/analysis")
+setwd("~/Code/diss-model/new-analysis")
 source("loading.r");
 data_ai = load_data(use_all=FALSE);
 data_ai = annotate_data(data_ai);
-pbps = c('2', '4', '8', '11b', '12', '13', '16', '18', '20', '22', '26', '30', '31');
-data_ai$pbp = factor(data_ai$pbp, levels=c(pbps)) # reorder factor levels
 data_ai_all = load_data(use_all=TRUE);
 data_ai_all = annotate_data(data_ai_all);
 data_ai$population = 'ai';
 data = data_ai;
 
-setwd("~/Code/diss-model/analysis")
+setwd("~/Code/diss-model/new-analysis")
 source("loading.r");
 data_ai_fb = load_data(use_all=FALSE, filename="data-0-7-2-fullblocked.csv");
 data_ai_fb = annotate_data(data_ai_fb);
@@ -74,7 +72,7 @@ sols[order(sols$freq),]
 
 ### Historgrams of time to solution #######################################################################
 
-setwd("~/Code/diss/modelling/current/analysis")
+setwd("~/Code/diss-model/new-analysis")
 for (pbp in c(pbps,'35','36')) {
   pdf(file=paste0("time-hist-pbp",pbp,".pdf"),height=2, width=2, pointsize=7)
   par(mar=c(3,3,0.5,0)+0.2)
@@ -859,7 +857,7 @@ data_ss_34$train_time_10 = pmin(data_ss_34$train_time/1000/60,10);
 mean_solved_ss = ddply(.data=data_ss_34[data_ss_34$found_solution==1,], .variables=.(pbp), train_time=mean(train_time_10), .fun=summarize);
 mean_solved_ai_no_31 = ddply(.data=data_ai[data_ai$found_solution==1&data_ai$pbp != 31,], .variables=.(pbp), train_time=mean(train_time), .fun=summarize);
 mean_solved_ss_no_31 = ddply(.data=data_ss_34[data_ss_34$found_solution==1&data_ss_34$pbp != 31,], .variables=.(pbp), train_time=mean(train_time_10), .fun=summarize);
-plot(x=mean_solved_ai$train_time, y=mean_solved_ss$train_time, xlab='model solution time in actions', ylab='human solution time in minutes', ylim=c(0,2),xlim=c(0,1500));
+plot(mean_solved_ai$train_time, mean_solved_ss$train_time, xlab='model solution time in actions', ylab='human solution time in minutes', ylim=c(0,2),xlim=c(0,1500));
 text(mean_solved_ai$train_time, mean_solved_ss$train_time, labels = mean_solved_ai$pbp, pos = 4)
 cor.test(mean_solved_ai$train_time, mean_solved_ss$train_time, method = "pearson", alternative = "two.sided")
 cor.test(mean_solved_ai_no_31$train_time, mean_solved_ss_no_31$train_time, method = "pearson", alternative = "two.sided")

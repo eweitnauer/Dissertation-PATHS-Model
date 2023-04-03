@@ -11,6 +11,7 @@
     <script src="../../libs/geom.js/src/vector.js"></script>
     <script src="../../libs/geom.js/src/matrix.js"></script>
     <script src="../../libs/geom.js/src/spatial_relation_analyzer.js"></script>
+    <script src="../../libs/geom.js/src/path-data-polyfill.js"></script>
     <script src="../../libs/box2dweb/Box2D.js"></script>
     <script src="../../libs/svg2physics/svg-scene-parser.js"></script>
     <script src="../../libs/svg2physics/box2d-adapter.js"></script>
@@ -78,5 +79,8 @@
     <script src="../../src/interpreter/pi-tester.js"></script>
     <script src="../../src/interpreter/pi-test-suite.js"></script>
 <script src="main.js"></script>
-<body onload="init_fullblocked(null, null, '_fullblocked_D');">
+<body>
+    <script>
+        initNoPhysics(97, Infinity, '_noPhysics');
+    </script>
 <div style="margin: 4em auto; width: 800px" id='log'><div>

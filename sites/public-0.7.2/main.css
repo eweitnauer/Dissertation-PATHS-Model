@@ -1,0 +1,295 @@
+body {
+	padding: 0;
+	margin: 0;
+	background-color: whitesmoke;
+	font-family: Lato;
+}
+
+svg {
+	background: white;
+	border: 1px solid black;
+	position: absolute;
+	opacity: 0.2;
+}
+
+.draghandle {
+	position: absolute;
+	background: transparent;
+	z-index: 10000;
+}
+
+.help-btn {
+	float: right;
+	border: 1px solid silver;
+	border-radius: 50%;
+	width: 28px;
+	height: 28px;
+	padding: 0px;
+	font-weight: bold;
+	background: silver;
+}
+
+.help-btn:hover {
+	border-color: #85A1C8;
+	background: #85A1C8;
+}
+
+.active, .show {
+	opacity: 1;
+	/*border: 4px solid black;*/
+	/*box-shadow:inset 0px 0px 2px 2px blue;*/
+	z-index: 1000;
+}
+
+.active.show {
+	box-shadow: inset 0px 0px 6px 2px #666;
+	/*border: 2px dashed black;*/
+}
+
+
+#solver button {
+	font-size: 1em;
+}
+
+#solver span {
+	font-size: 18px;
+}
+
+#last-solution {
+	font-weight: bold;
+	text-align: center;
+  font-size: 1.2em;
+}
+
+#debug-text {
+	height: 48px;
+	border: 1px solid silver;
+	font-size: 0.8em;
+	color: #666;
+	padding: 2px;
+	margin-top: 5px;
+	overflow-y: auto;
+	resize: vertical;
+}
+
+.feature {
+	width: 94px;
+	float: left;
+	margin: 1px;
+	padding: 3px 0px;
+	border: 1px solid silver;
+}
+
+.feature .key, .feature .val {
+	text-align: center;
+	font-size: 1em;
+}
+
+.feature .val {
+	margin-top: 2px;
+	font-size: 12px;
+}
+
+div#codelet-stats {
+	padding: 10px;
+}
+
+#codelet-stats p {
+	margin: 0.25em 0;
+	font-size: 13px;
+	color: #444;
+}
+
+#codelet-stats span {
+	font-size: 12px;
+	color: #444;
+}
+
+#right-side {
+	float: left;
+}
+
+
+.info {
+	width: 520px;
+	margin: 10px;
+	max-height: 416px;
+	overflow-y: auto;
+}
+
+#selector-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+#selector-table tr {
+	border-bottom: 1px solid silver;
+	cursor: pointer;
+
+}
+
+#selector-table tr:last-child {
+	border: none;
+}
+
+#selector-table td:nth-child(1) {
+	width: 1.5em;
+	text-align: left;
+}
+
+#selector-table td:nth-child(2) {
+	width: 1em;
+	text-align: left;
+}
+
+#selector-table td:nth-child(4) {
+	width: 0.5em;
+	text-align: center;
+}
+
+#selector-table td:nth-child(5) {
+	width: 3em;
+	text-align: right;
+}
+
+#selector-table td {
+	padding-bottom: 4px;
+}
+
+#selector-table tr:hover {
+	background-color: #eee;
+}
+
+.box {
+	background-color: white;
+	border: 1px solid #AAA;
+	border-bottom: 1px solid #888;
+	border-radius: 3px;
+	color: black;
+	box-shadow: 0px 2px 2px #AAA;
+	padding: 10px;
+}
+
+#vis {
+	position: relative;
+	margin: 10px;
+	float: left;
+}
+
+img:active {
+	opacity: 0.5;
+}
+
+img#btnNext {
+	position: absolute;
+	right: 10px;
+	top: 11px;
+	cursor: pointer;
+}
+
+img#btnPrev {
+	position: absolute;
+	left: 10px;
+	top: 11px;
+	cursor: pointer;
+}
+
+#svgs {
+	position: relative;
+}
+
+h2 {
+	color: #85A1C8;
+	font-family: Lato;
+	font-weight: 800;
+	text-align: center;
+	margin-top: 0em;
+	margin-bottom: 0.5em;
+	font-size: 26px;
+}
+
+svg text {
+	font-size: 4px;
+	fill: black;
+	pointer-events: none;
+	-webkit-user-select: none; /* Chrome/Safari */
+	-moz-user-select: none; /* Firefox */
+	-ms-user-select: none; /* IE10+ */
+}
+
+svg .shape {
+	fill: #aaa;
+	stroke: #222;
+}
+
+svg .unseen.shape {
+	fill: #eee;
+	stroke: #444;
+}
+
+svg .shape.static {
+	fill: none;
+	stroke: black;
+}
+
+svg .shape.selected {
+	stroke: red;
+	stroke-width: 1;
+}
+
+div#header #options {
+}
+
+div#header {
+	background: #333;
+	color: whitesmoke;
+	font-size: 10pt;
+	font-family: sans-serif;
+	font-weight: lighter;
+	padding-top: 5px;
+}
+
+div#header p {
+	margin: 0.5em 0;
+}
+
+div#header > div {
+	border-bottom: 1px solid silver;
+	padding: 5px;
+}
+
+div.opt-field {
+	display: inline-block;
+	vertical-align: top;
+	margin: 0px 4px;
+	border: 1px solid #555;
+	padding: 4px 8px;
+}
+
+div.opt-field .opt {
+	margin-left: 1em;
+}
+
+button#show-hide {
+	margin-right: 10em;
+	display: inline-block;
+}
+
+div#time-control {
+	float: right;
+	margin-bottom: 4px;
+	font-size: small;
+}
+
+div#scene-options {
+	float: left;
+	margin-bottom: 4px;
+	font-size: small;
+}
+
+label { font-weight: normal }
+
+div#time-control a {
+	color: rgb(133, 161, 200);
+	text-decoration: none;
+}

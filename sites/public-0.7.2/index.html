@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>PATHS Model</title>
+    <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+    <script src="jquery-2.1.4.min.js"></script>
+    <script src="bootstrap.min.js"></script>
+    <script src="d3.min.js"></script>
+    <script src="geom.min.js"></script>
+	  <script src="Box2D.min.js"></script>
+    <script src="pbp-model.js"></script>
+    <link href="main.css" rel="stylesheet">
+    <script src="main.js"></script>
+  </head>
+  <body onload="init();">
+    <div id="vis" class="box">
+        <img id="btnPrev" onclick="prev()" src="left.png"/>
+        <h2 id="pbp-num">PBP</h2>
+        <img id="btnNext" onclick="next()" src="right.png"/>
+        <div id='scene-options'>
+        <label><input id="only-show-active-scenes" type="checkbox" name="checkbox" checked='true'> only show active scenes</label>
+        </div>
+        <div id='time-control'>
+          <span>set time to:</span>
+          <a href='#' id='jump-to-zero' style='text-decoration: underline'>0</a>
+          <a href='#' id='jump-to-start' style='text-decoration: underline'>start</a>
+          <a href='#' id='jump-to-end' style='text-decoration: underline'>end</a>
+          <a href='#' id='curr-as-start' style='text-decoration: underline'>[start&lt;-curr]</a>
+        </div>
+        <div style='clear:both'></div>
+        <div id="svgs"></div>
+        <div style='margin-bottom: 10px'></div>
+        <button class='help-btn' type="button" data-toggle="collapse" data-target="#pbp-help">?</button>
+        <div class="collapse help-text" id="pbp-help">
+              <div class="well">
+                <p>The task in the physical Bongard problems shown above is to
+                identify a rule that distinguishes all scenes on the left side
+                from all scenes on the right side of the gray vertical bar. Each
+                of the scenes depicts a snapshot of a dynamical situation.
+                Use the arrow buttons at the top to navigate between different PBPs.
+
+                <p>The PATHS model works on two of the scenes at a time.
+                You can either show all scenes or just the ones that the PATHS model
+                is currently working on using the checkbox on the top left.
+                To explore the dynamic nature of the scenes,
+                hover the mouse over one of the scenes and click the play button. You
+                can modify the time at which the scenes are shown for all scenes at once
+                by clicking the "0", "start", and "end" links at the top right. Clicking
+                the "[start<-curr]" link will, differently from the other links, alter how PATHS sees the problem. It will redefine the problem such that the currently visible state in all scenes is treated as the initial state. This will potentially change the solution to the problem. The PATHS model should be reset
+                after making such a change.
+
+                <p><b>New feature: </b>Drag and drop SVG scenes onto the scenes above
+                to load your own scenes.</p>
+
+                <p>The objects in the scenes are colored with varying shades of gray,
+                reflecting the estimated probability that an object is part of a solution.
+                The darker an object is, the more likely it is to be selected for perception of further features and during the merging of hypothesis. Clicking on an object in one of the scenes will log all features
+                that the model perceived on it so far and the current probability estimation
+                to the developer console of the browser.
+              </div>
+            </div>
+    </div>
+    <div id="right-side">
+        <div id="solver" class="box info">
+            <button class='help-btn' type="button" data-toggle="collapse" data-target="#paths-help">?</button>
+            <h2>PATHS</h2>
+            <div class="collapse help-text" id="paths-help">
+              <div class="well">
+                <p>This webpage runs the latest implementation of the PATHS model, a cognitive process model of rule-based concept learning that can solve physical Bongard problems (PBPs). PATHS, and the PBPs, were developed by Erik Weitnauer as part of his PhD thesis.
+                <p>Use the buttons below to reset the model and to make it work on the current PBP. You can either let the model perform one action at a time or let it run until it finds a solution. The number of performed total actions, as well as the number of perceive-feature, create-hypothesis, check-hypothesis, combine-hypothesis, and recombine-hypthesis actions taken are shown below. The three numbers for each specific type of action are the successful attempts, the total attempts, and the probability of PATHS choosing the action.
+                <p>Please use Chrome to open this webpage!
+              </div>
+            </div>
+            <button role='button' class='btn btn-default btn-sm' id="solver-reset-btn">Reset</button>
+            <button role='button' class='btn btn-primary btn-sm' id="solver-run-btn">Run</button>
+            <button role='button' class='btn btn-default btn-sm' id="solver-step-btn">Step</button>
+            <span>&nbsp;&nbsp;performed actions: <span id="solver-step">?</span></span><br/>
+            <div id="codelet-stats"></div>
+            <div id="debug-text" style="display: none"></div>
+            <div id='sol-text'><p id="last-solution"></p></div>
+        </div>
+        <div id="selectors" class="box info">
+            <button class='help-btn' type="button" data-toggle="collapse" data-target="#hyp-help">?</button>
+            <h2>Hypotheses</h2>
+            <div class="collapse help-text" id="hyp-help">
+              <div class="well">
+                <p>The table below shows all hypotheses the PATHS model has constructed so far. The model always starts with the most general hypothesis it can form: "there are objects in the scenes". When constructed, a hypothesis will be tested on the two currently active scenes. Later, PATHS may decide to check it on further scenes.
+
+                <p>The letters in the left-most column show which of the checked scenes match a particular hypothesis. L for left scenes only, R for right scenes only, LR for matching scenes from both sides and "--" for a hypothesis that failed to match at least one scene from both sides, which means it cannot be a solution or part of a solution anymore.
+
+                <p>The second column shows the quantifier used in the hypothesis. E for exists, A for all, and 1 for unique. The third column states the selector on which the hypothesis is based. Each selector is used in exactly one hypothesis. The last two columns show the number of scenes a hypothesis was tested on and the estimated probability that the hypothesis is a solution or part of a solution.
+
+                <p>Clicking on a hypothesis will show which of the scenes it matches (althought PATHS might not know this yet). It will also highlight all objects that the hypothesis selects.
+              </div>
+            </div>
+            <table id="selector-table"></table>
+        </div>
+        <div id="features" class="box info">
+            <button class='help-btn' type="button" data-toggle="collapse" data-target="#feature-help">?</button>
+            <h2>Features</h2>
+            <div class="collapse help-text" id="feature-help">
+              <div class="well">
+                <p>Shows all features that the PATHS model can perceive on objects,
+                object pairs and groups of objects. The numbers, also reflected by
+                the darkness of the background, state the probability that a feature
+                is selected for perception.
+
+                <p>Clicking on a feature will make the selection of that feature and all hypotheses that use that feature far more probable. Clicking on the same feature again reverts the change.
+              </div>
+            </div>
+        </div>
+        <div id="solutions" class="box info" style="display: none">
+            <h2>Solutions</h2>
+            <ol></ol>
+        </div>
+        <div id="scene-info" class="box info" style="display: none">
+            <h2>Selected Scene</h2>
+        </div>
+    </div>
+  </body>
+</html>

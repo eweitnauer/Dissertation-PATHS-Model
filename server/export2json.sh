@@ -1,1 +1,1 @@
-mongoexport --host localhost --db data-server --collection $1 -f test_id,trial_curr,trial_total,rep,reps,steps,steps_max,pbp,pres_mode,perception_count,retrieval_count,sol,solved,timestamp --csv
+mongoexport --host localhost --db data-server --collection $1 -f test_id,trial_curr,trial_total,rep,reps,steps,steps_max,pbp,pres_mode,perception_count,retrieval_count,sol,solved,timestamp,"activity->feature->hyp_base","activity->obj->hyp_base","activity->selector->hyp_base" --type=csv

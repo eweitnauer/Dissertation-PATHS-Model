@@ -440,8 +440,8 @@ function init_pbp_data() {
   default_files = ['1-1', '1-2', '1-3', '1-4'
                       ,'2-1', '2-2', '2-3', '2-4'
                       ,'3-1', '3-2', '3-3', '3-4'
-                      ,'4-1', '4-2', '4-3', '4-4'];
-                      //,'5-1', '5-2', '5-3', '5-4'];
+                      ,'4-1', '4-2', '4-3', '4-4'
+                      ,'5-1', '5-2', '5-3', '5-4'];
   pbps = [
     {name: 'pbp18sim',  files: default_files, solution: ["touches in the end", "does not touch in the end"]},
     {name: 'pbp18dis',  files: default_files, solution: ["touches in the end", "does not touch in the end"]},

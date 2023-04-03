@@ -81,6 +81,11 @@ function init() {
 
 var pbps = [
   {pbp: '02',  solution: ["one object", "two objects"]},
+  // two variations of pbp 18 for a 2022 paper to demonstrate the benefits of blocking for dissimilar
+  // and interleaving for similar scenes
+  {pbp: '18sim', solution: ["objects touch eventually", "objects don't touch eventually"]},
+  {pbp: '18dis', solution: ["objects touch eventually", "objects don't touch eventually"]},
+  
   {pbp: '12',  solution: ["small object falls off", "small object stays on top"]},
   {pbp: '04',  solution: ["squares", "circles"]},
   {pbp: '32',  solution: ["objects rotate a lot", "objects rotate little or no at all"]},

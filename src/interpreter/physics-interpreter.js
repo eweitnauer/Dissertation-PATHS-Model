@@ -14,6 +14,8 @@ Bugs / Problems:
 
 Version 0.7.2
 - added fullblocked presentation schedule
+- added options.activity.selector.hyp_base parameter which allows to make the choosing
+  of (default value for old behavior is 1)
 
 Version 0.7.1
 - changed the default value of feature.hyp_base to 100, which practically leads
@@ -275,6 +277,12 @@ var pi_default_options = function() {
           }
         }
       , selector: {
+        // Set to 1 to estimate hypotheses probability in the optimal way
+  	    // as described in the dissertation (according to number of matches
+  	    // and some selector attribute and relation priors).
+  	    // Set to a higher value (e.g., 10) to do more exploitation, and
+        // lower (e.g. 0.1) for more exploration.
+        hyp_base: 1,
         attr_priors: {
         }
       , rel_priors: {

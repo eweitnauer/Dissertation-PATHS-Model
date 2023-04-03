@@ -21,6 +21,11 @@ AttentionNet = function(options) {
 
 	this.feature_base = options.activity.feature.hyp_base;
 	this.object_base = options.activity.obj.hyp_base;
+	// Set to 0 to estimate hypotheses probability in the optimal way
+  	// as described in the dissertation (according to number of matches
+  	// and some selector attribute and relation priors).
+  	// Set to a higher value to choose between hypotheses more randomly.
+  	this.solution_base = options.activity.selector.hyp_base;
 	this.obj_attr_priors = options.activity.obj.attr_priors;
 	this.group_attr_priors = options.activity.group.attr_priors;
 	this.group_base = options.activity.group.hyp_base;
@@ -73,7 +78,7 @@ AttentionNet.prototype.calcSolutionActivity = function(sol) {
 		if (!sol.allMatch()) // || !sol.sel.base_level_only())
 		  exp += sol.incompatibleMatchCount();
 	}
-	return Math.pow(2, -exp) * this.getSolutionPrior(sol);
+	return Math.pow(2, -exp * this.solution_base) * this.getSolutionPrior(sol);
 }
 
 AttentionNet.prototype.calcFeatureSelfActivity = function(feat) {

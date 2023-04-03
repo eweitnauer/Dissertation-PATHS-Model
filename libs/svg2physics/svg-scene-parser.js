@@ -39,6 +39,8 @@ var SVGSceneParser = (function() {
       var key = node.style.item(i);
       s[key] = node.style.getPropertyValue(key);
     }
+    s['stroke'] = s['stroke'] || node.getAttribute('stroke');
+    s['stroke-width'] = s['stroke-width'] || node.getAttribute('stroke-width');
     return s;
   }
 
@@ -94,9 +96,20 @@ var SVGSceneParser = (function() {
     shapes = shapes.filter(function(o) { return !o.is_frame});
 
     var path_nodes = root.getElementsByTagName('path')
-      , circle_nodes = root.getElementsByTagName('circle');
-    var els = Array.prototype.slice.call(path_nodes)
-            .concat(Array.prototype.slice.call(circle_nodes));
+      , circle_nodes = root.getElementsByTagName('circle')
+      , line_nodes = root.getElementsByTagName('line')
+      , polyline_nodes = root.getElementsByTagName('polyline')
+      , polygon_nodes = root.getElementsByTagName('polygon');
+    if (!Array.from) { // support for old phantomjs
+      Array.from = function(arg) {
+        return Array.prototype.slice.call(arg);
+      }
+    }
+    var els = Array.from(path_nodes)
+            .concat(Array.from(circle_nodes))
+            .concat(Array.from(line_nodes))
+            .concat(Array.from(polygon_nodes))
+            .concat(Array.from(polyline_nodes));
     for (var i=0; i<els.length; i++) {
       var el = els[i], shape;
       if (el.tagName === 'circle') shape = Circle.fromSVGCircle(el);
