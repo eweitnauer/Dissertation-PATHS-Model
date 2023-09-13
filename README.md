@@ -6,7 +6,7 @@ thesis](https://pub.uni-bielefeld.de/publication/2900932). It learns concepts
 from sets of physical scenes. 
 
 Here is a screen shot of the interface that you can use
-[here](https://graspablemath.com/projects/paths).
+[here](https://graspablemath.com/portfolio/paths).
 ![image](https://cloud.githubusercontent.com/assets/53043/24169452/0d0df5f4-0e54-11e7-96b0-b2e17152f113.png)
 
 (1) The learning task. The goal is to come up with the difference between all
